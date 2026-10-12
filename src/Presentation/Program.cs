@@ -9,9 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 // MVC hizmetleri
 builder.Services.AddControllersWithViews();
 
-// DbContext: burada geliştirme için SQLite kullanalım. Connection string appsettings.json'dan alınabilir.
+// DbContext: SQL Server kullanacak şekilde yapılandırıldı. Connection string appsettings.json'dan alınır.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=arabulucu.db"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ??
+                         "Server=(localdb)\\MSSQLLocalDB;Database=ARABULUCU;Trusted_Connection=True;MultipleActiveResultSets=true"));
 
 // DAL repository kayıtları (IItemRepository kullanılıyor)
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
