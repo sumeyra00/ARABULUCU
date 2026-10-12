@@ -9,7 +9,7 @@ Bu depo, çok katmanlı mimaride geliştirilecek "kayıp eşya" ilan ve iletişi
 - Resim yükleme (ilana fotoğraf ekleme)
 
 Mimari:
-- Presentation: Razor Pages (.NET 10)
+- Presentation: ASP.NET Core MVC (.NET 10)
 - Core: Domain modeller ve arayüzler
 - Infrastructure: EF Core, repository implementasyonları
 - Tests: Birim ve entegrasyon testleri
