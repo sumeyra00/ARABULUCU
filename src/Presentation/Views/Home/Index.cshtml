@@ -1,0 +1,16 @@
+@model IEnumerable<ARABULUCU.ENT.Entities.LostItem>
+
+@{
+    ViewData["Title"] = "İlanlar";
+}
+
+<h1>Son İlanlar</h1>
+
+<ul>
+@foreach(var item in Model)
+{
+    <li>
+        <strong>@item.Title</strong> - @item.Location - @item.CreatedAt.ToLocalTime().ToString("g")
+    </li>
+}
+</ul>
