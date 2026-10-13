@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+	<TargetFramework>net10.0</TargetFramework>
+	<Nullable>enable</Nullable>
+	<ImplicitUsings>enable</ImplicitUsings>
+	<AssemblyName>ARABULUCU.BLL</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<ProjectReference Include="..\ENT\ARABULUCU.ENT.csproj" />
+	<ProjectReference Include="..\DAL\ARABULUCU.DAL.csproj" />
+  </ItemGroup>
+</Project>
