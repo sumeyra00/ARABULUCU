@@ -1,0 +1,219 @@
+﻿@{
+    ViewData["Title"] = "Mesajlarım";
+}
+
+<!-- Leaflet Harita Kütüphanesi -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<div class="container py-4">
+    <div class="card shadow-sm border rounded-3 overflow-hidden">
+        <div class="row g-0" style="min-height: 580px;">
+            
+            <!-- Sol Panel: Konuşma Listesi -->
+            <div class="col-md-4 border-end bg-light">
+                <div class="p-3 border-bottom bg-white">
+                    <h5 class="fw-bold mb-2">Sohbetler</h5>
+                    <input type="text" class="form-control form-control-sm" placeholder="Sohbetlerde ara..." />
+                </div>
+
+                <div class="list-group list-group-flush">
+                    <a href="#" class="list-group-item list-group-item-action active p-3" aria-current="true">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="fw-bold">Ahmet K.</span>
+                            <small class="opacity-75">19:20</small>
+                        </div>
+                        <div class="small fw-semibold mb-1 text-truncate">🎒 Siyah Deri Sırt Çantası</div>
+                        <p class="small mb-0 opacity-75 text-truncate">📍 Buluşma konumu paylaşıldı</p>
+                    </a>
+
+                    <a href="#" class="list-group-item list-group-item-action p-3">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="fw-bold text-dark">Zeynep B.</span>
+                            <small class="text-muted">16:40</small>
+                        </div>
+                        <div class="small fw-semibold text-secondary mb-1 text-truncate">👛 Pembe Cüzdan</div>
+                        <p class="small text-muted mb-0 text-truncate">Kartlığı yemekhane güvenliğine bıraktım.</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Sağ Panel: Aktif Mesajlaşma Penceresi -->
+            <div class="col-md-8 d-flex flex-column bg-white">
+                
+                <!-- Üst Başlık -->
+                <div class="p-3 border-bottom d-flex align-items-center justify-content-between bg-white">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
+                            AK
+                        </div>
+                        <div>
+                            <div class="fw-bold">Ahmet K.</div>
+                            <small class="text-muted">İlgili İlan: Siyah Deri Sırt Çantası (#10482)</small>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="/Home/Detay" class="btn btn-sm btn-outline-secondary">İlanı Gör</a>
+                    </div>
+                </div>
+
+                <!-- Güvenlik Bilgilendirmesi -->
+                <div class="px-3 pt-2">
+                    <div class="alert alert-light border small text-muted py-2 mb-0 text-center">
+                        🔒 Bu sohbet eşleşme ve doğrulama sorusu onaylandıktan sonra açılmıştır. Teslimat için açık kampüs alanlarını tercih ediniz.
+                    </div>
+                </div>
+
+                <!-- Mesaj Balonları -->
+                <div class="flex-grow-1 p-3 overflow-auto" style="background-color: #F8FAFC;">
+                    
+                    <div class="d-flex flex-column align-items-start mb-3">
+                        <div class="bg-white p-2 px-3 rounded-3 shadow-sm border small" style="max-width: 75%;">
+                            Merhaba, doğrulama sorunuzu yanıtladım. Çantanız bende, teslim etmek için yarın buluşabilir miyiz?
+                        </div>
+                        <span class="text-muted mt-1 ps-1" style="font-size: 0.7rem;">19:15</span>
+                    </div>
+
+                    <div class="d-flex flex-column align-items-end mb-3">
+                        <div class="bg-primary text-white p-2 px-3 rounded-3 shadow-sm small" style="max-width: 75%;">
+                            Çok teşekkürler! Öğlen 12:30'da uygunum. Kampüste neredesiniz?
+                        </div>
+                        <span class="text-muted mt-1 pe-1" style="font-size: 0.7rem;">19:17</span>
+                    </div>
+
+                    <!-- ÖRNEK: CHAT İÇİNDE GÖNDERİLMİŞ KONUM KARTI MESAJI -->
+                    <div class="d-flex flex-column align-items-start mb-3">
+                        <div class="bg-white p-3 rounded-3 shadow-sm border small" style="max-width: 320px;">
+                            <div class="d-flex align-items-center gap-2 mb-2 text-danger fw-bold">
+                                <span>📍</span> Buluşma Noktası Paylaşıldı
+                            </div>
+                            <div class="bg-light border rounded-2 d-flex align-items-center justify-content-center text-center p-3 mb-2" style="height: 110px;">
+                                <div>
+                                    <div class="fw-bold text-dark">🍽️ Merkez Yemekhane Önü</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">39.7047° N, 37.0395° E</div>
+                                </div>
+                            </div>
+                            <p class="mb-2 text-secondary" style="font-size: 0.8rem;">
+                                <em>"Yemekhane giriş kapısının sağındaki banklardayım."</em>
+                            </p>
+                            <a href="https://www.google.com/maps?q=39.7047,37.0395" target="_blank" class="btn btn-sm btn-outline-primary w-100 fw-bold">
+                                Haritada Aç ve Yol Tarifi Al &rarr;
+                            </a>
+                        </div>
+                        <span class="text-muted mt-1 ps-1" style="font-size: 0.7rem;">19:20</span>
+                    </div>
+
+                </div>
+
+                <!-- Alt Mesaj Gönderme Çubuğu -->
+                <div class="p-3 border-top bg-white">
+                    <form class="d-flex gap-2 align-items-center">
+                        <!-- CHAT İÇİ CANLI KONUM PAYLAŞ BUTONU -->
+                        <button type="button" class="btn btn-outline-danger fw-semibold d-flex align-items-center gap-1 text-nowrap" data-bs-toggle="modal" data-bs-target="#locationModal">
+                            📍 Konum Paylaş
+                        </button>
+
+                        <input type="text" class="form-control" placeholder="Bir mesaj yazın..." required />
+                        <button type="submit" class="btn btn-primary fw-bold px-4">Gönder</button>
+                    </form>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- CHAT İÇİ BULUŞMA NOKTASI / KONUM PAYLAŞMA MODALI -->
+<div class="modal fade" id="locationModal" tabindex="-1" aria-labelledby="locationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="locationModalLabel">📍 Teslimat / Buluşma Konumu Paylaş</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-muted">Mevcut konumunuzu alabilir veya kampüs haritasından tıklayarak teslimat noktası seçebilirsiniz.</span>
+                    <button type="button" class="btn btn-sm btn-danger fw-bold" id="btnLiveLocation">
+                        🎯 Canlı GPS Konumumu Al
+                    </button>
+                </div>
+
+                <!-- Modal İçi Mini Harita -->
+                <div id="chatMap" class="rounded-3 border mb-3" style="height: 280px; width: 100%; background: #f0f0f0;"></div>
+
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Konum Başlığı / Yakın Bina</label>
+                        <input type="text" class="form-control form-control-sm" id="chatPlaceName" placeholder="Örn: Merkez Kütüphane Önü" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Buluşma Notu (Opsiyonel)</label>
+                        <input type="text" class="form-control form-control-sm" id="chatMeetingNote" placeholder="Örn: Yeşil banklardayım, mavi kazaklıyım" />
+                    </div>
+                    <input type="hidden" id="chatLat" />
+                    <input type="hidden" id="chatLng" />
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-success fw-bold" data-bs-dismiss="modal">
+                    ✓ Konumu Sohbete Gönder
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet JS ve Harita Scripti -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    let chatMapInitialized = false;
+    let chatMap;
+    let chatMarker;
+
+    const modalEl = document.getElementById('locationModal');
+    if (modalEl) {
+        modalEl.addEventListener('shown.bs.modal', function () {
+            if (!chatMapInitialized) {
+                chatMap = L.map('chatMap').setView([39.7047, 37.0395], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(chatMap);
+
+                chatMap.on('click', function (e) {
+                    setChatLocation(e.latlng.lat, e.latlng.lng, "Seçilen Buluşma Noktası");
+                });
+
+                chatMapInitialized = true;
+            } else {
+                chatMap.invalidateSize();
+            }
+        });
+    }
+
+    function setChatLocation(lat, lng, label) {
+        if (chatMarker) {
+            chatMarker.setLatLng([lat, lng]);
+        } else {
+            chatMarker = L.marker([lat, lng]).addTo(chatMap);
+        }
+        chatMarker.bindPopup(`<b>${label}</b>`).openPopup();
+        chatMap.setView([lat, lng], 17);
+        document.getElementById('chatLat').value = lat;
+        document.getElementById('chatLng').value = lng;
+    }
+
+    const liveBtn = document.getElementById('btnLiveLocation');
+    if (liveBtn) {
+        liveBtn.addEventListener('click', function () {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    setChatLocation(pos.coords.latitude, pos.coords.longitude, "Canlı Konumunuz");
+                });
+            }
+        });
+    }
+</script>

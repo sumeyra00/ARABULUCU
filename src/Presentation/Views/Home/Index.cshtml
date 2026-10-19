@@ -1,16 +1,89 @@
-@model IEnumerable<ARABULUCU.ENT.Entities.LostItem>
-
 @{
-    ViewData["Title"] = "İlanlar";
+    ViewData["Title"] = "Ana Sayfa";
 }
 
-<h1>Son İlanlar</h1>
+<!-- HERO BÖLÜMÜ -->
+<section class="py-5 text-center position-relative overflow-hidden" style="background: radial-gradient(circle at 50% 20%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%);">
 
-<ul>
-@foreach(var item in Model)
-{
-    <li>
-        <strong>@item.Title</strong> - @item.Location - @item.CreatedAt.ToLocalTime().ToString("g")
-    </li>
-}
-</ul>
+    <!-- Sevimli Süs Figürleri -->
+    <div class="position-absolute d-none d-lg-block" style="top: 10%; left: 8%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">🌸</div>
+    <div class="position-absolute d-none d-lg-block" style="top: 15%; right: 9%; font-size: 2.4rem; transform: rotate(18deg); user-select: none;">🔑</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 25%; left: 6%; font-size: 2.2rem; transform: rotate(10deg); user-select: none;">🎒</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 20%; right: 7%; font-size: 2.4rem; transform: rotate(-20deg); user-select: none;">👛</div>
+    <div class="position-absolute d-none d-lg-block" style="top: 40%; left: 16%; font-size: 1.6rem; user-select: none;">✨</div>
+    <div class="position-absolute d-none d-lg-block" style="top: 35%; right: 18%; font-size: 1.8rem; user-select: none;">💖</div>
+
+    <div class="container position-relative" style="z-index: 2;">
+        <h1 class="fw-bolder display-5 mb-4 text-dark" style="letter-spacing: -0.5px;">
+            Bir şey mi kaybettiniz,<br>yoksa bir şey mi buldunuz?
+        </h1>
+
+        <!-- İki Büyük Aksiyon Kartı -->
+        <div class="row g-3 justify-content-center mx-auto mb-4" style="max-width: 860px;">
+            <div class="col-md-6 text-start">
+                <a href="/Home/KayipOlustur" class="d-flex align-items-center gap-3 p-3 rounded-4 text-decoration-none shadow-sm text-white" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
+                    <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0 fs-3" style="width: 60px; height: 60px; background: rgba(255,255,255,0.25);">
+                        🔍
+                    </div>
+                    <div>
+                        <div class="fw-bold fs-4">Bir Şey Kaybettim</div>
+                        <div class="small fw-semibold opacity-75">Kayıp İlanı Ver &rarr;</div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 text-start">
+                <a href="/Home/BulunanOlustur" class="d-flex align-items-center gap-3 p-3 rounded-4 text-decoration-none shadow-sm text-dark border" style="background: #FFF3F6; border-color: #FFD9E2 !important;">
+                    <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0 fs-3" style="width: 60px; height: 60px; background: #FFE2EA;">
+                        🎁
+                    </div>
+                    <div>
+                        <div class="fw-bold fs-4">Bir Şey Buldum</div>
+                        <div class="small fw-semibold text-secondary">Bulunan Eşya Bildir &rarr;</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Oval Arama Barı -->
+        <div class="bg-white rounded-pill p-2 shadow-sm border d-flex align-items-center mx-auto flex-wrap" style="max-width: 920px; border-color: rgba(255, 94, 126, 0.2) !important;">
+            <div class="d-flex align-items-center flex-grow-1 px-3">
+                <i class="bi bi-search text-muted me-2"></i>
+                <input type="text" class="form-control border-0 shadow-none bg-transparent" placeholder="Ne arıyorsunuz? (Örn: Cüzdan, Kartlık, Kulaklık...)" />
+            </div>
+
+            <div class="vr d-none d-md-block my-2" style="background-color: #E2E8F0;"></div>
+
+            <div class="flex-grow-1 d-none d-md-block px-2">
+                <select class="form-select border-0 shadow-none bg-transparent">
+                    <option value="">Kategori Seçin</option>
+                    <option>🎒 Çanta & Sırt Çantası</option>
+                    <option>🔑 Anahtar & Aksesuar</option>
+                    <option>👛 Cüzdan & Öğrenci Kimliği</option>
+                    <option>🎧 Kulaklık & Elektronik</option>
+                    <option>📱 Telefon & Şarj Aleti</option>
+                    <option>⌚ Akıllı Saat & Takı</option>
+                    <option>📚 Kitap & Ders Notu</option>
+                </select>
+            </div>
+
+            <div class="vr d-none d-lg-block my-2" style="background-color: #E2E8F0;"></div>
+
+            <div class="flex-grow-1 d-none d-lg-block px-2">
+                <select class="form-select border-0 shadow-none bg-transparent">
+                    <option value="">Konum (Tüm Kampüs)</option>
+                    <option>📍 Tüm Kampüs Alanları</option>
+                    <option>🍽️ Merkez Yemekhane</option>
+                    <option>🏢 Kız Öğrenci Yurdu (KYK)</option>
+                    <option>🏢 Erkek Öğrenci Yurdu (KYK)</option>
+                    <option>☕ Kampüs Kafeler & Çarşı Alanı</option>
+                    <option>🏥 Tıp Fakültesi Hastanesi</option>
+                    <option>📚 Merkez Kütüphane</option>
+                    <option>⚙️ Mühendislik Fakültesi</option>
+                    <option>📖 Eğitim Fakültesi</option>
+                    <option>🔬 Fen-Edebiyat Fakültesi</option>
+                    <option>💼 İİBF</option>
+                </select>
+            </div>
+
+            <button class="btn rounded-pill px-4 py-2 text-white fw-bold shadow-sm" style="background: linear-gradient(135deg, #FF6082 0
