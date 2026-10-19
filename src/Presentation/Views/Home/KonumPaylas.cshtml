@@ -1,0 +1,156 @@
+﻿@{
+    ViewData["Title"] = "Konum Paylaşımı ve Buluşma Noktası";
+}
+
+<!-- Leaflet Harita Kütüphanesi (Ücretsiz & API Key İstemez) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            
+            <div class="card shadow-sm border rounded-3">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="fw-bold mb-1 text-primary">📍 Kampüs İçi Canlı Konum & Buluşma Noktası</h5>
+                        <p class="text-muted small mb-0">Eşya teslimi için mevcut konumunuzu alın veya haritadan güvenli bir nokta seçin.</p>
+                    </div>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 small">
+                        SCÜ Kampüsü
+                    </span>
+                </div>
+
+                <div class="card-body p-4">
+                    
+                    <!-- Butonlar ve Durum Alanı -->
+                    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+                        <div class="d-flex gap-2">
+                            <!-- CANLI KONUM EKLE BUTONU -->
+                            <button type="button" class="btn btn-primary fw-bold d-flex align-items-center gap-2" id="btnGetLocation">
+                                🎯 Canlı Konumumu Ekle
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnCampusCenter">
+                                🏫 Kampüs Merkezine Git
+                            </button>
+                        </div>
+                        <div id="locationStatus" class="small text-muted fw-semibold">
+                            Haritaya tıklayarak da nokta seçebilirsiniz.
+                        </div>
+                    </div>
+
+                    <!-- HARİTA GÖSTERİM ALANI -->
+                    <div id="map" class="rounded-3 border mb-3" style="height: 380px; width: 100%; background: #f0f0f0;"></div>
+
+                    <!-- Form Inputları (Backend'e gidecek Enlem / Boylam verileri) -->
+                    <form method="post" action="#">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Enlem (Latitude)</label>
+                                <input type="text" class="form-control form-control-sm bg-light" id="latitudeInput" name="latitude" placeholder="Örn: 39.7042" readonly required />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Boylam (Longitude)</label>
+                                <input type="text" class="form-control form-control-sm bg-light" id="longitudeInput" name="longitude" placeholder="Örn: 37.0398" readonly required />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Seçilen / Yakın Yer</label>
+                                <input type="text" class="form-control form-control-sm" id="placeName" name="placeName" placeholder="Örn: Yemekhane Yanı / Kütüphane Önü" />
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Buluşma / Teslimat Notu</label>
+                                <input type="text" class="form-control" name="meetingNote" placeholder="Örn: Kütüphane önündeki mavi banklardayım, üzerimde siyah mont var." />
+                            </div>
+
+                            <!-- Gönderme Butonları -->
+                            <div class="col-12 d-flex justify-content-end gap-2 mt-4">
+                                <a href="/Home/Mesajlar" class="btn btn-secondary">Vazgeç</a>
+                                <button type="submit" class="btn btn-success fw-bold px-4">
+                                    ✓ Bu Konumu Paylaş
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet JS ve Konum Alma Scripti -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Sivas Cumhuriyet Üniversitesi Koordinatları (Varsayılan Merkez)
+    const SCU_LAT = 39.7047;
+    const SCU_LNG = 37.0395;
+
+    // Haritayı SCÜ kampüsüne odaklayarak başlat
+    const map = L.map('map').setView([SCU_LAT, SCU_LNG], 15);
+
+    // OpenStreetMap Harita Katmanı
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    let marker;
+
+    // Harita üzerinde işaretçi güncelleme fonksiyonu
+    function updateMarker(lat, lng, title = "Buluşma Noktası") {
+        if (marker) {
+            marker.setLatLng([lat, lng]);
+        } else {
+            marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+            
+            // İşaretçi elle sürüklendiğinde de koordinatları güncelle
+            marker.on('dragend', function (e) {
+                const pos = marker.getLatLng();
+                setInputs(pos.lat, pos.lng, "İşaretçi sürüklendi");
+            });
+        }
+        marker.bindPopup(`<b>${title}</b><br>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`).openPopup();
+        map.setView([lat, lng], 17);
+        setInputs(lat, lng, title);
+    }
+
+    function setInputs(lat, lng, info) {
+        document.getElementById('latitudeInput').value = lat.toFixed(6);
+        document.getElementById('longitudeInput').value = lng.toFixed(6);
+        document.getElementById('locationStatus').innerHTML = `✅ ${info} (Enlem: ${lat.toFixed(4)}, Boylam: ${lng.toFixed(4)})`;
+    }
+
+    // 1. "Canlı Konumumu Ekle" Butonuna Basıldığında (HTML5 Geolocation)
+    document.getElementById('btnGetLocation').addEventListener('click', function () {
+        const status = document.getElementById('locationStatus');
+        
+        if (!navigator.geolocation) {
+            status.innerHTML = "❌ Tarayıcınız canlı konum desteği vermiyor.";
+            return;
+        }
+
+        status.innerHTML = "⏳ Canlı GPS konumunuz alınıyor...";
+
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                updateMarker(lat, lng, "Mevcut Canlı Konumunuz");
+            },
+            function (error) {
+                status.innerHTML = "⚠️ Konum izni verilmedi veya alınamadı. Haritadan tıklayarak seçebilirsiniz.";
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    });
+
+    // 2. Haritada herhangi bir yere tıklandığında orayı işaretle
+    map.on('click', function (e) {
+        updateMarker(e.latlng.lat, e.latlng.lng, "Seçilen Nokta");
+    });
+
+    // 3. Kampüs Merkezine Git Butonu
+    document.getElementById('btnCampusCenter').addEventListener('click', function () {
+        updateMarker(SCU_LAT, SCU_LNG, "Sivas Cumhuriyet Üniversitesi Merkez");
+    });
+</script>
