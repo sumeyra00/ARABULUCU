@@ -1,0 +1,117 @@
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;@{
+    ViewData["Title"] = "Kayıp İlanı Oluştur";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            <div class="card shadow-sm border rounded-3">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h4 class="mb-1 fw-bold text-danger">🔍 Bir Şey Kaybettim — Kayıp İlanı Ver</h4>
+                    <p class="text-muted small mb-0">Eşyanızı bulan kişinin size kolayca ulaşabilmesi için bilgileri detaylı girin.</p>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="post" action="#" enctype="multipart/form-data">
+                        
+                        <!-- 1. Temel Bilgiler -->
+                        <h6 class="fw-bold mb-3 border-bottom pb-2">1. Eşya Bilgileri</h6>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label fw-semibold">İlan Başlığı</label>
+                            <input type="text" class="form-control" id="title" name="title" placeholder="Örn: Siyah Deri Sırt Çantası" required />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label fw-semibold">Kategori</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Seçiniz...</option>
+                                    <option value="canta">🎒 Çanta & Sırt Çantası</option>
+                                    <option value="anahtar">🔑 Anahtar & Aksesuar</option>
+                                    <option value="cuzdan">👛 Cüzdan & Kartlık / Kimlik</option>
+                                    <option value="elektronik">🎧 Kulaklık & Elektronik</option>
+                                    <option value="telefon">📱 Telefon & Şarj Aleti</option>
+                                    <option value="saat">⌚ Akıllı Saat & Takı</option>
+                                    <option value="kitap">📚 Kitap & Ders Notu</option>
+                                    <option value="diger">📦 Diğer</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="lostDate" class="form-label fw-semibold">Kaybolduğu Tarih & Saat</label>
+                                <input type="datetime-local" class="form-control" id="lostDate" name="lostDate" required />
+                            </div>
+                        </div>
+
+                        <!-- 2. Konum Bilgileri -->
+                        <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">2. Kaybolduğu Kampüs Konumu</h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="campusArea" class="form-label fw-semibold">Kampüs Bölgesi</label>
+                                <select class="form-select" id="campusArea" name="campusArea" required>
+                                    <option value="">Bölge Seçiniz...</option>
+                                    <option value="yemekhane">🍽️ Merkez Yemekhane</option>
+                                    <option value="kutuphane">📚 Merkez Kütüphane</option>
+                                    <option value="kiz_kyk">🏢 Kız Öğrenci Yurdu (KYK)</option>
+                                    <option value="erkek_kyk">🏢 Erkek Öğrenci Yurdu (KYK)</option>
+                                    <option value="hastane">🏥 Tıp Fakültesi Hastanesi</option>
+                                    <option value="muhendislik">⚙️ Mühendislik Fakültesi</option>
+                                    <option value="egitim">📖 Eğitim Fakültesi</option>
+                                    <option value="iibf">💼 İİBF</option>
+                                    <option value="kafeler">☕ Kampüs Kafeler & Çarşı Alanı</option>
+                                    <option value="diger_alan">📍 Diğer Açık Alanlar</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="locationDetail" class="form-label fw-semibold">Detaylı Konum Açıklaması</label>
+                                <input type="text" class="form-control" id="locationDetail" name="locationDetail" placeholder="Örn: 2. kat pencere kenarı masalar" />
+                            </div>
+                        </div>
+
+                        <!-- 3. Açıklama & Fotoğraf -->
+                        <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">3. Detaylı Açıklama & Fotoğraf</h6>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label fw-semibold">Eşyanın Belirgin Özellikleri</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Rengi, markası, üzerinde çizik/etiket var mı?" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="itemPhoto" class="form-label fw-semibold">Eşyanın Varsa Önceki Bir Fotoğrafı</label>
+                            <input class="form-control" type="file" id="itemPhoto" name="itemPhoto" accept="image/*" />
+                            <div class="form-text small text-muted">Mümkünse eşyanın ayırt edilmesini sağlayacak net bir görsel ekleyin.</div>
+                        </div>
+
+                        <!-- 4. Güvenlik & Doğrulama Sorusu -->
+                        <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">4. Güvenlik Doğrulama Sorusu (Sahte Talepleri Önleme)</h6>
+                        <div class="alert alert-light border small text-muted mb-3">
+                            Bu eşyayı bulduğunu iddia eden kişi, sizin belirleyeceğiniz bu soruyu doğru yanıtlamadan gizli iletişim/fotoğraf detaylarını göremez.
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="securityQuestion" class="form-label fw-semibold">Doğrulama Sorunuz</label>
+                                <input type="text" class="form-control" id="securityQuestion" name="securityQuestion" placeholder="Örn: Anahtarlıktaki peluş figür ne?" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="securityAnswer" class="form-label fw-semibold">Beklenen Doğru Cevap</label>
+                                <input type="text" class="form-control" id="securityAnswer" name="securityAnswer" placeholder="Örn: Pembe tavşan" required />
+                            </div>
+                        </div>
+
+                        <!-- Kaydet Butonu -->
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-danger fw-bold py-2">Kayıp İlanını Yayınla</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
