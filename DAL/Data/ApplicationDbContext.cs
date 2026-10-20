@@ -15,10 +15,29 @@ namespace ARABULUCU.DAL.Data
         public DbSet<LostItemFeature> LostItemFeatures { get; set; } = null!;
         public DbSet<ContactMessage> ContactMessages { get; set; } = null!;
         public DbSet<UserProfile> UserProfiles { get; set; } = null!;
+        public DbSet<Notification> Notifications { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<LostItem>()
+                .HasOne(item => item.User)
+                .WithMany(user => user.LostItems)
+                .HasForeignKey(item => item.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<LostItem>()
+                .HasOne(item => item.Category)
+                .WithMany(category => category.LostItems)
+                .HasForeignKey(item => item.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(notification => notification.User)
+                .WithMany(user => user.Notifications)
+                .HasForeignKey(notification => notification.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Basit seed örneği: kampüste sık bulunan kategoriler
             modelBuilder.Entity<Category>().HasData(

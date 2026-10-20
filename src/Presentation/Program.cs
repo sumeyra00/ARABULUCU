@@ -20,6 +20,11 @@ builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddSignalR();
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.EnsureCreated(); // Veritabanı yoksa tablolarıyla birlikte anında oluşturur
+}
 
 if (!app.Environment.IsDevelopment())
 {

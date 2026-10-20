@@ -12,5 +12,11 @@ namespace ARABULUCU.ENT.Entities
         public string Location { get; set; } = string.Empty; // serbest metin veya koordinat bilgisi
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsFound { get; set; } = false;
+
+        public string UserId { get; set; } = string.Empty;
+        public UserProfile User { get; set; } = null!;
+
+        public int CategoryId { get; set; }
+        public Category Category { get; set; } = null!;
     }
 }
