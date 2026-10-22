@@ -12,7 +12,5 @@
   <Folder Name="/src/Presentation/">
     <Project Path="src/Presentation/ARABULUCU.Web.csproj" />
   </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/ARABULUCU.Tests/ARABULUCU.Tests.csproj" />
-  </Folder>
+  <Folder Name="/tests/" />
 </Solution>
