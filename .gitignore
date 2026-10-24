@@ -13,8 +13,10 @@ obj/
 .idea/
 .vscode/
 
-# EF migrations build artifacts
-**/Migrations/
+# EF migrations are committed source files
+**/Migrations/*
+!**/Migrations/
+!**/Migrations/**/*.cs
 
 # user secrets
 secrets.json

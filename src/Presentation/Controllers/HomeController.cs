@@ -15,7 +15,7 @@ namespace ARABULUCU.Web.Controllers
         }
         public IActionResult Register()
         {
-            return View("~/Views/Account/Register.cshtml");
+            return RedirectToAction("Register", "Account");
         }
         public IActionResult KayipOlustur()
         {

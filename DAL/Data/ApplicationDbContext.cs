@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using ARABULUCU.DAL.Entities;
 using ARABULUCU.ENT.Entities;
 
 namespace ARABULUCU.DAL.Data
 {
     // DAL katmanındaki DbContext: ENT içindeki entity sınıflarını kullanır.
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {

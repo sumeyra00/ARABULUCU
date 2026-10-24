@@ -1,4 +1,6 @@
-﻿@{
+@model RegisterViewModel
+
+@{
     ViewData["Title"] = "Üye Ol";
 }
 
@@ -15,46 +17,59 @@
                         Sivas Cumhuriyet Üniversitesi kampüsünde kayıp eşyalarını bulmak ve bildirmek için üye ol.
                     </p>
 
+                    @if (TempData["RegisterSuccess"] is string successMessage)
+                    {
+                        <div class="alert alert-success" role="alert">@successMessage</div>
+                    }
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
                     <!-- Kayıt Formu -->
-                    <form method="post" action="#">
+                    <form asp-controller="Account" asp-action="Register" method="post">
                         
                         <!-- Ad Soyad -->
                         <div class="mb-3">
-                            <label for="fullName" class="form-label fw-semibold">Ad Soyad</label>
-                            <input type="text" class="form-control" id="fullName" name="fullName" placeholder="Adınız ve Soyadınız" required />
+                            <label asp-for="FullName" class="form-label fw-semibold"></label>
+                            <input asp-for="FullName" class="form-control" placeholder="Adınız ve Soyadınız" autocomplete="name" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
                         </div>
 
                         <!-- E-posta -->
                         <div class="mb-3">
-                            <label for="email" class="form-label fw-semibold">Üniversite E-posta Adresi</label>
-                            <input type="email" class="form-control" id="email" name="email" placeholder="ogrenciNo@cumhuriyet.edu.tr" required />
+                            <label asp-for="Email" class="form-label fw-semibold">Üniversite E-posta Adresi</label>
+                            <input asp-for="Email" class="form-control" placeholder="ogrenciNo@cumhuriyet.edu.tr" autocomplete="email" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
 
                         <!-- Telefon Numarası -->
                         <div class="mb-3">
-                            <label for="phone" class="form-label fw-semibold">Telefon Numarası (Opsiyonel)</label>
-                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="05XX XXX XX XX" />
+                            <label asp-for="PhoneNumber" class="form-label fw-semibold">Telefon Numarası (Opsiyonel)</label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="05XX XXX XX XX" autocomplete="tel" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
                             <div class="form-text small text-muted">Eşya teslimlerinde iletişim kolaylığı sağlamak içindir.</div>
                         </div>
 
                         <!-- Şifre Alanları -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="password" class="form-label fw-semibold">Şifre</label>
-                                <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required />
+                                <label asp-for="Password" class="form-label fw-semibold"></label>
+                                <input asp-for="Password" class="form-control" placeholder="••••••••" autocomplete="new-password" />
+                                <span asp-validation-for="Password" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="confirmPassword" class="form-label fw-semibold">Şifre Tekrar</label>
-                                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required />
+                                <label asp-for="ConfirmPassword" class="form-label fw-semibold"></label>
+                                <input asp-for="ConfirmPassword" class="form-control" placeholder="••••••••" autocomplete="new-password" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                             </div>
                         </div>
 
                         <!-- Şartlar & Onay -->
                         <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="terms" name="terms" required />
-                            <label class="form-check-label small" for="terms">
+                            <input asp-for="TermsAccepted" class="form-check-input" />
+                            <label asp-for="TermsAccepted" class="form-check-label small">
                                 <a href="#" class="text-decoration-none">Kullanım Koşulları</a> ve <a href="#" class="text-decoration-none">KVKK Aydınlatma Metnini</a> okudum, onaylıyorum.
                             </label>
+                            <span asp-validation-for="TermsAccepted" class="text-danger small d-block"></span>
                         </div>
 
                         <!-- Kayıt Ol Butonu -->
