@@ -1,5 +1,12 @@
 @{
     ViewData["Title"] = "Ana Sayfa";
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var lostReportUrl = isAuthenticated
+        ? Url.Action("KayipOlustur", "Home")
+        : Url.Action("Login", "Account", new { returnUrl = Url.Action("KayipOlustur", "Home") });
+    var foundReportUrl = isAuthenticated
+        ? Url.Action("BulunanOlustur", "Home")
+        : Url.Action("Login", "Account", new { returnUrl = Url.Action("BulunanOlustur", "Home") });
 }
 
 <!-- HERO BÖLÜMÜ -->
@@ -21,25 +28,25 @@
         <!-- İki Büyük Aksiyon Kartı -->
         <div class="row g-3 justify-content-center mx-auto mb-4" style="max-width: 860px;">
             <div class="col-md-6 text-start">
-                <a asp-controller="Home" asp-action="KayipOlustur" class="d-flex align-items-center gap-3 p-3 rounded-4 text-decoration-none shadow-sm text-white" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
+                <a href="@lostReportUrl" class="d-flex align-items-center gap-3 p-3 rounded-4 text-decoration-none shadow-sm text-white" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
                     <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0 fs-3" style="width: 60px; height: 60px; background: rgba(255,255,255,0.25);">
                         🔍
                     </div>
                     <div>
                         <div class="fw-bold fs-4">Bir Şey Kaybettim</div>
-                        <div class="small fw-semibold opacity-75">Kayıp İlanı Ver &rarr; @if (User.Identity?.IsAuthenticated != true) { <span>(Giriş gerekli)</span> }</div>
+                        <div class="small fw-semibold opacity-75">Kayıp İlanı Ver &rarr; @if (!isAuthenticated) { <span>(Giriş gerekli)</span> }</div>
                     </div>
                 </a>
             </div>
 
             <div class="col-md-6 text-start">
-                <a asp-controller="Home" asp-action="BulunanOlustur" class="d-flex align-items-center gap-3 p-3 rounded-4 text-decoration-none shadow-sm text-dark border" style="background: #FFF3F6; border-color: #FFD9E2 !important;">
+                <a href="@foundReportUrl" class="d-flex align-items-center gap-3 p-3 rounded-4 text-decoration-none shadow-sm text-dark border" style="background: #FFF3F6; border-color: #FFD9E2 !important;">
                     <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0 fs-3" style="width: 60px; height: 60px; background: #FFE2EA;">
                         🎁
                     </div>
                     <div>
                         <div class="fw-bold fs-4">Bir Şey Buldum</div>
-                        <div class="small fw-semibold text-secondary">Bulunan Eşya Bildir &rarr; @if (User.Identity?.IsAuthenticated != true) { <span>(Giriş gerekli)</span> }</div>
+                        <div class="small fw-semibold text-secondary">Bulunan Eşya Bildir &rarr; @if (!isAuthenticated) { <span>(Giriş gerekli)</span> }</div>
                     </div>
                 </a>
             </div>
