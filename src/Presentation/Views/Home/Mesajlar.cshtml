@@ -5,75 +5,105 @@
 <!-- Leaflet Harita Kütüphanesi -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<div class="container py-4" id="chatApp" data-item-id="@ViewData["IlanId"]">
-    <div class="card shadow-sm border rounded-3 overflow-hidden">
-        <div class="row g-0" style="min-height: 580px;">
-            
-            <!-- Sol Panel: Konuşma Listesi -->
-            <div class="col-md-4 border-end bg-light">
-                <div class="p-3 border-bottom bg-white">
-                    <h5 class="fw-bold mb-2">Sohbetler</h5>
-                    <input type="text" class="form-control form-control-sm" placeholder="Sohbetlerde ara..." />
-                </div>
+<div class="position-relative overflow-hidden py-4" style="background: radial-gradient(circle at 50% 20%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: 100vh;">
 
-                <div class="list-group list-group-flush">
-                    <a href="#" class="list-group-item list-group-item-action active p-3" aria-current="true">
-                        <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="fw-bold">İlan #@ViewData["IlanId"]</span>
-                            <small id="chatStatus" class="opacity-75">Bağlanıyor...</small>
+    <!-- Sevimli Süs Figürleri -->
+    <div class="position-absolute d-none d-lg-block" style="top: 6%; left: 5%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">💬</div>
+    <div class="position-absolute d-none d-lg-block" style="top: 10%; right: 6%; font-size: 2.4rem; transform: rotate(18deg); user-select: none;">🌸</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 8%; left: 4%; font-size: 2rem; transform: rotate(12deg); user-select: none;">✨</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 10%; right: 5%; font-size: 2.2rem; transform: rotate(-12deg); user-select: none;">📍</div>
+
+    <div class="container position-relative" style="z-index: 2;" id="chatApp" data-item-id="@ViewData["IlanId"]">
+
+        <!-- Üst Geri Dön Butonu -->
+        <div class="mb-3">
+            <a href="/Home/Detay?ilanId=@ViewData["IlanId"]" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border">
+                &larr; İlan Detayına Dön
+            </a>
+        </div>
+
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);">
+            <div class="row g-0" style="min-height: 620px;">
+
+                <!-- Sol Panel: Konuşma Listesi -->
+                <div class="col-md-4 border-end" style="background-color: #FFFDFC;">
+                    <div class="p-3 border-bottom" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h5 class="fw-bold text-dark mb-0">💬 Sohbetler</h5>
+                            <span class="badge rounded-pill text-white px-2 py-1" style="background-color: #FF6082; font-size: 0.75rem;">Canlı</span>
                         </div>
-                        <div class="small fw-semibold mb-1 text-truncate">İlan sohbeti</div>
-                        <p class="small mb-0 opacity-75 text-truncate">SignalR ile canlı mesajlaşma</p>
-                    </a>
+                        <input type="text" class="form-control form-control-sm bg-white border rounded-pill px-3 py-2 shadow-none" placeholder="Sohbetlerde ara..." />
+                    </div>
 
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action p-3 border-bottom border-0 border-start border-4" style="background-color: #FFF0F4; border-left-color: #FF6082 !important;" aria-current="true">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0" style="width: 44px; height: 44px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
+                                    #@ViewData["IlanId"]
+                                </div>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <span class="fw-bold text-dark">İlan #@ViewData["IlanId"]</span>
+                                        <small id="chatStatus" class="badge rounded-pill bg-white text-muted border px-2 py-1" style="font-size: 0.7rem;">Bağlanıyor...</small>
+                                    </div>
+                                    <div class="small fw-semibold text-secondary text-truncate">İlan Sahibi ile Sohbet</div>
+                                    <p class="small text-muted mb-0 text-truncate" style="font-size: 0.75rem;">SignalR ile canlı mesajlaşma</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Sağ Panel: Aktif Mesajlaşma Penceresi -->
-            <div class="col-md-8 d-flex flex-column bg-white">
-                
-                <!-- Üst Başlık -->
-                <div class="p-3 border-bottom d-flex align-items-center justify-content-between bg-white">
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
-                            💬
+                <!-- Sağ Panel: Aktif Mesajlaşma Penceresi -->
+                <div class="col-md-8 d-flex flex-column bg-white">
+
+                    <!-- Üst Başlık -->
+                    <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="background-color: #FFFDFD;">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 42px; height: 42px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
+                                💬
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">İlan #@ViewData["IlanId"] Sohbeti</div>
+                                <small class="text-success fw-semibold" style="font-size: 0.75rem;">● SignalR Canlı Bağlantı</small>
+                            </div>
                         </div>
                         <div>
-                            <div class="fw-bold">İlan #@ViewData["IlanId"] sohbeti</div>
-                            <small class="text-muted">SignalR canlı sohbet</small>
+                            <a href="/Home/Detay?ilanId=@ViewData["IlanId"]" class="btn btn-sm rounded-pill px-3 fw-semibold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
+                                İlanı Gör
+                            </a>
                         </div>
                     </div>
-                    <div>
-                        <a href="/Home/Detay?ilanId=@ViewData["IlanId"]" class="btn btn-sm btn-outline-secondary">İlanı Gör</a>
+
+                    <!-- Güvenlik Bilgilendirmesi -->
+                    <div class="px-3 pt-3">
+                        <div class="alert border-0 rounded-4 small py-2 mb-0 text-center" style="background-color: #FFF3F6; border: 1px dashed #FFD9E2 !important; color: #842029;">
+                            🔒 Sohbetler ilan numarasına göre ayrılır. Güvenliğiniz için teslimatta kalabalık kampüs alanlarını tercih edin.
+                        </div>
                     </div>
-                </div>
 
-                <!-- Güvenlik Bilgilendirmesi -->
-                <div class="px-3 pt-2">
-                    <div class="alert alert-light border small text-muted py-2 mb-0 text-center">
-                        🔒 Sohbetler ilan numarasına göre ayrılır. Hassas kişisel bilgilerinizi paylaşmayın ve teslimat için açık kampüs alanlarını tercih edin.
+                    <!-- Mesaj Balonları -->
+                    <div id="chatMessages" class="flex-grow-1 p-3 overflow-auto d-flex flex-column" style="background-color: #FCFBFB; min-height: 380px;" aria-live="polite">
                     </div>
-                </div>
 
-                <!-- Mesaj Balonları -->
-                <div id="chatMessages" class="flex-grow-1 p-3 overflow-auto" style="background-color: #F8FAFC;" aria-live="polite">
-                </div>
+                    <!-- Alt Mesaj Gönderme Çubuğu -->
+                    <div class="p-3 border-top bg-white">
+                        <form id="chatForm" class="d-flex gap-2 align-items-center">
+                            <!-- Canlı Konum Paylaş Butonu -->
+                            <button type="button" class="btn btn-outline-danger rounded-pill fw-semibold d-flex align-items-center gap-1 text-nowrap px-3 py-2 shadow-none" data-bs-toggle="modal" data-bs-target="#locationModal" style="border-color: #FFD9E2; color: #FF416C;">
+                                📍 Konum Paylaş
+                            </button>
 
-                <!-- Alt Mesaj Gönderme Çubuğu -->
-                <div class="p-3 border-top bg-white">
-                    <form id="chatForm" class="d-flex gap-2 align-items-center">
-                        <!-- CHAT İÇİ CANLI KONUM PAYLAŞ BUTONU -->
-                        <button type="button" class="btn btn-outline-danger fw-semibold d-flex align-items-center gap-1 text-nowrap" data-bs-toggle="modal" data-bs-target="#locationModal">
-                            📍 Konum Paylaş
-                        </button>
+                            <input id="chatInput" type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="Bir mesaj yazın..." maxlength="2000" autocomplete="off" required />
+                            <button id="sendButton" type="submit" class="btn rounded-pill px-4 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);" disabled>
+                                Gönder
+                            </button>
+                        </form>
+                    </div>
 
-                        <input id="chatInput" type="text" class="form-control" placeholder="Bir mesaj yazın..." maxlength="2000" autocomplete="off" required />
-                        <button id="sendButton" type="submit" class="btn btn-primary fw-bold px-4" disabled>Gönder</button>
-                    </form>
                 </div>
 
             </div>
-
         </div>
     </div>
 </div>
@@ -81,40 +111,40 @@
 <!-- CHAT İÇİ BULUŞMA NOKTASI / KONUM PAYLAŞMA MODALI -->
 <div class="modal fade" id="locationModal" tabindex="-1" aria-labelledby="locationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="locationModalLabel">📍 Teslimat / Buluşma Konumu Paylaş</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+            <div class="modal-header border-bottom py-3" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
+                <h6 class="modal-title fw-bold text-dark" id="locationModalLabel">📍 Teslimat / Buluşma Konumu Paylaş</h6>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Kapat"></button>
             </div>
-            
-            <div class="modal-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
+
+            <div class="modal-body p-4">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
                     <span class="small text-muted">Mevcut konumunuzu alabilir veya kampüs haritasından tıklayarak teslimat noktası seçebilirsiniz.</span>
-                    <button type="button" class="btn btn-sm btn-danger fw-bold" id="btnLiveLocation">
+                    <button type="button" class="btn btn-sm rounded-pill px-3 py-2 text-white fw-bold shadow-sm text-nowrap" id="btnLiveLocation" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
                         🎯 Canlı GPS Konumumu Al
                     </button>
                 </div>
 
                 <!-- Modal İçi Mini Harita -->
-                <div id="chatMap" class="rounded-3 border mb-3" style="height: 280px; width: 100%; background: #f0f0f0;"></div>
+                <div id="chatMap" class="rounded-4 border mb-3 shadow-sm" style="height: 280px; width: 100%; background: #f0f0f0;"></div>
 
-                <div class="row g-2">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Konum Başlığı / Yakın Bina</label>
-                        <input type="text" class="form-control form-control-sm" id="chatPlaceName" placeholder="Örn: Merkez Kütüphane Önü" />
+                        <label class="form-label small fw-semibold text-secondary">Konum Başlığı / Yakın Bina</label>
+                        <input type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" id="chatPlaceName" placeholder="Örn: Merkez Kütüphane Önü" />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Buluşma Notu (Opsiyonel)</label>
-                        <input type="text" class="form-control form-control-sm" id="chatMeetingNote" placeholder="Örn: Yeşil banklardayım, mavi kazaklıyım" />
+                        <label class="form-label small fw-semibold text-secondary">Buluşma Notu (Opsiyonel)</label>
+                        <input type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" id="chatMeetingNote" placeholder="Örn: Yeşil banklardayım, mavi kazaklıyım" />
                     </div>
                     <input type="hidden" id="chatLat" />
                     <input type="hidden" id="chatLng" />
                 </div>
             </div>
 
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
-                <button type="button" class="btn btn-success fw-bold" id="sendLocationButton">
+            <div class="modal-footer border-top-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-light rounded-pill px-3 fw-semibold" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn rounded-pill px-4 fw-bold text-white shadow-sm" id="sendLocationButton" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%);">
                     ✓ Konumu Sohbete Gönder
                 </button>
             </div>
@@ -148,14 +178,20 @@
         wrapper.className = `d-flex flex-column ${ownMessage ? 'align-items-end' : 'align-items-start'} mb-3`;
 
         const bubble = document.createElement('div');
-        bubble.className = `p-2 px-3 rounded-3 shadow-sm ${ownMessage ? 'bg-primary text-white' : 'bg-white border'} small`;
+        if (ownMessage) {
+            bubble.className = 'p-3 rounded-4 shadow-sm text-white small';
+            bubble.style.background = 'linear-gradient(135deg, #FF6082 0%, #FF416C 100%)';
+        } else {
+            bubble.className = 'p-3 rounded-4 shadow-sm bg-white border text-dark small';
+        }
         bubble.style.maxWidth = '75%';
+        bubble.style.wordBreak = 'break-word';
         bubble.textContent = `${message.sender}: ${message.message}`;
 
         const timestamp = document.createElement('span');
-        timestamp.className = 'text-muted mt-1 px-1';
+        timestamp.className = 'text-muted mt-1 px-2';
         timestamp.style.fontSize = '0.7rem';
-        timestamp.textContent = new Date(message.sentAt).toLocaleString();
+        timestamp.textContent = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         wrapper.append(bubble, timestamp);
         chatMessages.appendChild(wrapper);
@@ -170,6 +206,7 @@
     connection.on('ReceiveMessage', appendMessage);
     connection.onreconnecting(() => {
         chatStatus.textContent = 'Yeniden bağlanıyor...';
+        chatStatus.className = 'badge rounded-pill bg-warning text-dark border px-2 py-1';
         sendButton.disabled = true;
     });
     connection.onreconnected(async () => {
@@ -177,11 +214,13 @@
             await joinConversation();
         } catch (error) {
             chatStatus.textContent = 'Sohbete yeniden katılınamadı';
+            chatStatus.className = 'badge rounded-pill bg-danger text-white border px-2 py-1';
             console.error('Sohbete yeniden katılınamadı:', error);
         }
     });
     connection.onclose(() => {
         chatStatus.textContent = 'Bağlantı kesildi';
+        chatStatus.className = 'badge rounded-pill bg-secondary text-white border px-2 py-1';
         sendButton.disabled = true;
     });
 
@@ -190,12 +229,14 @@
         chatMessages.replaceChildren();
         history.forEach(appendMessage);
         chatStatus.textContent = 'Bağlandı';
+        chatStatus.className = 'badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-1';
         sendButton.disabled = false;
     }
 
     async function connect() {
         if (!displayName) {
-            chatStatus.textContent = 'Sohbete katılmak için bir ad gerekli';
+            chatStatus.textContent = 'Ad gerekli';
+            chatStatus.className = 'badge rounded-pill bg-warning text-dark border px-2 py-1';
             chatInput.disabled = true;
             return;
         }
@@ -204,7 +245,8 @@
             await connection.start();
             await joinConversation();
         } catch (error) {
-            chatStatus.textContent = 'Bağlanılamadı, yeniden deneniyor...';
+            chatStatus.textContent = 'Bağlanılamadı, deneniyor...';
+            chatStatus.className = 'badge rounded-pill bg-danger text-white border px-2 py-1';
             console.error('Sohbet bağlantısı kurulamadı:', error);
             window.setTimeout(connect, 5000);
         }
@@ -235,14 +277,15 @@
         const place = document.getElementById('chatPlaceName').value.trim();
         const note = document.getElementById('chatMeetingNote').value.trim();
         if (!latitude || !longitude) {
-            chatStatus.textContent = 'Önce haritadan bir konum seçin';
+            alert('Lütfen önce haritadan bir konum seçin veya Canlı Konum butonuna tıklayın.');
             return;
         }
 
-        const message = `📍 ${place || 'Buluşma noktası'}: ${latitude}, ${longitude}${note ? ` — ${note}` : ''}`;
+        const message = `📍 Buluşma Noktası: ${place || 'Kampüs İçi'} (${latitude}, ${longitude})${note ? ` — Not: ${note}` : ''}`;
         try {
             await connection.invoke('SendMessage', message);
-            bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+            const modalInstance = bootstrap.Modal.getInstance(document.getElementById('locationModal'));
+            if (modalInstance) modalInstance.hide();
         } catch (error) {
             chatStatus.textContent = error.message || 'Konum gönderilemedi';
         }
@@ -258,6 +301,7 @@
     if (modalEl) {
         modalEl.addEventListener('shown.bs.modal', function () {
             if (!chatMapInitialized) {
+                // Sivas Cumhuriyet Üniversitesi koordinatları
                 chatMap = L.map('chatMap').setView([39.7047, 37.0395], 15);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; OpenStreetMap'

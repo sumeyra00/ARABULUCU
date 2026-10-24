@@ -6,44 +6,45 @@ namespace ARABULUCU.Web.Controllers
     {
         public IActionResult Index()
         {
-
             return View();
         }
-        public IActionResult Login()
-        {
-            return View("~/Views/Account/Login.cshtml");
-        }
-        public IActionResult Register()
-        {
-            return View("~/Views/Account/Register.cshtml");
-        }
+
         public IActionResult KayipOlustur()
         {
             return View("~/Views/Ilan/KayipOlustur.cshtml");
         }
+
         public IActionResult BulunanOlustur()
         {
             return View("~/Views/Ilan/BulunanOlustur.cshtml");
         }
-        public IActionResult Detay(int ilanId = 10482)
+
+        public IActionResult Detay()
         {
-            ViewData["IlanId"] = ilanId > 0 ? ilanId : 10482;
             return View("~/Views/Ilan/Detay.cshtml");
         }
-        public IActionResult Mesajlar(int ilanId = 10482)
+
+        public IActionResult Mesajlar()
         {
-            ViewData["IlanId"] = ilanId > 0 ? ilanId : 10482;
-            return View("~/Views/Home/Mesajlar.cshtml");
+            return View();
         }
+
         public IActionResult Profil()
         {
-            return View("~/Views/Home/Profil.cshtml");
+            return View();
         }
+
         public IActionResult KonumPaylas()
         {
-            return View("~/Views/Home/KonumPaylas.cshtml");
+            return View();
         }
-        public IActionResult Privacy()
+
+        public IActionResult Hakkimizda()
+        {
+            return View();
+        }
+
+        public IActionResult Iletisim()
         {
             return View();
         }

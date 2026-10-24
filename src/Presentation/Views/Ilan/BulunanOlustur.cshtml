@@ -2,121 +2,144 @@
     ViewData["Title"] = "Bulunan Eşya Bildir";
 }
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
+<div class="position-relative overflow-hidden py-5" style="background: radial-gradient(circle at 50% 15%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: 100vh;">
+
+    <!-- Sevimli Süs Figürleri -->
+    <div class="position-absolute d-none d-lg-block" style="top: 8%; left: 5%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">🎁</div>
+    <div class="position-absolute d-none d-lg-block" style="top: 10%; right: 6%; font-size: 2.4rem; transform: rotate(18deg); user-select: none;">✨</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 8%; left: 5%; font-size: 2rem; transform: rotate(12deg); user-select: none;">🔒</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 10%; right: 5%; font-size: 2.2rem; transform: rotate(-12deg); user-select: none;">🌸</div>
+
+    <div class="container position-relative" style="z-index: 2; max-width: 760px;">
+        
+        <!-- Geri Dön Butonu -->
+        <div class="mb-3">
+            <a href="/" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border">
+                &larr; Ana Sayfaya Dön
+            </a>
+        </div>
+
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);">
             
-            <div class="card shadow-sm border rounded-3">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <h4 class="mb-1 fw-bold text-success">🎁 Bir Şey Buldum — Buluntu Eşya Bildir</h4>
-                    <p class="text-muted small mb-0">Sahibinin eşyayı hızlıca bulabilmesi için lütfen bilgileri eksiksiz doldurun.</p>
+            <!-- Kart Başlığı -->
+            <div class="card-header border-bottom py-4 px-4 px-md-5 text-center" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
+                <div class="rounded-circle text-white d-inline-flex align-items-center justify-content-center fw-bold shadow-sm mb-3" style="width: 56px; height: 56px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); font-size: 1.6rem; box-shadow: 0 4px 12px rgba(255, 96, 130, 0.35);">
+                    🎁
                 </div>
+                <h3 class="fw-bold mb-1 text-dark">Bulunan Eşya Bildir</h3>
+                <p class="text-muted small mb-0">Eşyanın gerçek sahibine ulaşabilmesi için gizli doğrulama sorusuyla bildirim oluşturun.</p>
+            </div>
 
-                <div class="card-body p-4">
-                    <form method="post" action="#" enctype="multipart/form-data">
-                        
-                        <!-- 1. Temel Eşya Bilgileri -->
-                        <h6 class="fw-bold mb-3 border-bottom pb-2">1. Eşya Bilgileri</h6>
+            <div class="card-body p-4 p-md-5">
+                <form method="post" action="#" enctype="multipart/form-data">
+                    
+                    <!-- İlan Başlığı -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Eşya Tanımı / Başlık</label>
+                        <input type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="Örn: Siyah Sırt Çantası, Mavi Anahtarlık..." required />
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="title" class="form-label fw-semibold">Bulunan Eşya Başlığı</label>
-                            <input type="text" class="form-control" id="title" name="title" placeholder="Örn: Mavi Termos veya Pembe Kartlık" required />
+                    <!-- Kategori ve Konum (Hem Seçilebilir Hem Yazılabilir) -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Eşya Kategorisi</label>
+                            <input list="bulunanKategoriList" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="Kategori seçin veya yazın..." required />
+                            <datalist id="bulunanKategoriList">
+                                <option value="Cüzdan & Para"></option>
+                                <option value="Öğrenci Kimliği & Kartvizit"></option>
+                                <option value="Anahtar & Anahtarlık"></option>
+                                <option value="Telefon & Tablet"></option>
+                                <option value="Dizüstü Bilgisayar & Şarj Aleti"></option>
+                                <option value="Kulaklık & Ses Cihazları"></option>
+                                <option value="Çanta & Sırt Çantası"></option>
+                                <option value="Gözlük & Saat"></option>
+                                <option value="Giyim, Mont & Atkı"></option>
+                                <option value="Kitap, Defter & Ders Notu"></option>
+                                <option value="Su Matarası & Termos"></option>
+                                <option value="Spor Eşyası"></option>
+                                <option value="Diğer Kişisel Eşyalar"></option>
+                            </datalist>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="category" class="form-label fw-semibold">Kategori</label>
-                                <select class="form-select" id="category" name="category" required>
-                                    <option value="">Seçiniz...</option>
-                                    <option value="canta">🎒 Çanta & Sırt Çantası</option>
-                                    <option value="anahtar">🔑 Anahtar & Aksesuar</option>
-                                    <option value="cuzdan">👛 Cüzdan & Kartlık / Kimlik</option>
-                                    <option value="elektronik">🎧 Kulaklık & Elektronik</option>
-                                    <option value="telefon">📱 Telefon & Şarj Aleti</option>
-                                    <option value="saat">⌚ Akıllı Saat & Takı</option>
-                                    <option value="kitap">📚 Kitap & Ders Notu</option>
-                                    <option value="diger">📦 Diğer</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label for="foundDate" class="form-label fw-semibold">Bulunduğu Tarih & Saat</label>
-                                <input type="datetime-local" class="form-control" id="foundDate" name="foundDate" required />
-                            </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Bulunduğu Yer / Fakülte</label>
+                            <input list="bulunanKonumList" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="Fakülte seçin veya yazın..." required />
+                            <datalist id="bulunanKonumList">
+                                <option value="Merkez Yemekhane"></option>
+                                <option value="Merkez Kütüphane"></option>
+                                <option value="Merkezi Kafeterya"></option>
+                                <option value="Öğrenci İşleri Daire Bşk."></option>
+                                <option value="Kapalı Spor Salonu"></option>
+                                <option value="Stadyum & Halı Sahalar"></option>
+                                <option value="Kültür Merkezi"></option>
+                                <option value="Mühendislik Fakültesi"></option>
+                                <option value="Tıp Fakültesi"></option>
+                                <option value="Diş Hekimliği Fakültesi"></option>
+                                <option value="Eczacılık Fakültesi"></option>
+                                <option value="Sağlık Bilimleri Fakültesi"></option>
+                                <option value="Fen Fakültesi"></option>
+                                <option value="Edebiyat Fakültesi"></option>
+                                <option value="İktisadi ve İdari Bilimler Fakültesi"></option>
+                                <option value="İlahiyat Fakültesi"></option>
+                                <option value="Eğitim Fakültesi"></option>
+                                <option value="İletişim Fakültesi"></option>
+                                <option value="Mimarlık, Güzel Sanatlar ve Tasarım Fakültesi"></option>
+                                <option value="Hukuk Fakültesi"></option>
+                                <option value="Turizm Fakültesi"></option>
+                                <option value="Veteriner Fakültesi"></option>
+                                <option value="Sivas Teknik Bilimler MYO"></option>
+                                <option value="Cumhuriyet MYO"></option>
+                                <option value="Kampüs İçi Otobüs / Duraklar"></option>
+                            </datalist>
                         </div>
+                    </div>
 
-                        <!-- 2. Konum Bilgileri -->
-                        <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">2. Bulunduğu Kampüs Konumu</h6>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="campusArea" class="form-label fw-semibold">Kampüs Bölgesi</label>
-                                <select class="form-select" id="campusArea" name="campusArea" required>
-                                    <option value="">Bölge Seçiniz...</option>
-                                    <option value="yemekhane">🍽️ Merkez Yemekhane</option>
-                                    <option value="kutuphane">📚 Merkez Kütüphane</option>
-                                    <option value="kiz_kyk">🏢 Kız Öğrenci Yurdu (KYK)</option>
-                                    <option value="erkek_kyk">🏢 Erkek Öğrenci Yurdu (KYK)</option>
-                                    <option value="hastane">🏥 Tıp Fakültesi Hastanesi</option>
-                                    <option value="muhendislik">⚙️ Mühendislik Fakültesi</option>
-                                    <option value="egitim">📖 Eğitim Fakültesi</option>
-                                    <option value="iibf">💼 İİBF</option>
-                                    <option value="kafeler">☕ Kampüs Kafeler & Çarşı Alanı</option>
-                                    <option value="diger_alan">📍 Diğer Açık Alanlar</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label for="locationDetail" class="form-label fw-semibold">Tam Konum / Nerede Bulundu?</label>
-                                <input type="text" class="form-control" id="locationDetail" name="locationDetail" placeholder="Örn: Yemekhane 1. kat sıra masalarının altı" />
-                            </div>
+                    <!-- Bulunma Tarihi & Saati -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Bulunma Tarihi</label>
+                            <input type="date" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" required />
                         </div>
-
-                        <!-- 3. Eşyanın Mevcut Durumu & Teslim Yeri -->
-                        <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">3. Eşya Şu An Nerede?</h6>
-
-                        <div class="mb-3">
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="itemStatus" id="statusWithMe" value="with_me" checked>
-                                <label class="form-check-label fw-semibold" for="statusWithMe">
-                                    Eşya şu an bende (Sahibi sistem üzerinden benimle iletişime geçsin)
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="itemStatus" id="statusDelivered" value="delivered">
-                                <label class="form-check-label fw-semibold" for="statusDelivered">
-                                    Yetkili birime teslim ettim (Fakülte güvenliği, danışma veya yurt idaresi)
-                                </label>
-                            </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Bulunma Saati</label>
+                            <input type="time" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" />
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="deliveredTo" class="form-label fw-semibold">Teslim Ettiyseniz Nereye/Kime Bıraktınız?</label>
-                            <input type="text" class="form-control" id="deliveredTo" name="deliveredTo" placeholder="Örn: Mühendislik Fakültesi Zemin Kat Güvenlik Birimi" />
+                    <!-- SAHİPLİK DOĞRULAMA KUTUSU (GÜVENLİK) -->
+                    <div class="p-3 rounded-4 border mb-3" style="background-color: #FFF7F9; border-color: #FFD9E2 !important;">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="fs-5">🔒</span>
+                            <span class="fw-bold text-dark small">Sahiplik Doğrulama Sorusu (Önemli)</span>
                         </div>
-
-                        <!-- 4. Fotoğraf & Ayırt Edici Detay -->
-                        <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">4. Fotoğraf & Güvenlik İpucu</h6>
-
-                        <div class="mb-3">
-                            <label for="itemPhoto" class="form-label fw-semibold">Bulunan Eşyanın Fotoğrafı</label>
-                            <input class="form-control" type="file" id="itemPhoto" name="itemPhoto" accept="image/*" />
-                            <div class="form-text small text-muted">Fotoğraf sistemde ilk başta otomatik olarak hafif bulanık (blurred) gösterilecektir.</div>
+                        <p class="small text-muted mb-2">
+                            Eşyanın sahte taleplerle alınmasını önlemek için sadece gerçek sahibinin bilebileceği bir detay sorusu ve cevabı belirleyin.
+                        </p>
+                        <div class="mb-2">
+                            <input type="text" class="form-control bg-white border rounded-pill px-3 py-2 shadow-none small" placeholder="Soru: Örn: Çantanın ön gözünde ne vardı?" required />
                         </div>
-
-                        <div class="mb-3">
-                            <label for="securityQuestion" class="form-label fw-semibold">Sahibine Sorulacak Doğrulama Sorusu</label>
-                            <input type="text" class="form-control" id="securityQuestion" name="securityQuestion" placeholder="Örn: Cüzdanın içinde hangi kart vardı? / Çantanın fermuarındaki süs neydi?" required />
-                            <div class="form-text small text-muted">Gerçek sahibini ayırt etmek için sadece sahibinin bilebileceği bir detay sorusu yazın.</div>
+                        <div>
+                            <input type="text" class="form-control bg-white border rounded-pill px-3 py-2 shadow-none small" placeholder="Doğru Cevap: Örn: Kırmızı kalemlik" required />
                         </div>
+                    </div>
 
-                        <!-- Kaydet Butonu -->
-                        <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-success fw-bold py-2">Bulunan Eşyayı Bildir</button>
-                        </div>
+                    <!-- Açıklama -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Açıklama (Genel Bilgi)</label>
+                        <textarea rows="3" class="form-control bg-light border rounded-4 p-3 shadow-none" placeholder="Doğrulama sorusunun cevabını ele vermeyecek şekilde genel bilgiler yazın..." required></textarea>
+                    </div>
 
-                    </form>
-                </div>
+                    <!-- Fotoğraf Yükleme -->
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold text-secondary">Fotoğraf Yükle (İlanda maskelenecektir)</label>
+                        <input type="file" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" accept="image/*" />
+                    </div>
+
+                    <!-- Bildirimi Gönder Butonu -->
+                    <button type="button" class="btn w-100 rounded-pill py-3 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">
+                        🌸 Bulunan Eşyayı Bildir
+                    </button>
+
+                </form>
             </div>
 
         </div>
