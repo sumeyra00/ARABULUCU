@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ARABULUCU.Web.Controllers
@@ -17,10 +18,12 @@ namespace ARABULUCU.Web.Controllers
         {
             return RedirectToAction("Register", "Account");
         }
+        [Authorize]
         public IActionResult KayipOlustur()
         {
             return View("~/Views/Ilan/KayipOlustur.cshtml");
         }
+        [Authorize]
         public IActionResult BulunanOlustur()
         {
             return View("~/Views/Ilan/BulunanOlustur.cshtml");

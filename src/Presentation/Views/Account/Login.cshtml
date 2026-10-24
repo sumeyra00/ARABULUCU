@@ -22,6 +22,14 @@
                         <div class="alert alert-success" role="alert">@successMessage</div>
                     }
 
+                    @if (!string.IsNullOrWhiteSpace(Model.ReturnUrl))
+                    {
+                        <div class="alert alert-info" role="alert">
+                            İlan vermek için giriş yapın. Hesabınız yoksa
+                            <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">kayıt olun</a>.
+                        </div>
+                    }
+
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                     <!-- Giriş Formu -->
@@ -63,7 +71,7 @@
                 <!-- Alt Yönlendirme (Kayıt Ol) -->
                 <div class="card-footer bg-light text-center py-3">
                     <span class="small text-muted">Henüz hesabınız yok mu? </span>
-                    <a asp-controller="Account" asp-action="Register" class="small text-decoration-none fw-bold">Üye Ol</a>
+                    <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" class="small text-decoration-none fw-bold">Üye Ol</a>
                 </div>
             </div>
 

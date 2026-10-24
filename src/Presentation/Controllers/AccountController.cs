@@ -76,9 +76,9 @@ namespace ARABULUCU.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult Register()
+        public IActionResult Register(string? returnUrl = null)
         {
-            return View(new RegisterViewModel());
+            return View(new RegisterViewModel { ReturnUrl = returnUrl });
         }
 
         [HttpPost]
@@ -123,7 +123,7 @@ namespace ARABULUCU.Web.Controllers
             await transaction.CommitAsync();
 
             TempData["RegisterSuccess"] = "Kaydınız oluşturuldu. E-posta adresiniz ve şifrenizle giriş yapabilirsiniz.";
-            return RedirectToAction(nameof(Login));
+            return RedirectToAction(nameof(Login), new { returnUrl = model.ReturnUrl });
         }
 
         private static string GetLocalizedError(IdentityError error)

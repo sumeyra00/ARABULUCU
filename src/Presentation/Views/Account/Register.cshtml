@@ -26,6 +26,7 @@
 
                     <!-- Kayıt Formu -->
                     <form asp-controller="Account" asp-action="Register" method="post">
+                        <input asp-for="ReturnUrl" type="hidden" />
                         
                         <!-- Ad Soyad -->
                         <div class="mb-3">

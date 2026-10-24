@@ -32,5 +32,7 @@ namespace ARABULUCU.Web.Models.Account
         [Range(typeof(bool), "true", "true", ErrorMessage = "Kullanım koşullarını ve KVKK metnini onaylamalısınız.")]
         [Display(Name = "Kullanım koşulları ve KVKK onayı")]
         public bool TermsAccepted { get; set; }
+
+        public string? ReturnUrl { get; set; }
     }
 }
