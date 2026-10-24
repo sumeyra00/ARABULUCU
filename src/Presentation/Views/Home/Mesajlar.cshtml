@@ -5,7 +5,7 @@
 <!-- Leaflet Harita Kütüphanesi -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<div class="container py-4">
+<div class="container py-4" id="chatApp" data-item-id="@ViewData["IlanId"]">
     <div class="card shadow-sm border rounded-3 overflow-hidden">
         <div class="row g-0" style="min-height: 580px;">
             
@@ -19,21 +19,13 @@
                 <div class="list-group list-group-flush">
                     <a href="#" class="list-group-item list-group-item-action active p-3" aria-current="true">
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="fw-bold">Ahmet K.</span>
-                            <small class="opacity-75">19:20</small>
+                            <span class="fw-bold">İlan #@ViewData["IlanId"]</span>
+                            <small id="chatStatus" class="opacity-75">Bağlanıyor...</small>
                         </div>
-                        <div class="small fw-semibold mb-1 text-truncate">🎒 Siyah Deri Sırt Çantası</div>
-                        <p class="small mb-0 opacity-75 text-truncate">📍 Buluşma konumu paylaşıldı</p>
+                        <div class="small fw-semibold mb-1 text-truncate">İlan sohbeti</div>
+                        <p class="small mb-0 opacity-75 text-truncate">SignalR ile canlı mesajlaşma</p>
                     </a>
 
-                    <a href="#" class="list-group-item list-group-item-action p-3">
-                        <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="fw-bold text-dark">Zeynep B.</span>
-                            <small class="text-muted">16:40</small>
-                        </div>
-                        <div class="small fw-semibold text-secondary mb-1 text-truncate">👛 Pembe Cüzdan</div>
-                        <p class="small text-muted mb-0 text-truncate">Kartlığı yemekhane güvenliğine bıraktım.</p>
-                    </a>
                 </div>
             </div>
 
@@ -44,76 +36,39 @@
                 <div class="p-3 border-bottom d-flex align-items-center justify-content-between bg-white">
                     <div class="d-flex align-items-center gap-2">
                         <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
-                            AK
+                            💬
                         </div>
                         <div>
-                            <div class="fw-bold">Ahmet K.</div>
-                            <small class="text-muted">İlgili İlan: Siyah Deri Sırt Çantası (#10482)</small>
+                            <div class="fw-bold">İlan #@ViewData["IlanId"] sohbeti</div>
+                            <small class="text-muted">SignalR canlı sohbet</small>
                         </div>
                     </div>
                     <div>
-                        <a href="/Home/Detay" class="btn btn-sm btn-outline-secondary">İlanı Gör</a>
+                        <a href="/Home/Detay?ilanId=@ViewData["IlanId"]" class="btn btn-sm btn-outline-secondary">İlanı Gör</a>
                     </div>
                 </div>
 
                 <!-- Güvenlik Bilgilendirmesi -->
                 <div class="px-3 pt-2">
                     <div class="alert alert-light border small text-muted py-2 mb-0 text-center">
-                        🔒 Bu sohbet eşleşme ve doğrulama sorusu onaylandıktan sonra açılmıştır. Teslimat için açık kampüs alanlarını tercih ediniz.
+                        🔒 Sohbetler ilan numarasına göre ayrılır. Hassas kişisel bilgilerinizi paylaşmayın ve teslimat için açık kampüs alanlarını tercih edin.
                     </div>
                 </div>
 
                 <!-- Mesaj Balonları -->
-                <div class="flex-grow-1 p-3 overflow-auto" style="background-color: #F8FAFC;">
-                    
-                    <div class="d-flex flex-column align-items-start mb-3">
-                        <div class="bg-white p-2 px-3 rounded-3 shadow-sm border small" style="max-width: 75%;">
-                            Merhaba, doğrulama sorunuzu yanıtladım. Çantanız bende, teslim etmek için yarın buluşabilir miyiz?
-                        </div>
-                        <span class="text-muted mt-1 ps-1" style="font-size: 0.7rem;">19:15</span>
-                    </div>
-
-                    <div class="d-flex flex-column align-items-end mb-3">
-                        <div class="bg-primary text-white p-2 px-3 rounded-3 shadow-sm small" style="max-width: 75%;">
-                            Çok teşekkürler! Öğlen 12:30'da uygunum. Kampüste neredesiniz?
-                        </div>
-                        <span class="text-muted mt-1 pe-1" style="font-size: 0.7rem;">19:17</span>
-                    </div>
-
-                    <!-- ÖRNEK: CHAT İÇİNDE GÖNDERİLMİŞ KONUM KARTI MESAJI -->
-                    <div class="d-flex flex-column align-items-start mb-3">
-                        <div class="bg-white p-3 rounded-3 shadow-sm border small" style="max-width: 320px;">
-                            <div class="d-flex align-items-center gap-2 mb-2 text-danger fw-bold">
-                                <span>📍</span> Buluşma Noktası Paylaşıldı
-                            </div>
-                            <div class="bg-light border rounded-2 d-flex align-items-center justify-content-center text-center p-3 mb-2" style="height: 110px;">
-                                <div>
-                                    <div class="fw-bold text-dark">🍽️ Merkez Yemekhane Önü</div>
-                                    <div class="text-muted" style="font-size: 0.75rem;">39.7047° N, 37.0395° E</div>
-                                </div>
-                            </div>
-                            <p class="mb-2 text-secondary" style="font-size: 0.8rem;">
-                                <em>"Yemekhane giriş kapısının sağındaki banklardayım."</em>
-                            </p>
-                            <a href="https://www.google.com/maps?q=39.7047,37.0395" target="_blank" class="btn btn-sm btn-outline-primary w-100 fw-bold">
-                                Haritada Aç ve Yol Tarifi Al &rarr;
-                            </a>
-                        </div>
-                        <span class="text-muted mt-1 ps-1" style="font-size: 0.7rem;">19:20</span>
-                    </div>
-
+                <div id="chatMessages" class="flex-grow-1 p-3 overflow-auto" style="background-color: #F8FAFC;" aria-live="polite">
                 </div>
 
                 <!-- Alt Mesaj Gönderme Çubuğu -->
                 <div class="p-3 border-top bg-white">
-                    <form class="d-flex gap-2 align-items-center">
+                    <form id="chatForm" class="d-flex gap-2 align-items-center">
                         <!-- CHAT İÇİ CANLI KONUM PAYLAŞ BUTONU -->
                         <button type="button" class="btn btn-outline-danger fw-semibold d-flex align-items-center gap-1 text-nowrap" data-bs-toggle="modal" data-bs-target="#locationModal">
                             📍 Konum Paylaş
                         </button>
 
-                        <input type="text" class="form-control" placeholder="Bir mesaj yazın..." required />
-                        <button type="submit" class="btn btn-primary fw-bold px-4">Gönder</button>
+                        <input id="chatInput" type="text" class="form-control" placeholder="Bir mesaj yazın..." maxlength="2000" autocomplete="off" required />
+                        <button id="sendButton" type="submit" class="btn btn-primary fw-bold px-4" disabled>Gönder</button>
                     </form>
                 </div>
 
@@ -159,7 +114,7 @@
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
-                <button type="button" class="btn btn-success fw-bold" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-success fw-bold" id="sendLocationButton">
                     ✓ Konumu Sohbete Gönder
                 </button>
             </div>
@@ -169,7 +124,132 @@
 
 <!-- Leaflet JS ve Harita Scripti -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
 <script>
+    const chatApp = document.getElementById('chatApp');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatStatus = document.getElementById('chatStatus');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const sendButton = document.getElementById('sendButton');
+    const conversationId = Number(chatApp.dataset.itemId);
+    const nameStorageKey = 'arabulucu-chat-display-name';
+    let displayName = localStorage.getItem(nameStorageKey);
+    if (!displayName) {
+        displayName = window.prompt('Sohbette kullanılacak adınız:')?.trim();
+        if (displayName) {
+            localStorage.setItem(nameStorageKey, displayName);
+        }
+    }
+
+    function appendMessage(message) {
+        const ownMessage = message.sender === displayName;
+        const wrapper = document.createElement('div');
+        wrapper.className = `d-flex flex-column ${ownMessage ? 'align-items-end' : 'align-items-start'} mb-3`;
+
+        const bubble = document.createElement('div');
+        bubble.className = `p-2 px-3 rounded-3 shadow-sm ${ownMessage ? 'bg-primary text-white' : 'bg-white border'} small`;
+        bubble.style.maxWidth = '75%';
+        bubble.textContent = `${message.sender}: ${message.message}`;
+
+        const timestamp = document.createElement('span');
+        timestamp.className = 'text-muted mt-1 px-1';
+        timestamp.style.fontSize = '0.7rem';
+        timestamp.textContent = new Date(message.sentAt).toLocaleString();
+
+        wrapper.append(bubble, timestamp);
+        chatMessages.appendChild(wrapper);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl('/hubs/chat')
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on('ReceiveMessage', appendMessage);
+    connection.onreconnecting(() => {
+        chatStatus.textContent = 'Yeniden bağlanıyor...';
+        sendButton.disabled = true;
+    });
+    connection.onreconnected(async () => {
+        try {
+            await joinConversation();
+        } catch (error) {
+            chatStatus.textContent = 'Sohbete yeniden katılınamadı';
+            console.error('Sohbete yeniden katılınamadı:', error);
+        }
+    });
+    connection.onclose(() => {
+        chatStatus.textContent = 'Bağlantı kesildi';
+        sendButton.disabled = true;
+    });
+
+    async function joinConversation() {
+        const history = await connection.invoke('JoinConversation', conversationId, displayName);
+        chatMessages.replaceChildren();
+        history.forEach(appendMessage);
+        chatStatus.textContent = 'Bağlandı';
+        sendButton.disabled = false;
+    }
+
+    async function connect() {
+        if (!displayName) {
+            chatStatus.textContent = 'Sohbete katılmak için bir ad gerekli';
+            chatInput.disabled = true;
+            return;
+        }
+
+        try {
+            await connection.start();
+            await joinConversation();
+        } catch (error) {
+            chatStatus.textContent = 'Bağlanılamadı, yeniden deneniyor...';
+            console.error('Sohbet bağlantısı kurulamadı:', error);
+            window.setTimeout(connect, 5000);
+        }
+    }
+
+    chatForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message || connection.state !== signalR.HubConnectionState.Connected) {
+            return;
+        }
+
+        sendButton.disabled = true;
+        try {
+            await connection.invoke('SendMessage', message);
+            chatInput.value = '';
+            chatInput.focus();
+        } catch (error) {
+            chatStatus.textContent = error.message || 'Mesaj gönderilemedi';
+        } finally {
+            sendButton.disabled = connection.state !== signalR.HubConnectionState.Connected;
+        }
+    });
+
+    document.getElementById('sendLocationButton').addEventListener('click', async () => {
+        const latitude = document.getElementById('chatLat').value;
+        const longitude = document.getElementById('chatLng').value;
+        const place = document.getElementById('chatPlaceName').value.trim();
+        const note = document.getElementById('chatMeetingNote').value.trim();
+        if (!latitude || !longitude) {
+            chatStatus.textContent = 'Önce haritadan bir konum seçin';
+            return;
+        }
+
+        const message = `📍 ${place || 'Buluşma noktası'}: ${latitude}, ${longitude}${note ? ` — ${note}` : ''}`;
+        try {
+            await connection.invoke('SendMessage', message);
+            bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        } catch (error) {
+            chatStatus.textContent = error.message || 'Konum gönderilemedi';
+        }
+    });
+
+    connect();
+
     let chatMapInitialized = false;
     let chatMap;
     let chatMarker;
@@ -210,9 +290,11 @@
     if (liveBtn) {
         liveBtn.addEventListener('click', function () {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function (pos) {
-                    setChatLocation(pos.coords.latitude, pos.coords.longitude, "Canlı Konumunuz");
-                });
+                navigator.geolocation.getCurrentPosition(
+                    pos => setChatLocation(pos.coords.latitude, pos.coords.longitude, "Canlı Konumunuz"),
+                    error => { chatStatus.textContent = `Konum alınamadı: ${error.message}`; });
+            } else {
+                chatStatus.textContent = 'Tarayıcınız konum desteği sunmuyor';
             }
         });
     }
