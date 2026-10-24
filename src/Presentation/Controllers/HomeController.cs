@@ -25,12 +25,14 @@ namespace ARABULUCU.Web.Controllers
         {
             return View("~/Views/Ilan/BulunanOlustur.cshtml");
         }
-        public IActionResult Detay()
+        public IActionResult Detay(int ilanId = 10482)
         {
+            ViewData["IlanId"] = ilanId > 0 ? ilanId : 10482;
             return View("~/Views/Ilan/Detay.cshtml");
         }
-        public IActionResult Mesajlar()
+        public IActionResult Mesajlar(int ilanId = 10482)
         {
+            ViewData["IlanId"] = ilanId > 0 ? ilanId : 10482;
             return View("~/Views/Home/Mesajlar.cshtml");
         }
         public IActionResult Profil()
