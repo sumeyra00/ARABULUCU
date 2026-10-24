@@ -12,13 +12,67 @@ namespace ARABULUCU.Web.Controllers
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
         public AccountController(
             ApplicationDbContext dbContext,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager)
         {
             _dbContext = dbContext;
             _userManager = userManager;
+            _signInManager = signInManager;
+        }
+
+        [HttpGet]
+        public IActionResult Login(string? returnUrl = null)
+        {
+            return View(new LoginViewModel { ReturnUrl = returnUrl });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(
+                model.Email.Trim(),
+                model.Password,
+                model.RememberMe,
+                lockoutOnFailure: true);
+
+            if (result.Succeeded)
+            {
+                if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+                {
+                    return Redirect(model.ReturnUrl);
+                }
+
+                return RedirectToAction("Index", "Home");
+            }
+
+            if (result.IsLockedOut)
+            {
+                ModelState.AddModelError(string.Empty, "Çok fazla başarısız giriş denemesi. Lütfen daha sonra tekrar deneyin.");
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, "E-posta adresi veya şifre hatalı.");
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]
@@ -68,8 +122,8 @@ namespace ARABULUCU.Web.Controllers
             await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            TempData["RegisterSuccess"] = "Kaydınız oluşturuldu.";
-            return RedirectToAction(nameof(Register));
+            TempData["RegisterSuccess"] = "Kaydınız oluşturuldu. E-posta adresiniz ve şifrenizle giriş yapabilirsiniz.";
+            return RedirectToAction(nameof(Login));
         }
 
         private static string GetLocalizedError(IdentityError error)

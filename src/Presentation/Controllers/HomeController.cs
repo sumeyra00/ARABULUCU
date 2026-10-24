@@ -11,7 +11,7 @@ namespace ARABULUCU.Web.Controllers
         }
         public IActionResult Login()
         {
-            return View("~/Views/Account/Login.cshtml");
+            return RedirectToAction("Login", "Account");
         }
         public IActionResult Register()
         {
