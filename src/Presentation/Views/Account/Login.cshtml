@@ -1,4 +1,5 @@
-﻿@model ARABULUCU.Web.Controllers.LoginViewModel
+@model LoginViewModel
+
 @{
     ViewData["Title"] = "Giriş Yap";
 }
@@ -6,70 +7,75 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">
-
             <div class="card shadow-sm border rounded-3">
                 <div class="card-body p-4">
-
-                    <!-- Başlık & Bilgi -->
                     <h3 class="card-title text-center mb-1 fw-bold">Giriş Yap</h3>
                     <p class="text-center text-muted small mb-4">
                         Kayıp veya bulunan eşyalarınızı yönetmek için giriş yapın.
                     </p>
 
-                    <!-- Giriş Formu -->
-                    <form method="post" action="/Account/Login">
-                        @Html.AntiForgeryToken()
-                        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+                    @if (TempData["RegisterSuccess"] is string successMessage)
+                    {
+                        <div class="alert alert-success" role="alert">@successMessage</div>
+                    }
 
-                        <!-- E-posta -->
+                    @if (!string.IsNullOrWhiteSpace(Model.ReturnUrl))
+                    {
+                        <div class="alert alert-info" role="alert">
+                            Girişten sonra kayıp ilanı verebilir veya bulduğunuz eşyayı bildirebilirsiniz. Hesabınız yoksa
+                            <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">kayıt olun</a>.
+                        </div>
+                    }
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <form asp-controller="Account" asp-action="Login" method="post">
+                        @{
+                            var returnUrl = Model.ReturnUrl;
+                            var isKnownReturnUrl = returnUrl is "/" or "/Home/Index"
+                                or "/Home/KayipOlustur" or "/Home/BulunanOlustur";
+                        }
                         <div class="mb-3">
-                            <label for="email" class="form-label fw-semibold">E-posta Adresi</label>
-                            <input type="email" class="form-control" id="email" name="Email" value="@Model.Email" placeholder="ornek@cumhuriyet.edu.tr" required />
+                            <label asp-for="ReturnUrl" class="form-label fw-semibold">Girişten sonra ne yapmak istiyorsun?</label>
+                            <select asp-for="ReturnUrl" class="form-select">
+                                @if (!string.IsNullOrWhiteSpace(returnUrl) && !isKnownReturnUrl)
+                                {
+                                    <option value="@returnUrl">Önceki sayfaya devam et</option>
+                                }
+                                <option value="/">Ana sayfaya git</option>
+                                <option value="/Home/KayipOlustur">Kayıp ilanı ver</option>
+                                <option value="/Home/BulunanOlustur">Bulunan eşya bildir</option>
+                            </select>
                         </div>
 
-                        <!-- Şifre -->
                         <div class="mb-3">
-                            <label for="password" class="form-label fw-semibold">Şifre</label>
-                            <input type="password" class="form-control" id="password" name="Password" placeholder="••••••••" required />
+                            <label asp-for="Email" class="form-label fw-semibold"></label>
+                            <input asp-for="Email" class="form-control" placeholder="ornek@cumhuriyet.edu.tr" autocomplete="email" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
 
-                        <!-- Beni Hatırla & Şifremi Unuttum -->
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="rememberMe" name="RememberMe" value="true" />
-                                <label class="form-check-label small" for="rememberMe">Beni Hatırla</label>
-                            </div>
-                            <a href="#" class="small text-decoration-none">Şifremi Unuttum?</a>
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label fw-semibold"></label>
+                            <input asp-for="Password" class="form-control" placeholder="••••••••" autocomplete="current-password" />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
                         </div>
 
-                        <!-- Giriş Butonu -->
-                        <div class="d-grid mb-3">
+                        <div class="form-check mb-3">
+                            <input asp-for="RememberMe" class="form-check-input" />
+                            <label asp-for="RememberMe" class="form-check-label small"></label>
+                        </div>
+
+                        <div class="d-grid">
                             <button type="submit" class="btn btn-primary fw-bold py-2">Giriş Yap</button>
                         </div>
-
-                        <!-- Ayraç -->
-                        <div class="text-center my-3">
-                            <span class="text-muted small">veya</span>
-                        </div>
-
-                        <!-- Google ile Giriş -->
-                        <div class="d-grid mb-3">
-                            <button type="button" class="btn btn-outline-secondary py-2">
-                                Google ile Devam Et
-                            </button>
-                        </div>
-
                     </form>
-
                 </div>
 
-                <!-- Alt Yönlendirme (Kayıt Ol) -->
                 <div class="card-footer bg-light text-center py-3">
                     <span class="small text-muted">Henüz hesabınız yok mu? </span>
-                    <a href="/Account/Register" class="small text-decoration-none fw-bold">Üye Ol</a>
+                    <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" class="small text-decoration-none fw-bold">Üye Ol</a>
                 </div>
             </div>
-
         </div>
     </div>
 </div>

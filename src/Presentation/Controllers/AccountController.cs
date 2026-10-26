@@ -1,9 +1,8 @@
-using System.ComponentModel.DataAnnotations;
 using ARABULUCU.DAL.Data;
 using ARABULUCU.ENT.Entities;
+using ARABULUCU.Web.Models.Account;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace ARABULUCU.Web.Controllers;
 
@@ -24,27 +23,24 @@ public class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult Register() => View("~/Views/Account/Register.cshtml", new RegisterViewModel());
+    public IActionResult Register(string? returnUrl = null) =>
+        View(new RegisterViewModel { ReturnUrl = returnUrl });
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
-        if (!model.TermsAccepted)
-        {
-            ModelState.AddModelError(nameof(model.TermsAccepted), "Kullanım koşullarını ve KVKK metnini onaylamalısınız.");
-        }
-
         if (!ModelState.IsValid)
         {
-            return View("~/Views/Account/Register.cshtml", model);
+            return View(model);
         }
 
+        var email = model.Email.Trim();
         var user = new IdentityUser
         {
-            UserName = model.Email,
-            Email = model.Email,
-            PhoneNumber = string.IsNullOrWhiteSpace(model.PhoneNumber) ? null : model.PhoneNumber
+            UserName = email,
+            Email = email,
+            PhoneNumber = string.IsNullOrWhiteSpace(model.PhoneNumber) ? null : model.PhoneNumber.Trim()
         };
 
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
@@ -53,27 +49,28 @@ public class AccountController : Controller
         {
             foreach (var error in result.Errors)
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                ModelState.AddModelError(string.Empty, GetLocalizedError(error));
             }
 
-            return View("~/Views/Account/Register.cshtml", model);
+            return View(model);
         }
 
         _dbContext.UserProfiles.Add(new UserProfile
         {
             Id = user.Id,
-            DisplayName = model.DisplayName.Trim(),
-            Email = user.Email!
+            DisplayName = model.FullName.Trim(),
+            Email = email
         });
         await _dbContext.SaveChangesAsync();
         await transaction.CommitAsync();
 
-        await _signInManager.SignInAsync(user, isPersistent: false);
-        return RedirectToAction("Index", "Home");
+        TempData["RegisterSuccess"] = "Kaydınız oluşturuldu. E-posta adresiniz ve şifrenizle giriş yapabilirsiniz.";
+        return RedirectToAction(nameof(Login), new { returnUrl = model.ReturnUrl });
     }
 
     [HttpGet]
-    public IActionResult Login() => View("~/Views/Account/Login.cshtml", new LoginViewModel());
+    public IActionResult Login(string? returnUrl = null) =>
+        View(new LoginViewModel { ReturnUrl = returnUrl });
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -81,14 +78,14 @@ public class AccountController : Controller
     {
         if (!ModelState.IsValid)
         {
-            return View("~/Views/Account/Login.cshtml", model);
+            return View(model);
         }
 
-        var user = await _userManager.FindByEmailAsync(model.Email);
+        var user = await _userManager.FindByEmailAsync(model.Email.Trim());
         if (user is null)
         {
             ModelState.AddModelError(string.Empty, "E-posta veya şifre hatalı.");
-            return View("~/Views/Account/Login.cshtml", model);
+            return View(model);
         }
 
         var result = await _signInManager.PasswordSignInAsync(
@@ -99,50 +96,42 @@ public class AccountController : Controller
 
         if (result.Succeeded)
         {
+            if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+            {
+                return Redirect(model.ReturnUrl);
+            }
+
             return RedirectToAction("Index", "Home");
         }
 
-        ModelState.AddModelError(string.Empty, "E-posta veya şifre hatalı.");
-        return View("~/Views/Account/Login.cshtml", model);
+        var message = result.IsLockedOut
+            ? "Çok fazla başarısız giriş denemesi. Lütfen daha sonra tekrar deneyin."
+            : "E-posta veya şifre hatalı.";
+        ModelState.AddModelError(string.Empty, message);
+        return View(model);
     }
-}
 
-public class RegisterViewModel
-{
-    [Required(ErrorMessage = "Ad soyad zorunludur.")]
-    [StringLength(100)]
-    public string DisplayName { get; set; } = string.Empty;
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Logout()
+    {
+        await _signInManager.SignOutAsync();
+        return RedirectToAction("Index", "Home");
+    }
 
-    [Required(ErrorMessage = "E-posta adresi zorunludur.")]
-    [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi girin.")]
-    [StringLength(256)]
-    public string Email { get; set; } = string.Empty;
-
-    [Phone(ErrorMessage = "Geçerli bir telefon numarası girin.")]
-    [StringLength(30)]
-    public string? PhoneNumber { get; set; }
-
-    [Required(ErrorMessage = "Şifre zorunludur.")]
-    [DataType(DataType.Password)]
-    public string Password { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Şifre tekrar zorunludur.")]
-    [DataType(DataType.Password)]
-    [Compare(nameof(Password), ErrorMessage = "Şifreler eşleşmiyor.")]
-    public string ConfirmPassword { get; set; } = string.Empty;
-
-    public bool TermsAccepted { get; set; }
-}
-
-public class LoginViewModel
-{
-    [Required(ErrorMessage = "E-posta adresi zorunludur.")]
-    [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi girin.")]
-    public string Email { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Şifre zorunludur.")]
-    [DataType(DataType.Password)]
-    public string Password { get; set; } = string.Empty;
-
-    public bool RememberMe { get; set; }
+    private static string GetLocalizedError(IdentityError error)
+    {
+        return error.Code switch
+        {
+            "DuplicateEmail" or "DuplicateUserName" => "Bu e-posta adresiyle zaten bir hesap var.",
+            "InvalidEmail" or "InvalidUserName" => "Geçerli bir e-posta adresi girin.",
+            "PasswordTooShort" => "Şifre en az 8 karakter olmalıdır.",
+            "PasswordRequiresNonAlphanumeric" => "Şifre en az bir harf veya rakam dışı karakter içermelidir.",
+            "PasswordRequiresDigit" => "Şifre en az bir rakam içermelidir.",
+            "PasswordRequiresLower" => "Şifre en az bir küçük harf içermelidir.",
+            "PasswordRequiresUpper" => "Şifre en az bir büyük harf içermelidir.",
+            "PasswordRequiresUniqueChars" => "Şifre yeterli sayıda farklı karakter içermelidir.",
+            _ => error.Description
+        };
+    }
 }

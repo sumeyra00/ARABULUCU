@@ -1,4 +1,6 @@
-﻿@{
+@model FoundItemViewModel
+
+@{
     ViewData["Title"] = "Bulunan Eşya Bildir";
 }
 
@@ -13,35 +15,35 @@
                 </div>
 
                 <div class="card-body p-4">
-                    <form method="post" action="#" enctype="multipart/form-data">
+                    <form asp-action="BulunanOlustur" method="post" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                         
                         <!-- 1. Temel Eşya Bilgileri -->
                         <h6 class="fw-bold mb-3 border-bottom pb-2">1. Eşya Bilgileri</h6>
 
                         <div class="mb-3">
-                            <label for="title" class="form-label fw-semibold">Bulunan Eşya Başlığı</label>
-                            <input type="text" class="form-control" id="title" name="title" placeholder="Örn: Mavi Termos veya Pembe Kartlık" required />
+                            <label asp-for="Title" class="form-label fw-semibold">Bulunan Eşya Başlığı</label>
+                            <input asp-for="Title" class="form-control" placeholder="Örn: Siyah cüzdan" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="category" class="form-label fw-semibold">Kategori</label>
-                                <select class="form-select" id="category" name="category" required>
+                                <label asp-for="CategoryId" class="form-label fw-semibold">Kategori</label>
+                                <select asp-for="CategoryId" class="form-select">
                                     <option value="">Seçiniz...</option>
-                                    <option value="canta">🎒 Çanta & Sırt Çantası</option>
-                                    <option value="anahtar">🔑 Anahtar & Aksesuar</option>
-                                    <option value="cuzdan">👛 Cüzdan & Kartlık / Kimlik</option>
-                                    <option value="elektronik">🎧 Kulaklık & Elektronik</option>
-                                    <option value="telefon">📱 Telefon & Şarj Aleti</option>
-                                    <option value="saat">⌚ Akıllı Saat & Takı</option>
-                                    <option value="kitap">📚 Kitap & Ders Notu</option>
-                                    <option value="diger">📦 Diğer</option>
+                                    <option value="1">👛 Cüzdan & Kartlık</option>
+                                    <option value="2">🔑 Anahtar</option>
+                                    <option value="3">📱 Telefon</option>
+                                    <option value="4">🎧 Kulaklık</option>
                                 </select>
+                                <span asp-validation-for="CategoryId" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label for="foundDate" class="form-label fw-semibold">Bulunduğu Tarih & Saat</label>
-                                <input type="datetime-local" class="form-control" id="foundDate" name="foundDate" required />
+                                <label asp-for="FoundDate" class="form-label fw-semibold">Bulunduğu Tarih & Saat</label>
+                                <input asp-for="FoundDate" type="datetime-local" class="form-control" />
+                                <span asp-validation-for="FoundDate" class="text-danger"></span>
                             </div>
                         </div>
 
@@ -50,8 +52,8 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="campusArea" class="form-label fw-semibold">Kampüs Bölgesi</label>
-                                <select class="form-select" id="campusArea" name="campusArea" required>
+                                <label asp-for="CampusArea" class="form-label fw-semibold">Kampüs Bölgesi</label>
+                                <select asp-for="CampusArea" class="form-select">
                                     <option value="">Bölge Seçiniz...</option>
                                     <option value="yemekhane">🍽️ Merkez Yemekhane</option>
                                     <option value="kutuphane">📚 Merkez Kütüphane</option>
@@ -64,11 +66,13 @@
                                     <option value="kafeler">☕ Kampüs Kafeler & Çarşı Alanı</option>
                                     <option value="diger_alan">📍 Diğer Açık Alanlar</option>
                                 </select>
+                                <span asp-validation-for="CampusArea" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label for="locationDetail" class="form-label fw-semibold">Tam Konum / Nerede Bulundu?</label>
-                                <input type="text" class="form-control" id="locationDetail" name="locationDetail" placeholder="Örn: Yemekhane 1. kat sıra masalarının altı" />
+                                <label asp-for="LocationDetail" class="form-label fw-semibold">Tam Konum / Nerede Bulundu?</label>
+                                <input asp-for="LocationDetail" class="form-control" placeholder="Örn: Yemekhane 1. kat sıra masalarının altı" />
+                                <span asp-validation-for="LocationDetail" class="text-danger"></span>
                             </div>
                         </div>
 
@@ -77,36 +81,40 @@
 
                         <div class="mb-3">
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="itemStatus" id="statusWithMe" value="with_me" checked>
+                                <input asp-for="ItemStatus" class="form-check-input" type="radio" id="statusWithMe" value="with_me">
                                 <label class="form-check-label fw-semibold" for="statusWithMe">
                                     Eşya şu an bende (Sahibi sistem üzerinden benimle iletişime geçsin)
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="itemStatus" id="statusDelivered" value="delivered">
+                                <input asp-for="ItemStatus" class="form-check-input" type="radio" id="statusDelivered" value="delivered">
                                 <label class="form-check-label fw-semibold" for="statusDelivered">
                                     Yetkili birime teslim ettim (Fakülte güvenliği, danışma veya yurt idaresi)
                                 </label>
                             </div>
+                            <span asp-validation-for="ItemStatus" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label for="deliveredTo" class="form-label fw-semibold">Teslim Ettiyseniz Nereye/Kime Bıraktınız?</label>
-                            <input type="text" class="form-control" id="deliveredTo" name="deliveredTo" placeholder="Örn: Mühendislik Fakültesi Zemin Kat Güvenlik Birimi" />
+                            <label asp-for="DeliveredTo" class="form-label fw-semibold">Teslim Ettiyseniz Nereye/Kime Bıraktınız?</label>
+                            <input asp-for="DeliveredTo" class="form-control" placeholder="Örn: Mühendislik Fakültesi Zemin Kat Güvenlik Birimi" />
+                            <span asp-validation-for="DeliveredTo" class="text-danger"></span>
                         </div>
 
                         <!-- 4. Fotoğraf & Ayırt Edici Detay -->
                         <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">4. Fotoğraf & Güvenlik İpucu</h6>
 
                         <div class="mb-3">
-                            <label for="itemPhoto" class="form-label fw-semibold">Bulunan Eşyanın Fotoğrafı</label>
-                            <input class="form-control" type="file" id="itemPhoto" name="itemPhoto" accept="image/*" />
+                            <label asp-for="ItemPhoto" class="form-label fw-semibold">Bulunan Eşyanın Fotoğrafı</label>
+                            <input asp-for="ItemPhoto" class="form-control" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp" />
+                            <span asp-validation-for="ItemPhoto" class="text-danger"></span>
                             <div class="form-text small text-muted">Fotoğraf sistemde ilk başta otomatik olarak hafif bulanık (blurred) gösterilecektir.</div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="securityQuestion" class="form-label fw-semibold">Sahibine Sorulacak Doğrulama Sorusu</label>
-                            <input type="text" class="form-control" id="securityQuestion" name="securityQuestion" placeholder="Örn: Cüzdanın içinde hangi kart vardı? / Çantanın fermuarındaki süs neydi?" required />
+                            <label asp-for="SecurityQuestion" class="form-label fw-semibold">Sahibine Sorulacak Doğrulama Sorusu</label>
+                            <input asp-for="SecurityQuestion" class="form-control" placeholder="Örn: Cüzdanın içinde hangi kart vardı?" />
+                            <span asp-validation-for="SecurityQuestion" class="text-danger"></span>
                             <div class="form-text small text-muted">Gerçek sahibini ayırt etmek için sadece sahibinin bilebileceği bir detay sorusu yazın.</div>
                         </div>
 

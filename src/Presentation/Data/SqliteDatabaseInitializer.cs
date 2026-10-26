@@ -96,6 +96,79 @@ public static class SqliteDatabaseInitializer
         """CREATE UNIQUE INDEX IF NOT EXISTS "UserNameIndex" ON "AspNetUsers" ("NormalizedUserName")"""
     ];
 
+    private static readonly string[] ApplicationSchema = [
+        """
+        CREATE TABLE IF NOT EXISTS "Categories" (
+            "Id" INTEGER NOT NULL CONSTRAINT "PK_Categories" PRIMARY KEY AUTOINCREMENT,
+            "Name" TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS "ContactMessages" (
+            "Id" INTEGER NOT NULL CONSTRAINT "PK_ContactMessages" PRIMARY KEY AUTOINCREMENT,
+            "LostItemId" INTEGER NOT NULL,
+            "FromUserId" TEXT NOT NULL,
+            "Message" TEXT NOT NULL,
+            "SentAt" TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS "LostItemFeatures" (
+            "Id" INTEGER NOT NULL CONSTRAINT "PK_LostItemFeatures" PRIMARY KEY AUTOINCREMENT,
+            "LostItemId" INTEGER NOT NULL,
+            "Key" TEXT NOT NULL,
+            "Value" TEXT NOT NULL,
+            "IsHidden" INTEGER NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS "UserProfiles" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_UserProfiles" PRIMARY KEY,
+            "DisplayName" TEXT NOT NULL,
+            "Email" TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS "LostItems" (
+            "Id" INTEGER NOT NULL CONSTRAINT "PK_LostItems" PRIMARY KEY AUTOINCREMENT,
+            "Title" TEXT NOT NULL,
+            "Description" TEXT NOT NULL,
+            "ImagePath" TEXT NULL,
+            "Location" TEXT NOT NULL,
+            "CreatedAt" TEXT NOT NULL,
+            "IsFound" INTEGER NOT NULL,
+            "UserId" TEXT NOT NULL,
+            "CategoryId" INTEGER NOT NULL,
+            CONSTRAINT "FK_LostItems_Categories_CategoryId"
+                FOREIGN KEY ("CategoryId") REFERENCES "Categories" ("Id") ON DELETE RESTRICT,
+            CONSTRAINT "FK_LostItems_UserProfiles_UserId"
+                FOREIGN KEY ("UserId") REFERENCES "UserProfiles" ("Id") ON DELETE RESTRICT
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS "Notifications" (
+            "Id" INTEGER NOT NULL CONSTRAINT "PK_Notifications" PRIMARY KEY AUTOINCREMENT,
+            "UserId" TEXT NOT NULL,
+            "Message" TEXT NOT NULL,
+            "IsRead" INTEGER NOT NULL,
+            "CreatedAt" TEXT NOT NULL,
+            "LostItemId" INTEGER NULL,
+            CONSTRAINT "FK_Notifications_LostItems_LostItemId"
+                FOREIGN KEY ("LostItemId") REFERENCES "LostItems" ("Id"),
+            CONSTRAINT "FK_Notifications_UserProfiles_UserId"
+                FOREIGN KEY ("UserId") REFERENCES "UserProfiles" ("Id") ON DELETE CASCADE
+        )
+        """,
+        """CREATE INDEX IF NOT EXISTS "IX_LostItems_CategoryId" ON "LostItems" ("CategoryId")""",
+        """CREATE INDEX IF NOT EXISTS "IX_LostItems_UserId" ON "LostItems" ("UserId")""",
+        """CREATE INDEX IF NOT EXISTS "IX_Notifications_LostItemId" ON "Notifications" ("LostItemId")""",
+        """CREATE INDEX IF NOT EXISTS "IX_Notifications_UserId" ON "Notifications" ("UserId")""",
+        """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (1, 'Cüzdan')""",
+        """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (2, 'Anahtar')""",
+        """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (3, 'Telefon')""",
+        """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (4, 'Kulaklık')"""
+    ];
+
     public static async Task InitializeAsync(ApplicationDbContext dbContext)
     {
         var migrations = dbContext.Database.GetMigrations().ToArray();
@@ -105,7 +178,12 @@ public static class SqliteDatabaseInitializer
         {
             var connection = dbContext.Database.GetDbConnection();
             var tableNames = await GetTableNamesAsync(connection);
-            if (tableNames.Contains("UserProfiles") && migrations.Length > 0)
+            var hasLegacyApplicationSchema = tableNames.Contains("Categories")
+                || tableNames.Contains("LostItems")
+                || tableNames.Contains("UserProfiles")
+                || tableNames.Contains("Notifications");
+
+            if (hasLegacyApplicationSchema && migrations.Length > 0)
             {
                 var migrationHistory = await GetAppliedMigrationIdsAsync(connection, tableNames);
                 var initialMigration = migrations[0];
@@ -140,6 +218,15 @@ public static class SqliteDatabaseInitializer
         }
 
         await dbContext.Database.MigrateAsync();
+        await EnsureApplicationSchemaAsync(dbContext);
+    }
+
+    private static async Task EnsureApplicationSchemaAsync(ApplicationDbContext dbContext)
+    {
+        foreach (var statement in ApplicationSchema)
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(statement);
+        }
     }
 
     private static async Task<HashSet<string>> GetTableNamesAsync(DbConnection connection)
