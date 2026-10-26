@@ -1,155 +1,48 @@
-﻿@{
-    ViewData["Title"] = "Profilim ve İlanlarım";
+﻿@model ARABULUCU.Web.Controllers.ProfileViewModel
+@{
+    ViewData["Title"] = "İlanlarım";
 }
 
 <div class="container py-5">
-    
-    <!-- Profil Üst Kartı -->
     <div class="card shadow-sm border rounded-3 mb-4">
         <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div class="d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center fw-bold fs-3" style="width: 64px; height: 64px;">
-                    FN
-                </div>
-                <div>
-                    <h4 class="fw-bold mb-1">Fatmanur A.</h4>
-                    <p class="text-muted small mb-0">
-                        <i class="bi bi-mortarboard me-1"></i> Sivas Cumhuriyet Üniversitesi • Mühendislik Fakültesi
-                    </p>
-                    <span class="text-muted small">ornek@cumhuriyet.edu.tr</span>
-                </div>
+            <div>
+                <h4 class="fw-bold mb-1">@Model.DisplayName</h4>
+                <span class="text-muted small">@Model.Email</span>
             </div>
-
             <div class="d-flex gap-2">
                 <a href="/Home/KayipOlustur" class="btn btn-outline-danger btn-sm fw-bold">+ Yeni Kayıp İlanı</a>
                 <a href="/Home/BulunanOlustur" class="btn btn-outline-success btn-sm fw-bold">+ Yeni Buluntu Bildir</a>
             </div>
         </div>
-    </div>
 
-    <!-- Sekmeler (Tabs) -->
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+        </div>
+    }
+
     <ul class="nav nav-tabs mb-4" id="profileTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active fw-bold text-dark" id="items-tab" data-bs-toggle="tab" data-bs-target="#items-tab-pane" type="button" role="tab">
-                📋 İlanlarım (3)
+            <button class="nav-link active fw-bold text-dark" id="lost-tab" data-bs-toggle="tab" data-bs-target="#lost-pane" type="button" role="tab">
+                Kayıp İlanlarım (@Model.LostItems.Count)
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link fw-semibold text-secondary" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests-tab-pane" type="button" role="tab">
-                🔒 Gelen Doğrulama Cevapları <span class="badge bg-danger rounded-pill ms-1">1</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link fw-semibold text-secondary" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings-tab-pane" type="button" role="tab">
-                ⚙️ Hesap Ayarları
+            <button class="nav-link fw-semibold text-secondary" id="found-tab" data-bs-toggle="tab" data-bs-target="#found-pane" type="button" role="tab">
+                Buluntu Eşyalarım (@Model.FoundItems.Count)
             </button>
         </li>
     </ul>
 
-    <!-- Sekme İçerikleri -->
-    <div class="tab-content" id="profileTabContent">
-        
-        <!-- 1. SEKME: İlanlarım -->
-        <div class="tab-pane fade show active" id="items-tab-pane" role="tabpanel">
-            <div class="card shadow-sm border rounded-3">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Tür</th>
-                                    <th>İlan Başlığı</th>
-                                    <th>Konum</th>
-                                    <th>Tarih</th>
-                                    <th>Durum</th>
-                                    <th class="text-end">İşlemler</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- 1. İlan -->
-                                <tr>
-                                    <td><span class="badge bg-danger">Kayıp</span></td>
-                                    <td><strong>Siyah Deri Sırt Çantası</strong></td>
-                                    <td><small class="text-muted">Merkez Kütüphane</small></td>
-                                    <td><small class="text-muted">18.10.2026</small></td>
-                                    <td><span class="badge bg-warning text-dark">Aramada</span></td>
-                                    <td class="text-end">
-                                        <a href="/Home/Detay" class="btn btn-sm btn-outline-secondary">Görüntüle</a>
-                                        <button class="btn btn-sm btn-outline-success">Çözüldü İşaretle</button>
-                                        <button class="btn btn-sm btn-outline-danger">Sil</button>
-                                    </td>
-                                </tr>
-
-                                <!-- 2. İlan -->
-                                <tr>
-                                    <td><span class="badge bg-success">Bulundu</span></td>
-                                    <td><strong>Mavi Çelik Termos</strong></td>
-                                    <td><small class="text-muted">Merkez Yemekhane</small></td>
-                                    <td><small class="text-muted">15.10.2026</small></td>
-                                    <td><span class="badge bg-success">Teslim Edildi</span></td>
-                                    <td class="text-end">
-                                        <a href="/Home/Detay" class="btn btn-sm btn-outline-secondary">Görüntüle</a>
-                                        <button class="btn btn-sm btn-outline-danger" disabled>Sil</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="lost-pane" role="tabpanel" aria-labelledby="lost-tab">
+            @await Html.PartialAsync("_UserItemList", Model.LostItems)
         </div>
-
-        <!-- 2. SEKME: Gelen Doğrulama Talepleri -->
-        <div class="tab-pane fade" id="requests-tab-pane" role="tabpanel">
-            <div class="card shadow-sm border rounded-3 p-3">
-                <h6 class="fw-bold mb-3">İlanlarınıza Gelen Eşleşme Yanıtları</h6>
-                
-                <!-- Tek Talep Kartı -->
-                <div class="p-3 bg-light rounded-3 border mb-3">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <strong>Ahmet K.</strong>, <em>"Siyah Deri Sırt Çantası"</em> ilanınızın doğrulama sorusuna cevap verdi.
-                        </div>
-                        <small class="text-muted">19:15</small>
-                    </div>
-                    <div class="small text-secondary mb-2">
-                        <strong>Sorduğunuz Soru:</strong> Çantanın ön gözündeki küçük anahtarlıkta hangi figür vardı?
-                    </div>
-                    <div class="small p-2 bg-white rounded border mb-3">
-                        <strong>Kullanıcının Cevabı:</strong> <em>"Küçük sarı bir ayıcık figürü vardı, fermuarında da yeşil ip takılı."</em>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-success fw-bold">✓ Doğrula & Sohbet Başlat</button>
-                        <button class="btn btn-sm btn-outline-danger">✕ Reddet</button>
-                    </div>
-                </div>
-            </div>
+        <div class="tab-pane fade" id="found-pane" role="tabpanel" aria-labelledby="found-tab">
+            @await Html.PartialAsync("_UserItemList", Model.FoundItems)
         </div>
-
-        <!-- 3. SEKME: Hesap Ayarları -->
-        <div class="tab-pane fade" id="settings-tab-pane" role="tabpanel">
-            <div class="card shadow-sm border rounded-3 p-4">
-                <h6 class="fw-bold mb-3 border-bottom pb-2">Bilgileri Güncelle</h6>
-                <form class="row g-3" style="max-width: 650px;">
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Ad Soyad</label>
-                        <input type="text" class="form-control" value="Fatmanur A." />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Telefon Numarası</label>
-                        <input type="tel" class="form-control" placeholder="05XX XXX XX XX" />
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label small fw-semibold">Yeni Şifre (Değiştirmek istemiyorsanız boş bırakın)</label>
-                        <input type="password" class="form-control" placeholder="••••••••" />
-                    </div>
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-primary fw-bold">Değişiklikleri Kaydet</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
     </div>
-
 </div>

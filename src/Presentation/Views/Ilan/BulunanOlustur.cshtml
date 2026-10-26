@@ -1,36 +1,53 @@
-@model FoundItemViewModel
-
+﻿@model ARABULUCU.Web.Controllers.ItemReportViewModel
 @{
     ViewData["Title"] = "Bulunan Eşya Bildir";
 }
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
+<div class="position-relative overflow-hidden py-5" style="background: radial-gradient(circle at 50% 15%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: 100vh;">
+
+    <!-- Sevimli Süs Figürleri -->
+    <div class="position-absolute d-none d-lg-block" style="top: 8%; left: 5%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">🎁</div>
+    <div class="position-absolute d-none d-lg-block" style="top: 10%; right: 6%; font-size: 2.4rem; transform: rotate(18deg); user-select: none;">✨</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 8%; left: 5%; font-size: 2rem; transform: rotate(12deg); user-select: none;">🔒</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 10%; right: 5%; font-size: 2.2rem; transform: rotate(-12deg); user-select: none;">🌸</div>
+
+    <div class="container position-relative" style="z-index: 2; max-width: 760px;">
+        
+        <!-- Geri Dön Butonu -->
+        <div class="mb-3">
+            <a href="/" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border">
+                &larr; Ana Sayfaya Dön
+            </a>
+        </div>
+
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);">
             
-            <div class="card shadow-sm border rounded-3">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <h4 class="mb-1 fw-bold text-success">🎁 Bir Şey Buldum — Buluntu Eşya Bildir</h4>
-                    <p class="text-muted small mb-0">Sahibinin eşyayı hızlıca bulabilmesi için lütfen bilgileri eksiksiz doldurun.</p>
+            <!-- Kart Başlığı -->
+            <div class="card-header border-bottom py-4 px-4 px-md-5 text-center" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
+                <div class="rounded-circle text-white d-inline-flex align-items-center justify-content-center fw-bold shadow-sm mb-3" style="width: 56px; height: 56px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); font-size: 1.6rem; box-shadow: 0 4px 12px rgba(255, 96, 130, 0.35);">
+                    🎁
                 </div>
+                <h3 class="fw-bold mb-1 text-dark">Bulunan Eşya Bildir</h3>
+                <p class="text-muted small mb-0">Eşyanın gerçek sahibine ulaşabilmesi için gizli doğrulama sorusuyla bildirim oluşturun.</p>
+            </div>
 
                 <div class="card-body p-4">
-                    <form asp-action="BulunanOlustur" method="post" enctype="multipart/form-data">
-                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <form method="post" action="/Home/BulunanOlustur" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
                         
                         <!-- 1. Temel Eşya Bilgileri -->
                         <h6 class="fw-bold mb-3 border-bottom pb-2">1. Eşya Bilgileri</h6>
 
                         <div class="mb-3">
-                            <label asp-for="Title" class="form-label fw-semibold">Bulunan Eşya Başlığı</label>
-                            <input asp-for="Title" class="form-control" placeholder="Örn: Siyah cüzdan" />
-                            <span asp-validation-for="Title" class="text-danger"></span>
+                            <label for="title" class="form-label fw-semibold">Bulunan Eşya Başlığı</label>
+                            <input type="text" class="form-control" id="title" name="Title" value="@Model.Title" placeholder="Örn: Mavi Termos veya Pembe Kartlık" required />
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="CategoryId" class="form-label fw-semibold">Kategori</label>
-                                <select asp-for="CategoryId" class="form-select">
+                                <label for="category" class="form-label fw-semibold">Kategori</label>
+                                <select class="form-select" id="category" name="Category" required>
                                     <option value="">Seçiniz...</option>
                                     <option value="1">👛 Cüzdan & Kartlık</option>
                                     <option value="2">🔑 Anahtar</option>
@@ -41,19 +58,19 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="FoundDate" class="form-label fw-semibold">Bulunduğu Tarih & Saat</label>
-                                <input asp-for="FoundDate" type="datetime-local" class="form-control" />
-                                <span asp-validation-for="FoundDate" class="text-danger"></span>
+                                <label for="foundDate" class="form-label fw-semibold">Bulunduğu Tarih & Saat</label>
+                                <input type="datetime-local" class="form-control" id="foundDate" name="ItemDate" value="@Model.ItemDate?.ToString("yyyy-MM-ddTHH:mm")" required />
                             </div>
                         </div>
+                    </div>
 
                         <!-- 2. Konum Bilgileri -->
                         <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">2. Bulunduğu Kampüs Konumu</h6>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="CampusArea" class="form-label fw-semibold">Kampüs Bölgesi</label>
-                                <select asp-for="CampusArea" class="form-select">
+                                <label for="campusArea" class="form-label fw-semibold">Kampüs Bölgesi</label>
+                                <select class="form-select" id="campusArea" name="CampusArea" required>
                                     <option value="">Bölge Seçiniz...</option>
                                     <option value="yemekhane">🍽️ Merkez Yemekhane</option>
                                     <option value="kutuphane">📚 Merkez Kütüphane</option>
@@ -70,9 +87,8 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="LocationDetail" class="form-label fw-semibold">Tam Konum / Nerede Bulundu?</label>
-                                <input asp-for="LocationDetail" class="form-control" placeholder="Örn: Yemekhane 1. kat sıra masalarının altı" />
-                                <span asp-validation-for="LocationDetail" class="text-danger"></span>
+                                <label for="locationDetail" class="form-label fw-semibold">Tam Konum / Nerede Bulundu?</label>
+                                <input type="text" class="form-control" id="locationDetail" name="LocationDetail" value="@Model.LocationDetail" placeholder="Örn: Yemekhane 1. kat sıra masalarının altı" />
                             </div>
                         </div>
 
@@ -81,13 +97,13 @@
 
                         <div class="mb-3">
                             <div class="form-check mb-2">
-                                <input asp-for="ItemStatus" class="form-check-input" type="radio" id="statusWithMe" value="with_me">
+                                <input class="form-check-input" type="radio" name="ItemStatus" id="statusWithMe" value="with_me" checked="@(Model.ItemStatus != "delivered")">
                                 <label class="form-check-label fw-semibold" for="statusWithMe">
                                     Eşya şu an bende (Sahibi sistem üzerinden benimle iletişime geçsin)
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input asp-for="ItemStatus" class="form-check-input" type="radio" id="statusDelivered" value="delivered">
+                                <input class="form-check-input" type="radio" name="ItemStatus" id="statusDelivered" value="delivered" checked="@(Model.ItemStatus == "delivered")">
                                 <label class="form-check-label fw-semibold" for="statusDelivered">
                                     Yetkili birime teslim ettim (Fakülte güvenliği, danışma veya yurt idaresi)
                                 </label>
@@ -96,35 +112,46 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="DeliveredTo" class="form-label fw-semibold">Teslim Ettiyseniz Nereye/Kime Bıraktınız?</label>
-                            <input asp-for="DeliveredTo" class="form-control" placeholder="Örn: Mühendislik Fakültesi Zemin Kat Güvenlik Birimi" />
-                            <span asp-validation-for="DeliveredTo" class="text-danger"></span>
+                            <label for="deliveredTo" class="form-label fw-semibold">Teslim Ettiyseniz Nereye/Kime Bıraktınız?</label>
+                            <input type="text" class="form-control" id="deliveredTo" name="DeliveredTo" value="@Model.DeliveredTo" placeholder="Örn: Mühendislik Fakültesi Zemin Kat Güvenlik Birimi" />
                         </div>
+                    </div>
 
-                        <!-- 4. Fotoğraf & Ayırt Edici Detay -->
-                        <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">4. Fotoğraf & Güvenlik İpucu</h6>
-
-                        <div class="mb-3">
-                            <label asp-for="ItemPhoto" class="form-label fw-semibold">Bulunan Eşyanın Fotoğrafı</label>
-                            <input asp-for="ItemPhoto" class="form-control" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp" />
-                            <span asp-validation-for="ItemPhoto" class="text-danger"></span>
-                            <div class="form-text small text-muted">Fotoğraf sistemde ilk başta otomatik olarak hafif bulanık (blurred) gösterilecektir.</div>
+                    <!-- SAHİPLİK DOĞRULAMA KUTUSU (GÜVENLİK) -->
+                    <div class="p-3 rounded-4 border mb-3" style="background-color: #FFF7F9; border-color: #FFD9E2 !important;">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="fs-5">🔒</span>
+                            <span class="fw-bold text-dark small">Sahiplik Doğrulama Sorusu (Önemli)</span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="SecurityQuestion" class="form-label fw-semibold">Sahibine Sorulacak Doğrulama Sorusu</label>
-                            <input asp-for="SecurityQuestion" class="form-control" placeholder="Örn: Cüzdanın içinde hangi kart vardı?" />
-                            <span asp-validation-for="SecurityQuestion" class="text-danger"></span>
+                            <label for="securityQuestion" class="form-label fw-semibold">Sahibine Sorulacak Doğrulama Sorusu</label>
+                            <input type="text" class="form-control" id="securityQuestion" name="SecurityQuestion" value="@Model.SecurityQuestion" placeholder="Örn: Cüzdanın içinde hangi kart vardı? / Çantanın fermuarındaki süs neydi?" required />
                             <div class="form-text small text-muted">Gerçek sahibini ayırt etmek için sadece sahibinin bilebileceği bir detay sorusu yazın.</div>
                         </div>
-
-                        <!-- Kaydet Butonu -->
-                        <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-success fw-bold py-2">Bulunan Eşyayı Bildir</button>
+                        <div>
+                            <input type="text" class="form-control bg-white border rounded-pill px-3 py-2 shadow-none small" placeholder="Doğru Cevap: Örn: Kırmızı kalemlik" required />
                         </div>
+                    </div>
 
-                    </form>
-                </div>
+                    <!-- Açıklama -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Açıklama (Genel Bilgi)</label>
+                        <textarea rows="3" class="form-control bg-light border rounded-4 p-3 shadow-none" placeholder="Doğrulama sorusunun cevabını ele vermeyecek şekilde genel bilgiler yazın..." required></textarea>
+                    </div>
+
+                    <!-- Fotoğraf Yükleme -->
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold text-secondary">Fotoğraf Yükle (İlanda maskelenecektir)</label>
+                        <input type="file" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" accept="image/*" />
+                    </div>
+
+                    <!-- Bildirimi Gönder Butonu -->
+                    <button type="button" class="btn w-100 rounded-pill py-3 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">
+                        🌸 Bulunan Eşyayı Bildir
+                    </button>
+
+                </form>
             </div>
 
         </div>
