@@ -51,7 +51,18 @@ public class AccountController : Controller
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors.Select(error => error.Description).Distinct(StringComparer.Ordinal))
+            var duplicateAccount = result.Errors.Any(error =>
+                error.Code is "DuplicateEmail" or "DuplicateUserName");
+
+            if (duplicateAccount)
+            {
+                ModelState.AddModelError(string.Empty, "Bu e-posta adresiyle zaten bir hesap var.");
+            }
+
+            foreach (var error in result.Errors
+                         .Where(error => error.Code is not ("DuplicateEmail" or "DuplicateUserName"))
+                         .Select(error => error.Description)
+                         .Distinct(StringComparer.Ordinal))
             {
                 ModelState.AddModelError(string.Empty, error);
             }
