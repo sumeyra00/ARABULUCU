@@ -1,4 +1,5 @@
-﻿@{
+﻿@model ARABULUCU.Web.Controllers.LoginViewModel
+@{
     ViewData["Title"] = "Giriş Yap";
 }
 
@@ -23,32 +24,37 @@
                     <p class="text-muted small mb-0">Kayıp veya bulunan eşyalarınızı yönetmek için giriş yapın.</p>
                 </div>
 
-                <form method="post" action="/Home/Login">
-                    <!-- E-posta -->
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-secondary">E-posta Adresi</label>
-                        <input type="email" name="Email" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="ornek@cumhuriyet.edu.tr" required />
-                    </div>
+                    <!-- Giriş Formu -->
+                    <form method="post" action="/Account/Login">
+                        @Html.AntiForgeryToken()
+                        @if (TempData["SuccessMessage"] is string successMessage)
+                        {
+                            <div class="alert alert-success" role="alert">@successMessage</div>
+                        }
+                        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
 
-                    <!-- Şifre -->
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-secondary">Şifre</label>
-                        <input type="password" name="Password" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="••••••••" required />
-                    </div>
+                        <!-- E-posta -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-semibold">E-posta Adresi</label>
+                            <input type="email" class="form-control" id="email" name="Email" value="@Model.Email" placeholder="ornek@cumhuriyet.edu.tr" required />
+                        </div>
 
-                    <!-- Beni Hatırla & Şifremi Unuttum -->
-                    <div class="d-flex align-items-center justify-content-between mb-4 small">
-                        <div class="form-check">
-                            <input class="form-check-input shadow-none" type="checkbox" id="rememberMe" style="accent-color: #FF416C;" />
-                            <label class="form-check-label text-muted" for="rememberMe">Beni Hatırla</label>
+                        <!-- Şifre -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label fw-semibold">Şifre</label>
+                            <input type="password" class="form-control" id="password" name="Password" placeholder="••••••••" required />
                         </div>
                         <a href="#" class="text-decoration-none fw-semibold" style="color: #FF416C;">Şifremi Unuttum?</a>
                     </div>
 
-                    <!-- Giriş Yap Butonu -->
-                    <button type="submit" class="btn w-100 rounded-pill py-2 fw-bold text-white shadow-sm mb-3" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">
-                        Giriş Yap
-                    </button>
+                        <!-- Beni Hatırla & Şifremi Unuttum -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="rememberMe" name="RememberMe" value="true" />
+                                <label class="form-check-label small" for="rememberMe">Beni Hatırla</label>
+                            </div>
+                            <a href="#" class="small text-decoration-none">Şifremi Unuttum?</a>
+                        </div>
 
                     <!-- Ayraç -->
                     <div class="d-flex align-items-center my-3">

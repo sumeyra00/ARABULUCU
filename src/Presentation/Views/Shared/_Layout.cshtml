@@ -101,18 +101,12 @@
 
             <!-- Sağ Butonlar -->
             <div class="d-flex align-items-center gap-2">
-                <a href="/Home/Login" class="btn btn-pink-outline rounded-pill px-3 px-md-4 py-2 fw-bold small">
-                    Giriş Yap
-                </a>
-                <a href="/Home/Register" class="btn btn-pink-gradient rounded-pill px-3 px-md-4 py-2 fw-bold small shadow-sm">
-                    Üye Ol
-                </a>
-                
-                <!-- Yandan Açılan Çekmece Menü Butonu -->
-                <button class="btn btn-menu-trigger d-flex align-items-center gap-2 shadow-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" aria-controls="sideMenu">
-                    <i class="bi bi-list fs-5"></i>
-                    <span class="d-none d-md-inline" style="font-size: 0.9rem;">Menü</span>
-                </button>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a href="/Home/Profil" class="btn btn-light rounded-pill px-3 fw-bold">İlanlarım</a>
+                }
+                <a href="/Account/Login" class="btn btn-outline-danger rounded-pill px-4 fw-bold" style="border-color: #FF5E7E; color: #FF5E7E;">Giriş Yap</a>
+                <a href="/Account/Register" class="btn text-white rounded-pill px-4 fw-bold" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">Üye Ol</a>
             </div>
 
         </div>

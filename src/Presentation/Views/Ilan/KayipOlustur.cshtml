@@ -1,5 +1,6 @@
-﻿@{
-    ViewData["Title"] = "Kayıp Eşya İlanı Ver";
+@model ARABULUCU.Web.Controllers.ItemReportViewModel
+@{
+    ViewData["Title"] = "Kayıp İlanı Oluştur";
 }
 
 <div class="position-relative overflow-hidden py-5" style="background: radial-gradient(circle at 50% 15%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: 100vh;">
@@ -30,35 +31,80 @@
                 <p class="text-muted small mb-0">Kampüste kaybettiğiniz eşyanın detaylarını paylaşarak bulunmasını kolaylaştırın.</p>
             </div>
 
-            <div class="card-body p-4 p-md-5">
-                <form method="post" action="#" enctype="multipart/form-data">
-                    
-                    <!-- İlan Başlığı -->
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-secondary">İlan Başlığı</label>
-                        <input type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="Örn: Siyah Deri Cüzdan, Mavi Termos..." required />
-                    </div>
+                <div class="card-body p-4">
+                    <form method="post" action="/Home/KayipOlustur" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+                        
+                        <!-- 1. Temel Bilgiler -->
+                        <h6 class="fw-bold mb-3 border-bottom pb-2">1. Eşya Bilgileri</h6>
 
-                    <!-- Kategori ve Konum (Hem Seçilebilir Hem Yazılabilir) -->
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold text-secondary">Eşya Kategorisi</label>
-                            <input list="kayipKategoriList" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="Kategori seçin veya yazın..." required />
-                            <datalist id="kayipKategoriList">
-                                <option value="Cüzdan & Para"></option>
-                                <option value="Öğrenci Kimliği & Kartvizit"></option>
-                                <option value="Anahtar & Anahtarlık"></option>
-                                <option value="Telefon & Tablet"></option>
-                                <option value="Dizüstü Bilgisayar & Şarj Aleti"></option>
-                                <option value="Kulaklık & Ses Cihazları"></option>
-                                <option value="Çanta & Sırt Çantası"></option>
-                                <option value="Gözlük & Saat"></option>
-                                <option value="Giyim, Mont & Atkı"></option>
-                                <option value="Kitap, Defter & Ders Notu"></option>
-                                <option value="Su Matarası & Termos"></option>
-                                <option value="Spor Eşyası"></option>
-                                <option value="Diğer Kişisel Eşyalar"></option>
-                            </datalist>
+                        <div class="mb-3">
+                            <label for="title" class="form-label fw-semibold">İlan Başlığı</label>
+                            <input type="text" class="form-control" id="title" name="Title" value="@Model.Title" placeholder="Örn: Siyah Deri Sırt Çantası" required />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label fw-semibold">Kategori</label>
+                                <select class="form-select" id="category" name="Category" required>
+                                    <option value="">Seçiniz...</option>
+                                    <option value="canta">🎒 Çanta & Sırt Çantası</option>
+                                    <option value="anahtar">🔑 Anahtar & Aksesuar</option>
+                                    <option value="cuzdan">👛 Cüzdan & Kartlık / Kimlik</option>
+                                    <option value="elektronik">🎧 Kulaklık & Elektronik</option>
+                                    <option value="telefon">📱 Telefon & Şarj Aleti</option>
+                                    <option value="saat">⌚ Akıllı Saat & Takı</option>
+                                    <option value="kitap">📚 Kitap & Ders Notu</option>
+                                    <option value="diger">📦 Diğer</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="lostDate" class="form-label fw-semibold">Kaybolduğu Tarih & Saat</label>
+                                <input type="datetime-local" class="form-control" id="lostDate" name="ItemDate" value="@Model.ItemDate?.ToString("yyyy-MM-ddTHH:mm")" required />
+                            </div>
+                        </div>
+
+                        <!-- 2. Konum Bilgileri -->
+                        <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">2. Kaybolduğu Kampüs Konumu</h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="campusArea" class="form-label fw-semibold">Kampüs Bölgesi</label>
+                                <select class="form-select" id="campusArea" name="CampusArea" required>
+                                    <option value="">Bölge Seçiniz...</option>
+                                    <option value="yemekhane">🍽️ Merkez Yemekhane</option>
+                                    <option value="kutuphane">📚 Merkez Kütüphane</option>
+                                    <option value="kiz_kyk">🏢 Kız Öğrenci Yurdu (KYK)</option>
+                                    <option value="erkek_kyk">🏢 Erkek Öğrenci Yurdu (KYK)</option>
+                                    <option value="hastane">🏥 Tıp Fakültesi Hastanesi</option>
+                                    <option value="muhendislik">⚙️ Mühendislik Fakültesi</option>
+                                    <option value="egitim">📖 Eğitim Fakültesi</option>
+                                    <option value="iibf">💼 İİBF</option>
+                                    <option value="kafeler">☕ Kampüs Kafeler & Çarşı Alanı</option>
+                                    <option value="diger_alan">📍 Diğer Açık Alanlar</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="locationDetail" class="form-label fw-semibold">Detaylı Konum Açıklaması</label>
+                                <input type="text" class="form-control" id="locationDetail" name="LocationDetail" value="@Model.LocationDetail" placeholder="Örn: 2. kat pencere kenarı masalar" />
+                            </div>
+                        </div>
+
+                        <!-- 3. Açıklama & Fotoğraf -->
+                        <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">3. Detaylı Açıklama & Fotoğraf</h6>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label fw-semibold">Eşyanın Belirgin Özellikleri</label>
+                            <textarea class="form-control" id="description" name="Description" rows="3" placeholder="Rengi, markası, üzerinde çizik/etiket var mı?" required>@Model.Description</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="itemPhoto" class="form-label fw-semibold">Eşyanın Varsa Önceki Bir Fotoğrafı</label>
+                            <input class="form-control" type="file" id="itemPhoto" name="itemPhoto" accept="image/*" />
+                            <div class="form-text small text-muted">Mümkünse eşyanın ayırt edilmesini sağlayacak net bir görsel ekleyin.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold text-secondary">Kaybedilen Yer / Fakülte</label>
@@ -93,11 +139,15 @@
                         </div>
                     </div>
 
-                    <!-- Kayıp Tarihi & Saati -->
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold text-secondary">Kaybedilme Tarihi</label>
-                            <input type="date" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" required />
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="securityQuestion" class="form-label fw-semibold">Doğrulama Sorunuz</label>
+                                <input type="text" class="form-control" id="securityQuestion" name="SecurityQuestion" value="@Model.SecurityQuestion" placeholder="Örn: Anahtarlıktaki peluş figür ne?" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="securityAnswer" class="form-label fw-semibold">Beklenen Doğru Cevap</label>
+                                <input type="text" class="form-control" id="securityAnswer" name="securityAnswer" placeholder="Örn: Pembe tavşan" required />
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold text-secondary">Yaklaşık Saat</label>
