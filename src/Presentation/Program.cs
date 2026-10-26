@@ -3,6 +3,8 @@ using ARABULUCU.DAL.Data;
 using ARABULUCU.DAL.Repositories;
 using ARABULUCU.ENT.Entities;
 using ARABULUCU.Web.Hubs;
+using ARABULUCU.Web.Data;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +14,19 @@ builder.Services.AddControllersWithViews();
 // DbContext: burada geliştirme için SQLite kullanalım. Connection string appsettings.json'dan alınabilir.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=arabulucu.db"));
+
+builder.Services
+    .AddIdentity<IdentityUser, IdentityRole>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+        options.Password.RequiredLength = 8;
+        options.Password.RequireDigit = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireNonAlphanumeric = false;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
 // DAL repository kayıtları (IItemRepository kullanılıyor)
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
@@ -23,7 +38,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    dbContext.Database.EnsureCreated(); // Veritabanı yoksa tablolarıyla birlikte anında oluşturur
+    await SqliteDatabaseInitializer.InitializeAsync(dbContext);
 }
 
 if (!app.Environment.IsDevelopment())
@@ -37,6 +52,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

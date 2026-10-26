@@ -1,4 +1,5 @@
-﻿@{
+﻿@model ARABULUCU.Web.Controllers.LoginViewModel
+@{
     ViewData["Title"] = "Giriş Yap";
 }
 
@@ -16,24 +17,26 @@
                     </p>
 
                     <!-- Giriş Formu -->
-                    <form method="post" action="#">
+                    <form method="post" action="/Account/Login">
+                        @Html.AntiForgeryToken()
+                        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
 
                         <!-- E-posta -->
                         <div class="mb-3">
                             <label for="email" class="form-label fw-semibold">E-posta Adresi</label>
-                            <input type="email" class="form-control" id="email" name="email" placeholder="ornek@cumhuriyet.edu.tr" required />
+                            <input type="email" class="form-control" id="email" name="Email" value="@Model.Email" placeholder="ornek@cumhuriyet.edu.tr" required />
                         </div>
 
                         <!-- Şifre -->
                         <div class="mb-3">
                             <label for="password" class="form-label fw-semibold">Şifre</label>
-                            <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required />
+                            <input type="password" class="form-control" id="password" name="Password" placeholder="••••••••" required />
                         </div>
 
                         <!-- Beni Hatırla & Şifremi Unuttum -->
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe" />
+                                <input type="checkbox" class="form-check-input" id="rememberMe" name="RememberMe" value="true" />
                                 <label class="form-check-label small" for="rememberMe">Beni Hatırla</label>
                             </div>
                             <a href="#" class="small text-decoration-none">Şifremi Unuttum?</a>
