@@ -3,18 +3,26 @@
     ViewData["Title"] = "Üye Ol";
 }
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-7 col-lg-6">
+<div class="position-relative overflow-hidden py-5 d-flex align-items-center justify-content-center" style="background: radial-gradient(circle at 50% 20%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: calc(100vh - 160px);">
+
+    <!-- Sevimli Süs Figürleri -->
+    <div class="position-absolute d-none d-lg-block" style="top: 10%; left: 10%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">🌸</div>
+    <div class="position-absolute d-none d-lg-block" style="top: 15%; right: 12%; font-size: 2.2rem; transform: rotate(18deg); user-select: none;">✨</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 12%; left: 12%; font-size: 2rem; transform: rotate(12deg); user-select: none;">📝</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 15%; right: 10%; font-size: 2.2rem; transform: rotate(-12deg); user-select: none;">💖</div>
+
+    <div class="container position-relative" style="z-index: 2; max-width: 480px;">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);">
             
-            <div class="card shadow-sm border rounded-3">
-                <div class="card-body p-4">
-                    
-                    <!-- Başlık & Bilgi -->
-                    <h3 class="card-title text-center mb-1 fw-bold">Hesap Oluştur</h3>
-                    <p class="text-center text-muted small mb-4">
-                        Sivas Cumhuriyet Üniversitesi kampüsünde kayıp eşyalarını bulmak ve bildirmek için üye ol.
-                    </p>
+            <div class="card-body p-4 p-sm-5">
+                <!-- Başlık & İkon -->
+                <div class="text-center mb-4">
+                    <div class="rounded-circle text-white d-inline-flex align-items-center justify-content-center fw-bold shadow-sm mb-3" style="width: 52px; height: 52px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); font-size: 1.5rem;">
+                        ✨
+                    </div>
+                    <h3 class="fw-bold text-dark mb-1">Aramıza Katıl</h3>
+                    <p class="text-muted small mb-0">Kampüste kaybolan veya bulunan eşyaları bildirmek için hesabını oluştur.</p>
+                </div>
 
                     <!-- Kayıt Formu -->
                     <form method="post" action="/Account/Register">
@@ -66,14 +74,29 @@
                             @Html.ValidationMessageFor(model => model.TermsAccepted, "", new { @class = "text-danger small d-block" })
                         </div>
 
-                        <!-- Kayıt Ol Butonu -->
-                        <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary fw-bold py-2">Üye Ol</button>
-                        </div>
+                    <!-- Üye Ol Butonu -->
+                    <button type="submit" class="btn w-100 rounded-pill py-2 fw-bold text-white shadow-sm mb-3" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">
+                        Hesap Oluştur
+                    </button>
 
-                    </form>
+                    <!-- Ayraç -->
+                    <div class="d-flex align-items-center my-3">
+                        <hr class="flex-grow-1 text-muted opacity-25">
+                        <span class="px-3 text-muted small">veya</span>
+                        <hr class="flex-grow-1 text-muted opacity-25">
+                    </div>
 
-                </div>
+                    <!-- Google ile Kayıt Ol -->
+                    <button type="button" class="btn btn-light border w-100 rounded-pill py-2 fw-semibold text-dark small shadow-sm d-flex align-items-center justify-content-center gap-2">
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                        Google ile Kayıt Ol
+                    </button>
+                </form>
 
                 <!-- Alt Yönlendirme (Giriş Yap) -->
                 <div class="card-footer bg-light text-center py-3">

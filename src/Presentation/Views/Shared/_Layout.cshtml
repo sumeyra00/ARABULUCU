@@ -9,24 +9,97 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #FCF9F9;
+            color: #1E293B;
+            margin: 0;
+            padding: 0;
+        }
+
+        .btn-pink-outline {
+            border: 1.5px solid #FFD9E2;
+            color: #FF416C;
+            background-color: #FFF7F9;
+            transition: all 0.25s ease;
+        }
+
+        .btn-pink-outline:hover {
+            background-color: #FFE2EA;
+            color: #E11D48;
+            border-color: #FFB3C6;
+        }
+
+        .btn-pink-gradient {
+            background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);
+            color: #ffffff;
+            border: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-pink-gradient:hover {
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 96, 130, 0.35);
+        }
+
+        /* Menü Butonu */
+        .btn-menu-trigger {
+            border: 1.5px solid #FFD9E2;
+            background-color: #FFF7F9;
+            color: #FF416C;
+            border-radius: 50rem;
+            padding: 8px 16px;
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }
+
+        .btn-menu-trigger:hover {
+            background-color: #FFE2EA;
+            color: #E11D48;
+        }
+
+        /* Çekmece Menü Linkleri */
+        .drawer-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #334155;
+            font-weight: 600;
+            border-radius: 14px;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .drawer-link:hover {
+            background-color: #FFF0F4;
+            color: #FF416C;
+            transform: translateX(4px);
+        }
+
+        .drawer-link i {
+            font-size: 1.2rem;
+            color: #FF6082;
+        }
+    </style>
 </head>
-<body style="font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FCF9F9; color: #1E293B; margin: 0; padding: 0;">
+<body class="d-flex flex-column min-vh-100">
 
     <!-- ÜST MENÜ (NAVBAR) -->
-    <header class="bg-white border-bottom sticky-top py-2" style="border-color: rgba(255, 94, 126, 0.15) !important;">
+    <header class="bg-white border-bottom sticky-top py-2" style="border-color: rgba(255, 96, 130, 0.15) !important; backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.96) !important;">
         <div class="container d-flex align-items-center justify-content-between">
+            
+            <!-- Logo & Marka -->
             <a href="/" class="d-flex align-items-center gap-2 text-decoration-none fw-bold fs-3 text-dark">
-                <span style="background: #FFF0F4; color: #FF5E7E; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">🔍</span>
-                arabulucu
+                <span style="background: #FFF0F4; color: #FF5E7E; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 2px solid #FFD9E2; box-shadow: 0 2px 6px rgba(255, 94, 126, 0.15);">🔍</span>
+                <span style="letter-spacing: -0.5px;">arabulucu</span>
             </a>
 
-            <div class="d-none d-md-flex align-items-center gap-4">
-                <a href="#" class="text-decoration-none fw-semibold text-secondary">Kayıp İlanları</a>
-                <a href="#" class="text-decoration-none fw-semibold text-secondary">Bulunan Eşyalar</a>
-                <a href="#" class="text-decoration-none fw-semibold text-secondary">Hakkımızda</a>
-                <a href="#" class="text-decoration-none fw-semibold text-secondary">İletişim</a>
-            </div>
-
+            <!-- Sağ Butonlar -->
             <div class="d-flex align-items-center gap-2">
                 @if (User.Identity?.IsAuthenticated == true)
                 {
@@ -35,20 +108,102 @@
                 <a href="/Account/Login" class="btn btn-outline-danger rounded-pill px-4 fw-bold" style="border-color: #FF5E7E; color: #FF5E7E;">Giriş Yap</a>
                 <a href="/Account/Register" class="btn text-white rounded-pill px-4 fw-bold" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">Üye Ol</a>
             </div>
+
         </div>
     </header>
 
-    <main role="main">
+    <!-- SAĞDAN KAYARAK AÇILAN ÇEKMECE PANELİ (OFFCANVAS) -->
+    <div class="offcanvas offcanvas-end border-0 shadow-lg" tabindex="-1" id="sideMenu" aria-labelledby="sideMenuLabel" style="width: 320px; background-color: #FFFDFC;">
+        
+        <!-- Çekmece Başlığı -->
+        <div class="offcanvas-header border-bottom py-3" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
+            <h6 class="offcanvas-title fw-bold text-dark d-flex align-items-center gap-2" id="sideMenuLabel">
+                <span style="background: white; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem;">✨</span>
+                Menü
+            </h6>
+            <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+        </div>
+
+        <div class="offcanvas-body d-flex flex-column justify-content-between p-4">
+            
+            <!-- Üst Kısım: Menü Linkleri -->
+            <div>
+                <nav class="d-flex flex-column gap-2">
+                    <a href="/Home/Profil" class="drawer-link">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Hesabım / Profilim</span>
+                    </a>
+                    <a href="/Home/Mesajlar" class="drawer-link">
+                        <i class="bi bi-chat-dots-fill"></i>
+                        <div class="d-flex align-items-center justify-content-between flex-grow-1">
+                            <span>Mesajlarım</span>
+                            <span class="badge rounded-pill text-white px-2 py-1" style="background-color: #FF6082; font-size: 0.7rem;">Canlı</span>
+                        </div>
+                    </a>
+                    <a href="/Home/Hakkimizda" class="drawer-link">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>Hakkımızda</span>
+                    </a>
+                    <a href="/Home/Iletisim" class="drawer-link">
+                        <i class="bi bi-envelope-fill"></i>
+                        <span>İletişim & Yardım</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Alt Kısım: Dil Seçimi -->
+            <div class="pt-4 border-top">
+                <label class="form-label small fw-bold text-secondary mb-2">Dil / Language</label>
+                <div class="dropdown">
+                    <button class="btn btn-white border w-100 rounded-pill py-2 px-3 d-flex align-items-center justify-content-between shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: #ffffff;">
+                        <span class="d-flex align-items-center gap-2 fw-semibold small text-dark">
+                            <span>🇹🇷</span> Türkçe
+                        </span>
+                        <i class="bi bi-chevron-down small text-muted"></i>
+                    </button>
+                    <ul class="dropdown-menu w-100 rounded-4 shadow-sm border-0 mt-1 p-2">
+                        <li>
+                            <a class="dropdown-item rounded-3 py-2 fw-semibold small d-flex align-items-center gap-2 active" href="#" style="background-color: #FFF0F4; color: #FF416C;">
+                                <span>🇹🇷</span> Türkçe
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item rounded-3 py-2 fw-semibold small d-flex align-items-center gap-2" href="#">
+                                <span>🇬🇧</span> English
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="text-center mt-3">
+                    <small class="text-muted" style="font-size: 0.72rem;">Sivas Cumhuriyet Üniversitesi</small>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SAYFA İÇERİĞİ -->
+    <main role="main" class="flex-grow-1">
         @RenderBody()
     </main>
 
-    <footer class="bg-white border-top text-center py-4 mt-5 text-muted small" style="border-color: rgba(255, 94, 126, 0.12) !important;">
+    <!-- ALT BİLGİ (FOOTER) -->
+    <footer class="bg-white border-top text-center py-4 mt-auto" style="border-color: rgba(255, 96, 130, 0.15) !important;">
         <div class="container">
+            <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                <span class="badge rounded-pill px-3 py-1 fw-semibold" style="background-color: #FFF0F4; color: #FF416C; border: 1px solid #FFD9E2;">
+                    🌸 Sivas Cumhuriyet Üniversitesi
+                </span>
+            </div>
             <p class="mb-1 fw-bold text-dark">&copy; @DateTime.Now.Year Arabulucu Platformu. Tüm hakları saklıdır.</p>
-            <p class="mb-0">Sivas Cumhuriyet Üniversitesi • Kampüs İçi Güvenli Kayıp Eşya Dayanışma Portalı</p>
+            <p class="mb-0 text-muted small">Kampüs İçi Güvenli Kayıp Eşya Dayanışma Portalı</p>
         </div>
     </footer>
 
+    <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
