@@ -12,15 +12,18 @@ public class AccountController : Controller
     private readonly ApplicationDbContext _dbContext;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         ApplicationDbContext dbContext,
         UserManager<IdentityUser> userManager,
-        SignInManager<IdentityUser> signInManager)
+        SignInManager<IdentityUser> signInManager,
+        ILogger<AccountController> logger)
     {
         _dbContext = dbContext;
         _userManager = userManager;
         _signInManager = signInManager;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -48,39 +51,50 @@ public class AccountController : Controller
         };
 
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
-        var result = await _userManager.CreateAsync(user, model.Password);
-        if (!result.Succeeded)
+        try
         {
-            var duplicateAccount = result.Errors.Any(error =>
-                error.Code is "DuplicateEmail" or "DuplicateUserName");
-
-            if (duplicateAccount)
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, "Bu e-posta adresiyle zaten bir hesap var.");
+                var duplicateAccount = result.Errors.Any(error =>
+                    error.Code is "DuplicateEmail" or "DuplicateUserName");
+
+                if (duplicateAccount)
+                {
+                    ModelState.AddModelError(string.Empty, "Bu e-posta adresiyle zaten bir hesap var.");
+                }
+
+                foreach (var error in result.Errors
+                             .Where(error => error.Code is not ("DuplicateEmail" or "DuplicateUserName"))
+                             .Select(error => error.Description)
+                             .Distinct(StringComparer.Ordinal))
+                {
+                    ModelState.AddModelError(string.Empty, error);
+                }
+
+                return View("~/Views/Account/Register.cshtml", model);
             }
 
-            foreach (var error in result.Errors
-                         .Where(error => error.Code is not ("DuplicateEmail" or "DuplicateUserName"))
-                         .Select(error => error.Description)
-                         .Distinct(StringComparer.Ordinal))
+            _dbContext.UserProfiles.Add(new UserProfile
             {
-                ModelState.AddModelError(string.Empty, error);
-            }
+                Id = user.Id,
+                DisplayName = model.DisplayName.Trim(),
+                Email = user.Email!
+            });
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException exception)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(exception, "Could not save the new user profile for {Email}.", model.Email);
+            ModelState.AddModelError(string.Empty, "Kayıt sırasında bir veritabanı hatası oluştu. Lütfen daha sonra tekrar deneyin.");
 
             return View("~/Views/Account/Register.cshtml", model);
         }
 
-        _dbContext.UserProfiles.Add(new UserProfile
-        {
-            Id = user.Id,
-            DisplayName = model.DisplayName.Trim(),
-            Email = user.Email!
-        });
-        await _dbContext.SaveChangesAsync();
-        await transaction.CommitAsync();
-
-        await _signInManager.SignInAsync(user, isPersistent: false);
-        return RedirectToAction("Index", "Home");
+        TempData["SuccessMessage"] = "Kayıt başarılı. Giriş yapmak için e-posta adresiniz ve şifrenizi kullanın.";
+        return RedirectToAction(nameof(Login));
     }
 
     [HttpGet]

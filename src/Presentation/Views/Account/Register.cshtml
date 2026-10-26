@@ -63,6 +63,7 @@
                             <label class="form-check-label small" for="terms">
                                 <a href="#" class="text-decoration-none">Kullanım Koşulları</a> ve <a href="#" class="text-decoration-none">KVKK Aydınlatma Metnini</a> okudum, onaylıyorum.
                             </label>
+                            @Html.ValidationMessageFor(model => model.TermsAccepted, "", new { @class = "text-danger small d-block" })
                         </div>
 
                         <!-- Kayıt Ol Butonu -->

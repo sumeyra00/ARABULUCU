@@ -19,6 +19,10 @@
                     <!-- Giriş Formu -->
                     <form method="post" action="/Account/Login">
                         @Html.AntiForgeryToken()
+                        @if (TempData["SuccessMessage"] is string successMessage)
+                        {
+                            <div class="alert alert-success" role="alert">@successMessage</div>
+                        }
                         @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
 
                         <!-- E-posta -->

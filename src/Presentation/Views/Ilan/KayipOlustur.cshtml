@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;@{
+@model ARABULUCU.Web.Controllers.ItemReportViewModel
+@{
     ViewData["Title"] = "Kayıp İlanı Oluştur";
 }
 
@@ -13,20 +14,22 @@
                 </div>
 
                 <div class="card-body p-4">
-                    <form method="post" action="#" enctype="multipart/form-data">
+                    <form method="post" action="/Home/KayipOlustur" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
                         
                         <!-- 1. Temel Bilgiler -->
                         <h6 class="fw-bold mb-3 border-bottom pb-2">1. Eşya Bilgileri</h6>
 
                         <div class="mb-3">
                             <label for="title" class="form-label fw-semibold">İlan Başlığı</label>
-                            <input type="text" class="form-control" id="title" name="title" placeholder="Örn: Siyah Deri Sırt Çantası" required />
+                            <input type="text" class="form-control" id="title" name="Title" value="@Model.Title" placeholder="Örn: Siyah Deri Sırt Çantası" required />
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="category" class="form-label fw-semibold">Kategori</label>
-                                <select class="form-select" id="category" name="category" required>
+                                <select class="form-select" id="category" name="Category" required>
                                     <option value="">Seçiniz...</option>
                                     <option value="canta">🎒 Çanta & Sırt Çantası</option>
                                     <option value="anahtar">🔑 Anahtar & Aksesuar</option>
@@ -41,7 +44,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="lostDate" class="form-label fw-semibold">Kaybolduğu Tarih & Saat</label>
-                                <input type="datetime-local" class="form-control" id="lostDate" name="lostDate" required />
+                                <input type="datetime-local" class="form-control" id="lostDate" name="ItemDate" value="@Model.ItemDate?.ToString("yyyy-MM-ddTHH:mm")" required />
                             </div>
                         </div>
 
@@ -51,7 +54,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="campusArea" class="form-label fw-semibold">Kampüs Bölgesi</label>
-                                <select class="form-select" id="campusArea" name="campusArea" required>
+                                <select class="form-select" id="campusArea" name="CampusArea" required>
                                     <option value="">Bölge Seçiniz...</option>
                                     <option value="yemekhane">🍽️ Merkez Yemekhane</option>
                                     <option value="kutuphane">📚 Merkez Kütüphane</option>
@@ -68,7 +71,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="locationDetail" class="form-label fw-semibold">Detaylı Konum Açıklaması</label>
-                                <input type="text" class="form-control" id="locationDetail" name="locationDetail" placeholder="Örn: 2. kat pencere kenarı masalar" />
+                                <input type="text" class="form-control" id="locationDetail" name="LocationDetail" value="@Model.LocationDetail" placeholder="Örn: 2. kat pencere kenarı masalar" />
                             </div>
                         </div>
 
@@ -77,7 +80,7 @@
 
                         <div class="mb-3">
                             <label for="description" class="form-label fw-semibold">Eşyanın Belirgin Özellikleri</label>
-                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Rengi, markası, üzerinde çizik/etiket var mı?" required></textarea>
+                            <textarea class="form-control" id="description" name="Description" rows="3" placeholder="Rengi, markası, üzerinde çizik/etiket var mı?" required>@Model.Description</textarea>
                         </div>
 
                         <div class="mb-3">
@@ -95,7 +98,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="securityQuestion" class="form-label fw-semibold">Doğrulama Sorunuz</label>
-                                <input type="text" class="form-control" id="securityQuestion" name="securityQuestion" placeholder="Örn: Anahtarlıktaki peluş figür ne?" required />
+                                <input type="text" class="form-control" id="securityQuestion" name="SecurityQuestion" value="@Model.SecurityQuestion" placeholder="Örn: Anahtarlıktaki peluş figür ne?" required />
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="securityAnswer" class="form-label fw-semibold">Beklenen Doğru Cevap</label>
