@@ -1,4 +1,5 @@
-﻿@{
+﻿@model ARABULUCU.Web.Controllers.ItemReportViewModel
+@{
     ViewData["Title"] = "Bulunan Eşya Bildir";
 }
 
@@ -13,20 +14,22 @@
                 </div>
 
                 <div class="card-body p-4">
-                    <form method="post" action="#" enctype="multipart/form-data">
+                    <form method="post" action="/Home/BulunanOlustur" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
                         
                         <!-- 1. Temel Eşya Bilgileri -->
                         <h6 class="fw-bold mb-3 border-bottom pb-2">1. Eşya Bilgileri</h6>
 
                         <div class="mb-3">
                             <label for="title" class="form-label fw-semibold">Bulunan Eşya Başlığı</label>
-                            <input type="text" class="form-control" id="title" name="title" placeholder="Örn: Mavi Termos veya Pembe Kartlık" required />
+                            <input type="text" class="form-control" id="title" name="Title" value="@Model.Title" placeholder="Örn: Mavi Termos veya Pembe Kartlık" required />
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="category" class="form-label fw-semibold">Kategori</label>
-                                <select class="form-select" id="category" name="category" required>
+                                <select class="form-select" id="category" name="Category" required>
                                     <option value="">Seçiniz...</option>
                                     <option value="canta">🎒 Çanta & Sırt Çantası</option>
                                     <option value="anahtar">🔑 Anahtar & Aksesuar</option>
@@ -41,7 +44,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="foundDate" class="form-label fw-semibold">Bulunduğu Tarih & Saat</label>
-                                <input type="datetime-local" class="form-control" id="foundDate" name="foundDate" required />
+                                <input type="datetime-local" class="form-control" id="foundDate" name="ItemDate" value="@Model.ItemDate?.ToString("yyyy-MM-ddTHH:mm")" required />
                             </div>
                         </div>
 
@@ -51,7 +54,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="campusArea" class="form-label fw-semibold">Kampüs Bölgesi</label>
-                                <select class="form-select" id="campusArea" name="campusArea" required>
+                                <select class="form-select" id="campusArea" name="CampusArea" required>
                                     <option value="">Bölge Seçiniz...</option>
                                     <option value="yemekhane">🍽️ Merkez Yemekhane</option>
                                     <option value="kutuphane">📚 Merkez Kütüphane</option>
@@ -68,7 +71,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="locationDetail" class="form-label fw-semibold">Tam Konum / Nerede Bulundu?</label>
-                                <input type="text" class="form-control" id="locationDetail" name="locationDetail" placeholder="Örn: Yemekhane 1. kat sıra masalarının altı" />
+                                <input type="text" class="form-control" id="locationDetail" name="LocationDetail" value="@Model.LocationDetail" placeholder="Örn: Yemekhane 1. kat sıra masalarının altı" />
                             </div>
                         </div>
 
@@ -77,13 +80,13 @@
 
                         <div class="mb-3">
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="itemStatus" id="statusWithMe" value="with_me" checked>
+                                <input class="form-check-input" type="radio" name="ItemStatus" id="statusWithMe" value="with_me" checked="@(Model.ItemStatus != "delivered")">
                                 <label class="form-check-label fw-semibold" for="statusWithMe">
                                     Eşya şu an bende (Sahibi sistem üzerinden benimle iletişime geçsin)
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="itemStatus" id="statusDelivered" value="delivered">
+                                <input class="form-check-input" type="radio" name="ItemStatus" id="statusDelivered" value="delivered" checked="@(Model.ItemStatus == "delivered")">
                                 <label class="form-check-label fw-semibold" for="statusDelivered">
                                     Yetkili birime teslim ettim (Fakülte güvenliği, danışma veya yurt idaresi)
                                 </label>
@@ -92,7 +95,7 @@
 
                         <div class="mb-3">
                             <label for="deliveredTo" class="form-label fw-semibold">Teslim Ettiyseniz Nereye/Kime Bıraktınız?</label>
-                            <input type="text" class="form-control" id="deliveredTo" name="deliveredTo" placeholder="Örn: Mühendislik Fakültesi Zemin Kat Güvenlik Birimi" />
+                            <input type="text" class="form-control" id="deliveredTo" name="DeliveredTo" value="@Model.DeliveredTo" placeholder="Örn: Mühendislik Fakültesi Zemin Kat Güvenlik Birimi" />
                         </div>
 
                         <!-- 4. Fotoğraf & Ayırt Edici Detay -->
@@ -106,7 +109,7 @@
 
                         <div class="mb-3">
                             <label for="securityQuestion" class="form-label fw-semibold">Sahibine Sorulacak Doğrulama Sorusu</label>
-                            <input type="text" class="form-control" id="securityQuestion" name="securityQuestion" placeholder="Örn: Cüzdanın içinde hangi kart vardı? / Çantanın fermuarındaki süs neydi?" required />
+                            <input type="text" class="form-control" id="securityQuestion" name="SecurityQuestion" value="@Model.SecurityQuestion" placeholder="Örn: Cüzdanın içinde hangi kart vardı? / Çantanın fermuarındaki süs neydi?" required />
                             <div class="form-text small text-muted">Gerçek sahibini ayırt etmek için sadece sahibinin bilebileceği bir detay sorusu yazın.</div>
                         </div>
 
