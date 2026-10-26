@@ -51,9 +51,9 @@ public class AccountController : Controller
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors)
+            foreach (var error in result.Errors.Select(error => error.Description).Distinct(StringComparer.Ordinal))
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                ModelState.AddModelError(string.Empty, error);
             }
 
             return View("~/Views/Account/Register.cshtml", model);
