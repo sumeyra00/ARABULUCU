@@ -2,88 +2,216 @@
     ViewData["Title"] = "Ana Sayfa";
 }
 
+@if (TempData["FoundItemSuccess"] is string foundItemSuccess)
+{
+    <div class="container pt-3">
+        <div class="alert alert-success mb-0" role="status">@foundItemSuccess</div>
+    </div>
+}
+
 <!-- HERO BÖLÜMÜ -->
-<section class="py-5 text-center position-relative overflow-hidden" style="background: radial-gradient(circle at 50% 20%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%);">
+<div class="position-relative overflow-hidden py-5" style="background: radial-gradient(circle at 50% 15%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%);">
 
     <!-- Sevimli Süs Figürleri -->
-    <div class="position-absolute d-none d-lg-block" style="top: 10%; left: 8%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">🌸</div>
-    <div class="position-absolute d-none d-lg-block" style="top: 15%; right: 9%; font-size: 2.4rem; transform: rotate(18deg); user-select: none;">🔑</div>
-    <div class="position-absolute d-none d-lg-block" style="bottom: 25%; left: 6%; font-size: 2.2rem; transform: rotate(10deg); user-select: none;">🎒</div>
-    <div class="position-absolute d-none d-lg-block" style="bottom: 20%; right: 7%; font-size: 2.4rem; transform: rotate(-20deg); user-select: none;">👛</div>
-    <div class="position-absolute d-none d-lg-block" style="top: 40%; left: 16%; font-size: 1.6rem; user-select: none;">✨</div>
-    <div class="position-absolute d-none d-lg-block" style="top: 35%; right: 18%; font-size: 1.8rem; user-select: none;">💖</div>
+    <div class="position-absolute d-none d-lg-block" style="top: 12%; left: 4%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">✨</div>
+    <div class="position-absolute d-none d-lg-block" style="top: 15%; right: 5%; font-size: 2rem; transform: rotate(15deg); user-select: none;">💖</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 20%; left: 6%; font-size: 2rem; transform: rotate(10deg); user-select: none;">🌸</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 18%; right: 6%; font-size: 2rem; transform: rotate(-10deg); user-select: none;">🔑</div>
 
-    <div class="container position-relative" style="z-index: 2;">
-        <h1 class="fw-bolder display-5 mb-4 text-dark" style="letter-spacing: -0.5px;">
+    <div class="container position-relative py-4 text-center" style="z-index: 2; max-width: 900px;">
+        
+        <!-- Ana Başlık -->
+        <h1 class="fw-bolder text-dark mb-4 display-5" style="letter-spacing: -1px; line-height: 1.25;">
             Bir şey mi kaybettiniz,<br>yoksa bir şey mi buldunuz?
         </h1>
 
-        <!-- İki Büyük Aksiyon Kartı -->
-        <div class="row g-3 justify-content-center mx-auto mb-4" style="max-width: 860px;">
-            <div class="col-md-6 text-start">
-                <a href="/Home/KayipOlustur" class="d-flex align-items-center gap-3 p-3 rounded-4 text-decoration-none shadow-sm text-white" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
-                    <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0 fs-3" style="width: 60px; height: 60px; background: rgba(255,255,255,0.25);">
-                        🔍
-                    </div>
-                    <div>
-                        <div class="fw-bold fs-4">Bir Şey Kaybettim</div>
-                        <div class="small fw-semibold opacity-75">Kayıp İlanı Ver &rarr;</div>
+        <!-- Eylem Butonları (Kayıp / Bulunan) -->
+        <div class="row g-3 justify-content-center mb-5">
+            <div class="col-sm-6 col-md-5">
+                <a href="/Home/KayipOlustur" class="card border-0 text-decoration-none shadow-sm h-100 rounded-4 overflow-hidden" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                    <div class="card-body p-3 p-md-4 d-flex align-items-center gap-3 text-white text-start">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: rgba(255, 255, 255, 0.25); font-size: 1.5rem; flex-shrink: 0;">
+                            🔍
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">Bir Şey Kaybettim</h5>
+                            <small class="text-white-50">Kayıp İlanı Ver &rarr;</small>
+                        </div>
                     </div>
                 </a>
             </div>
-
-            <div class="col-md-6 text-start">
-                <a href="/Home/BulunanOlustur" class="d-flex align-items-center gap-3 p-3 rounded-4 text-decoration-none shadow-sm text-dark border" style="background: #FFF3F6; border-color: #FFD9E2 !important;">
-                    <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0 fs-3" style="width: 60px; height: 60px; background: #FFE2EA;">
-                        🎁
-                    </div>
-                    <div>
-                        <div class="fw-bold fs-4">Bir Şey Buldum</div>
-                        <div class="small fw-semibold text-secondary">Bulunan Eşya Bildir &rarr;</div>
+            <div class="col-sm-6 col-md-5">
+                <a href="/Home/BulunanOlustur" class="card border text-decoration-none shadow-sm h-100 rounded-4 overflow-hidden" style="background: #FFF5F7; border-color: #FFD9E2 !important; transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                    <div class="card-body p-3 p-md-4 d-flex align-items-center gap-3 text-start">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: #FFE2EA; font-size: 1.5rem; flex-shrink: 0;">
+                            🎁
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0 text-dark">Bir Şey Buldum</h5>
+                            <small class="text-muted">Bulunan Eşya Bildir &rarr;</small>
+                        </div>
                     </div>
                 </a>
             </div>
         </div>
+        <!-- Arama ve Filtre Çubuğu -->
+<div class="card border-0 shadow-sm rounded-pill p-2 bg-white mx-auto" style="max-width: 920px; border: 1.5px solid #FFD9E2 !important;">
+    <div class="row g-2 align-items-center px-3 py-1">
+        
+        <!-- Arama Kelimesi -->
+        <div class="col-md-4 d-flex align-items-center gap-2 border-end-md">
+            <span class="text-muted fs-5">🔍</span>
+            <input type="text" class="form-control border-0 shadow-none px-1 small" placeholder="Ne arıyorsunuz? (Örn: Cüzdan, USB...)" />
+        </div>
 
-        <!-- Oval Arama Barı -->
-        <div class="bg-white rounded-pill p-2 shadow-sm border d-flex align-items-center mx-auto flex-wrap" style="max-width: 920px; border-color: rgba(255, 94, 126, 0.2) !important;">
-            <div class="d-flex align-items-center flex-grow-1 px-3">
-                <i class="bi bi-search text-muted me-2"></i>
-                <input type="text" class="form-control border-0 shadow-none bg-transparent" placeholder="Ne arıyorsunuz? (Örn: Cüzdan, Kartlık, Kulaklık...)" />
+        <!-- Kategori (Datalist: Hem Seçilebilir Hem Yazılabilir) -->
+        <div class="col-md-4 border-end-md">
+            <input list="kategoriListesi" class="form-control border-0 shadow-none small text-dark" placeholder="Kategori seçin veya yazın..." />
+            <datalist id="kategoriListesi">
+                <option value="Cüzdan & Para"></option>
+                <option value="Öğrenci Kimliği & Kart"></option>
+                <option value="Anahtar & Anahtarlık"></option>
+                <option value="Telefon & Tablet"></option>
+                <option value="Dizüstü Bilgisayar & Şarj"></option>
+                <option value="Kulaklık & Aksesuar"></option>
+                <option value="Çanta & Sırt Çantası"></option>
+                <option value="Gözlük & Saat"></option>
+                <option value="Giyim, Mont & Atkı"></option>
+                <option value="Kitap, Defter & Not"></option>
+                <option value="Su Matarası & Termos"></option>
+                <option value="Diğer Kişisel Eşyalar"></option>
+            </datalist>
+        </div>
+
+        <!-- Konum / Fakülteler (Datalist: SCÜ Yerleşkesi) -->
+        <div class="col-md-4">
+            <input list="konumListesi" class="form-control border-0 shadow-none small text-dark" placeholder="Konum seçin veya yazın..." />
+            <datalist id="konumListesi">
+                <!-- Ortak Alanlar -->
+                <option value="Merkez Yemekhane"></option>
+                <option value="Merkez Kütüphane"></option>
+                <option value="Merkezi Kafeterya"></option>
+                <option value="Öğrenci İşleri Daire Bşk."></option>
+                <option value="Kapalı Spor Salonu"></option>
+                <option value="Stadyum & Halı Sahalar"></option>
+                <option value="Kültür Merkezi"></option>
+                <!-- Fakülteler -->
+                <option value="Mühendislik Fakültesi"></option>
+                <option value="Tıp Fakültesi"></option>
+                <option value="Diş Hekimliği Fakültesi"></option>
+                <option value="Eczacılık Fakültesi"></option>
+                <option value="Sağlık Bilimleri Fakültesi"></option>
+                <option value="Fen Fakültesi"></option>
+                <option value="Edebiyat Fakültesi"></option>
+                <option value="İktisadi ve İdari Bilimler Fakültesi"></option>
+                <option value="İlahiyat Fakültesi"></option>
+                <option value="Eğitim Fakültesi"></option>
+                <option value="İletişim Fakültesi"></option>
+                <option value="Mimarlık, Güzel Sanatlar ve Tasarım Fakültesi"></option>
+                <option value="Hukuk Fakültesi"></option>
+                <option value="Turizm Fakültesi"></option>
+                <option value="Veteriner Fakültesi"></option>
+                <option value="Sivas Teknik Bilimler MYO"></option>
+                <option value="Cumhuriyet MYO"></option>
+            </datalist>
+        </div>
+
+    </div>
+</div>
+
+                <!-- Kategori Seçimi -->
+                <div class="col-md-3 border-end-md">
+                    <select class="form-select border-0 shadow-none small text-secondary">
+                        <option selected>Kategori Seçin</option>
+                        <option value="1">Elektronik</option>
+                        <option value="2">Çanta & Cüzdan</option>
+                        <option value="3">Kimlik & Kart</option>
+                        <option value="4">Giyim & Aksesuar</option>
+                        <option value="5">Diğer</option>
+                    </select>
+                </div>
+
+                <!-- Konum Seçimi -->
+                <div class="col-md-4">
+                    <select class="form-select border-0 shadow-none small text-secondary">
+                        <option selected>Konum (Tüm Kampüs)</option>
+                        <option value="1">Merkez Yemekhane</option>
+                        <option value="2">Merkez Kütüphane</option>
+                        <option value="3">Mühendislik Fakültesi</option>
+                        <option value="4">İktisadi ve İdari Bil. Fak.</option>
+                        <option value="5">Spor Salonu / Çevresi</option>
+                    </select>
+                </div>
+
             </div>
+        </div>
 
-            <div class="vr d-none d-md-block my-2" style="background-color: #E2E8F0;"></div>
+    </div>
+</div>
 
-            <div class="flex-grow-1 d-none d-md-block px-2">
-                <select class="form-select border-0 shadow-none bg-transparent">
-                    <option value="">Kategori Seçin</option>
-                    <option>🎒 Çanta & Sırt Çantası</option>
-                    <option>🔑 Anahtar & Aksesuar</option>
-                    <option>👛 Cüzdan & Öğrenci Kimliği</option>
-                    <option>🎧 Kulaklık & Elektronik</option>
-                    <option>📱 Telefon & Şarj Aleti</option>
-                    <option>⌚ Akıllı Saat & Takı</option>
-                    <option>📚 Kitap & Ders Notu</option>
-                </select>
+<!-- SON İLANLAR VİTRİNİ -->
+<div class="container py-5">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1">Son Bildirilen Eşyalar</h4>
+            <p class="text-muted small mb-0">Kampüste son 24 saatte paylaşılan güncel ilanlar</p>
+        </div>
+        <a href="#" class="btn btn-sm btn-pink-outline rounded-pill px-3 py-2 fw-semibold">Tümünü Gör</a>
+    </div>
+
+    <div class="row g-4">
+        <!-- İlan Kartı 1 -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="background: white; border: 1px solid #FFE2EA !important;">
+                <div class="p-4 text-center" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFF7F9 100%);">
+                    <div style="font-size: 3.5rem;">🎒</div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge rounded-pill text-white px-3 py-1 small" style="background: #FF6082;">Kayıp</span>
+                        <span class="small text-muted">2 saat önce</span>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-1">Siyah Deri Sırt Çantası</h6>
+                    <p class="text-muted small mb-3">📍 Merkez Kütüphane (2. Kat)</p>
+                    <a href="/Home/Detay" class="btn btn-sm w-100 rounded-pill fw-semibold" style="background: #FFF0F4; color: #FF416C; border: 1px solid #FFD9E2;">Detayları Gör</a>
+                </div>
             </div>
+        </div>
 
-            <div class="vr d-none d-lg-block my-2" style="background-color: #E2E8F0;"></div>
-
-            <div class="flex-grow-1 d-none d-lg-block px-2">
-                <select class="form-select border-0 shadow-none bg-transparent">
-                    <option value="">Konum (Tüm Kampüs)</option>
-                    <option>📍 Tüm Kampüs Alanları</option>
-                    <option>🍽️ Merkez Yemekhane</option>
-                    <option>🏢 Kız Öğrenci Yurdu (KYK)</option>
-                    <option>🏢 Erkek Öğrenci Yurdu (KYK)</option>
-                    <option>☕ Kampüs Kafeler & Çarşı Alanı</option>
-                    <option>🏥 Tıp Fakültesi Hastanesi</option>
-                    <option>📚 Merkez Kütüphane</option>
-                    <option>⚙️ Mühendislik Fakültesi</option>
-                    <option>📖 Eğitim Fakültesi</option>
-                    <option>🔬 Fen-Edebiyat Fakültesi</option>
-                    <option>💼 İİBF</option>
-                </select>
+        <!-- İlan Kartı 2 -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="background: white; border: 1px solid #FFE2EA !important;">
+                <div class="p-4 text-center" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFF7F9 100%);">
+                    <div style="font-size: 3.5rem;">💳</div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge rounded-pill text-white px-3 py-1 small" style="background: #10B981;">Bulundu</span>
+                        <span class="small text-muted">Dün</span>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-1">Öğrenci Kimlik Kartı</h6>
+                    <p class="text-muted small mb-3">📍 Yemekhane Girişi</p>
+                    <a href="/Home/Detay" class="btn btn-sm w-100 rounded-pill fw-semibold" style="background: #FFF0F4; color: #FF416C; border: 1px solid #FFD9E2;">Detayları Gör</a>
+                </div>
             </div>
+        </div>
 
-            <button class="btn rounded-pill px-4 py-2 text-white fw-bold shadow-sm" style="background: linear-gradient(135deg, #FF6082 0
+        <!-- İlan Kartı 3 -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="background: white; border: 1px solid #FFE2EA !important;">
+                <div class="p-4 text-center" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFF7F9 100%);">
+                    <div style="font-size: 3.5rem;">🔑</div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge rounded-pill text-white px-3 py-1 small" style="background: #FF6082;">Kayıp</span>
+                        <span class="small text-muted">3 gün önce</span>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-1">Mavi Anahtarlık & 2 Anahtar</h6>
+                    <p class="text-muted small mb-3">📍 Mühendislik Fakültesi B Blok</p>
+                    <a href="/Home/Detay" class="btn btn-sm w-100 rounded-pill fw-semibold" style="background: #FFF0F4; color: #FF416C; border: 1px solid #FFD9E2;">Detayları Gör</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

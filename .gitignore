@@ -27,6 +27,9 @@ secrets.json
 # database files
 *.db
 *.sqlite
+*.db-shm
+*.db-wal
+*.sqbpro
 
 # npm
 node_modules/

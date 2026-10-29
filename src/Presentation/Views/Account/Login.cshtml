@@ -1,79 +1,51 @@
-﻿@model ARABULUCU.Web.Controllers.LoginViewModel
+@model LoginViewModel
+
 @{
     ViewData["Title"] = "Giriş Yap";
 }
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-
-            <div class="card shadow-sm border rounded-3">
-                <div class="card-body p-4">
-
-                    <!-- Başlık & Bilgi -->
-                    <h3 class="card-title text-center mb-1 fw-bold">Giriş Yap</h3>
-                    <p class="text-center text-muted small mb-4">
-                        Kayıp veya bulunan eşyalarınızı yönetmek için giriş yapın.
-                    </p>
-
-                    <!-- Giriş Formu -->
-                    <form method="post" action="/Account/Login">
-                        @Html.AntiForgeryToken()
-                        @if (TempData["SuccessMessage"] is string successMessage)
-                        {
-                            <div class="alert alert-success" role="alert">@successMessage</div>
-                        }
-                        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
-
-                        <!-- E-posta -->
-                        <div class="mb-3">
-                            <label for="email" class="form-label fw-semibold">E-posta Adresi</label>
-                            <input type="email" class="form-control" id="email" name="Email" value="@Model.Email" placeholder="ornek@cumhuriyet.edu.tr" required />
-                        </div>
-
-                        <!-- Şifre -->
-                        <div class="mb-3">
-                            <label for="password" class="form-label fw-semibold">Şifre</label>
-                            <input type="password" class="form-control" id="password" name="Password" placeholder="••••••••" required />
-                        </div>
-
-                        <!-- Beni Hatırla & Şifremi Unuttum -->
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="rememberMe" name="RememberMe" value="true" />
-                                <label class="form-check-label small" for="rememberMe">Beni Hatırla</label>
-                            </div>
-                            <a href="#" class="small text-decoration-none">Şifremi Unuttum?</a>
-                        </div>
-
-                        <!-- Giriş Butonu -->
-                        <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary fw-bold py-2">Giriş Yap</button>
-                        </div>
-
-                        <!-- Ayraç -->
-                        <div class="text-center my-3">
-                            <span class="text-muted small">veya</span>
-                        </div>
-
-                        <!-- Google ile Giriş -->
-                        <div class="d-grid mb-3">
-                            <button type="button" class="btn btn-outline-secondary py-2">
-                                Google ile Devam Et
-                            </button>
-                        </div>
-
-                    </form>
-
+<div class="position-relative overflow-hidden py-5 d-flex align-items-center justify-content-center" style="background: radial-gradient(circle at 50% 20%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: calc(100vh - 160px);">
+    <div class="container position-relative" style="z-index: 2; max-width: 440px;">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-body p-4 p-sm-5">
+                <div class="text-center mb-4">
+                    <div class="rounded-circle text-white d-inline-flex align-items-center justify-content-center shadow-sm mb-3" style="width: 52px; height: 52px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); font-size: 1.5rem;">🔐</div>
+                    <h3 class="fw-bold text-dark mb-1">Giriş Yap</h3>
+                    <p class="text-muted small mb-0">Kayıp veya bulunan eşyalarınızı yönetmek için giriş yapın.</p>
                 </div>
 
-                <!-- Alt Yönlendirme (Kayıt Ol) -->
-                <div class="card-footer bg-light text-center py-3">
-                    <span class="small text-muted">Henüz hesabınız yok mu? </span>
-                    <a href="/Account/Register" class="small text-decoration-none fw-bold">Üye Ol</a>
-                </div>
+                @if (TempData["SuccessMessage"] is string successMessage)
+                {
+                    <div class="alert alert-success" role="status">@successMessage</div>
+                }
+
+                <form asp-controller="Account" asp-action="Login" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    <input asp-for="ReturnUrl" type="hidden" />
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label fw-semibold"></label>
+                        <input asp-for="Email" class="form-control" placeholder="ornek@cumhuriyet.edu.tr" autocomplete="email" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label fw-semibold"></label>
+                        <input asp-for="Password" class="form-control" placeholder="Şifreniz" autocomplete="current-password" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+                    <div class="form-check mb-4">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label">Beni hatırla</label>
+                    </div>
+                    <button type="submit" class="btn w-100 rounded-pill py-2 fw-bold text-white" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">Giriş Yap</button>
+                </form>
             </div>
-
+            <div class="card-footer border-top-0 py-3 text-center" style="background-color: #FFF0F4;">
+                <p class="mb-0 small text-muted">
+                    Henüz hesabınız yok mu?
+                    <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" class="fw-bold text-decoration-none" style="color: #FF416C;">Üye Ol</a>
+                </p>
+            </div>
         </div>
     </div>
 </div>
