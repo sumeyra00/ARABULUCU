@@ -1,9 +1,12 @@
 using ARABULUCU.DAL.Data;
 using ARABULUCU.ENT.Entities;
 using ARABULUCU.Web.Models.Account;
+using ARABULUCU.Web.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Text;
 
 namespace ARABULUCU.Web.Controllers;
 
@@ -13,17 +16,20 @@ public class AccountController : Controller
     private readonly UserManager<IdentityUser> _userManager;
     private readonly SignInManager<IdentityUser> _signInManager;
     private readonly ILogger<AccountController> _logger;
+    private readonly IAccountEmailSender _emailSender;
 
     public AccountController(
         ApplicationDbContext dbContext,
         UserManager<IdentityUser> userManager,
         SignInManager<IdentityUser> signInManager,
-        ILogger<AccountController> logger)
+        ILogger<AccountController> logger,
+        IAccountEmailSender emailSender)
     {
         _dbContext = dbContext;
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
+        _emailSender = emailSender;
     }
 
     [HttpGet]
@@ -97,6 +103,120 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult Login(string? returnUrl = null) =>
         View(new LoginViewModel { ReturnUrl = returnUrl });
+
+    [HttpGet]
+    public IActionResult ForgotPassword() => View(new ForgotPasswordViewModel());
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var user = await _userManager.FindByEmailAsync(model.Email.Trim());
+        if (user is not null)
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var resetUrl = Url.Action(
+                nameof(ResetPassword),
+                "Account",
+                new { email = user.Email, code = encodedToken },
+                Request.Scheme);
+
+            if (resetUrl is null)
+            {
+                throw new InvalidOperationException("Could not generate the password reset URL.");
+            }
+
+            try
+            {
+                await _emailSender.SendPasswordResetLinkAsync(user.Email!, resetUrl);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Could not send a password reset email to {Email}.", user.Email);
+            }
+        }
+
+        return RedirectToAction(nameof(ForgotPasswordConfirmation));
+    }
+
+    [HttpGet]
+    public IActionResult ForgotPasswordConfirmation() => View();
+
+    [HttpGet]
+    public IActionResult ResetPassword(string? email, string? code)
+    {
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(code))
+        {
+            return BadRequest("Şifre sıfırlama bağlantısı geçersiz veya eksik.");
+        }
+
+        try
+        {
+            WebEncoders.Base64UrlDecode(code);
+            return View(new ResetPasswordViewModel { Email = email, Code = code });
+        }
+        catch (FormatException)
+        {
+            return BadRequest("Şifre sıfırlama bağlantısı geçersiz veya eksik.");
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        string token;
+        try
+        {
+            token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Code));
+        }
+        catch (FormatException)
+        {
+            ModelState.AddModelError(string.Empty, "Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş.");
+            return View(model);
+        }
+
+        var user = await _userManager.FindByEmailAsync(model.Email.Trim());
+        if (user is null)
+        {
+            ModelState.AddModelError(string.Empty, "Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş.");
+            return View(model);
+        }
+
+        var result = await _userManager.ResetPasswordAsync(user, token, model.Password);
+        if (!result.Succeeded)
+        {
+            _logger.LogWarning(
+                "Password reset failed for user {UserId}. Identity errors: {ErrorCodes}",
+                user.Id,
+                string.Join(", ", result.Errors.Select(error => error.Code)));
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    error.Code == "InvalidToken"
+                        ? "Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş."
+                        : GetLocalizedError(error));
+            }
+
+            return View(model);
+        }
+
+        TempData["SuccessMessage"] = "Şifreniz yenilendi. Yeni şifrenizle giriş yapabilirsiniz.";
+        return RedirectToAction(nameof(Login));
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]

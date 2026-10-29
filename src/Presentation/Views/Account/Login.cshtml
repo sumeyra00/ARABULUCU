@@ -37,6 +37,9 @@
                         <input asp-for="RememberMe" class="form-check-input" />
                         <label asp-for="RememberMe" class="form-check-label">Beni hatırla</label>
                     </div>
+                    <div class="text-end mb-3">
+                        <a asp-controller="Account" asp-action="ForgotPassword" class="small text-decoration-none" style="color: #FF416C;">Şifremi Unuttum</a>
+                    </div>
                     <button type="submit" class="btn w-100 rounded-pill py-2 fw-bold text-white" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">Giriş Yap</button>
                 </form>
             </div>

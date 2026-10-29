@@ -4,12 +4,15 @@ using ARABULUCU.DAL.Repositories;
 using ARABULUCU.ENT.Entities;
 using ARABULUCU.Web.Hubs;
 using ARABULUCU.Web.Data;
+using ARABULUCU.Web.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // MVC hizmetleri
 builder.Services.AddControllersWithViews();
+builder.Services.AddDataProtection().SetApplicationName("ARABULUCU");
 
 // DbContext: burada geliştirme için SQLite kullanalım. Connection string appsettings.json'dan alınabilir.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -27,6 +30,8 @@ builder.Services
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.AddTransient<IAccountEmailSender, SmtpAccountEmailSender>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
