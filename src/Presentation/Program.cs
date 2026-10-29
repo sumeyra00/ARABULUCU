@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ARABULUCU.DAL.Data;
 using ARABULUCU.DAL.Repositories;
+using ARABULUCU.BLL.Services;
 using ARABULUCU.ENT.Entities;
 using ARABULUCU.Web.Hubs;
 using ARABULUCU.Web.Data;
@@ -41,6 +42,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // DAL repository kayıtları (IItemRepository kullanılıyor)
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
+builder.Services.AddScoped<IVehicleListingService, VehicleListingService>();
 
 // SignalR hub kaydı (chat için)
 builder.Services.AddSignalR();
@@ -56,9 +58,9 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();

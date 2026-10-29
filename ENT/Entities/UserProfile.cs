@@ -11,5 +11,6 @@ namespace ARABULUCU.ENT.Entities
 
         public ICollection<LostItem> LostItems { get; set; } = new List<LostItem>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+        public ICollection<VehicleListing> VehicleListings { get; set; } = new List<VehicleListing>();
     }
 }

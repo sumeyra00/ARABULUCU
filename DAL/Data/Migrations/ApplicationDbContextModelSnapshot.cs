@@ -79,6 +79,21 @@ namespace ARABULUCU.DAL.Data.Migrations
                     b.ToTable("ContactMessages");
                 });
 
+            modelBuilder.Entity("ARABULUCU.ENT.Entities.ListingFeature", b =>
+                {
+                    b.Property<int>("VehicleListingId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("VehicleFeatureId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("VehicleListingId", "VehicleFeatureId");
+
+                    b.HasIndex("VehicleFeatureId");
+
+                    b.ToTable("ListingFeatures");
+                });
+
             modelBuilder.Entity("ARABULUCU.ENT.Entities.LostItem", b =>
                 {
                     b.Property<int>("Id")
@@ -195,6 +210,113 @@ namespace ARABULUCU.DAL.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("UserProfiles");
+                });
+
+            modelBuilder.Entity("ARABULUCU.ENT.Entities.VehicleFeature", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsHiddenFeature")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("VehicleFeatures");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Description = "Açılır cam tavan",
+                            IsHiddenFeature = false,
+                            Name = "Sunroof"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Description = "Ön veya arka koltuk ısıtma sistemi",
+                            IsHiddenFeature = false,
+                            Name = "Isıtmalı Koltuk"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Description = "LED ön far sistemi",
+                            IsHiddenFeature = false,
+                            Name = "LED Far"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Description = "Park manevralarını destekleyen kamera",
+                            IsHiddenFeature = false,
+                            Name = "Geri Görüş Kamerası"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Description = "Gösterge paneli açılış animasyonu",
+                            IsHiddenFeature = true,
+                            Name = "Kadran Selamlama"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Description = "Araç bilgi-eğlence sistemindeki gizli menü",
+                            IsHiddenFeature = true,
+                            Name = "Gizli Menü Aktivasyonu"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Description = "Sinyal lambalarının park aydınlatması olarak kullanımı",
+                            IsHiddenFeature = true,
+                            Name = "Amerikan Park"
+                        });
+                });
+
+            modelBuilder.Entity("ARABULUCU.ENT.Entities.VehicleListing", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Mileage")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("VehicleListings");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -389,6 +511,25 @@ namespace ARABULUCU.DAL.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ARABULUCU.ENT.Entities.ListingFeature", b =>
+                {
+                    b.HasOne("ARABULUCU.ENT.Entities.VehicleFeature", "VehicleFeature")
+                        .WithMany("Listings")
+                        .HasForeignKey("VehicleFeatureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ARABULUCU.ENT.Entities.VehicleListing", "VehicleListing")
+                        .WithMany("Features")
+                        .HasForeignKey("VehicleListingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("VehicleFeature");
+
+                    b.Navigation("VehicleListing");
+                });
+
             modelBuilder.Entity("ARABULUCU.ENT.Entities.LostItem", b =>
                 {
                     b.HasOne("ARABULUCU.ENT.Entities.Category", "Category")
@@ -421,6 +562,17 @@ namespace ARABULUCU.DAL.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("LostItem");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ARABULUCU.ENT.Entities.VehicleListing", b =>
+                {
+                    b.HasOne("ARABULUCU.ENT.Entities.UserProfile", "User")
+                        .WithMany("VehicleListings")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -486,6 +638,18 @@ namespace ARABULUCU.DAL.Data.Migrations
                     b.Navigation("LostItems");
 
                     b.Navigation("Notifications");
+
+                    b.Navigation("VehicleListings");
+                });
+
+            modelBuilder.Entity("ARABULUCU.ENT.Entities.VehicleFeature", b =>
+                {
+                    b.Navigation("Listings");
+                });
+
+            modelBuilder.Entity("ARABULUCU.ENT.Entities.VehicleListing", b =>
+                {
+                    b.Navigation("Features");
                 });
 #pragma warning restore 612, 618
         }
