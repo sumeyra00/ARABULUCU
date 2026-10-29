@@ -1,0 +1,104 @@
+@model ARABULUCU.Web.Controllers.CreateVehicleListingViewModel
+@{
+    ViewData["Title"] = "Araç İlanı Oluştur";
+    var standardFeatures = Model.Features.Where(feature => !feature.IsHiddenFeature);
+    var hiddenFeatures = Model.Features.Where(feature => feature.IsHiddenFeature);
+}
+
+<div class="container py-5" style="max-width: 900px;">
+    <div class="mb-3">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border">
+            &larr; Ana Sayfaya Dön
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header border-0 py-4 px-4 px-md-5 text-center" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
+            <h1 class="h3 fw-bold mb-1">Araç İlanı Oluştur</h1>
+            <p class="text-muted mb-0">Araç bilgilerini girin, donanım ve aktivasyon özelliklerini seçin.</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+            @if (TempData["SuccessMessage"] is string successMessage)
+            {
+                <div class="alert alert-success" role="status">@successMessage</div>
+            }
+
+            <form action="/VehicleListing/Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <h2 class="h5 fw-bold border-bottom pb-2 mb-3">Araç Bilgileri</h2>
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label fw-semibold">İlan başlığı</label>
+                    <input asp-for="Title" class="form-control" placeholder="Örn: 2019 model bakımlı sedan" />
+                    <span asp-validation-for="Title" class="text-danger small"></span>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Price" class="form-label fw-semibold">Fiyat (TL)</label>
+                        <input asp-for="Price" class="form-control" type="number" min="0.01" step="0.01" />
+                        <span asp-validation-for="Price" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Mileage" class="form-label fw-semibold">Kilometre</label>
+                        <input asp-for="Mileage" class="form-control" type="number" min="0" step="1" />
+                        <span asp-validation-for="Mileage" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label asp-for="Description" class="form-label fw-semibold">Açıklama</label>
+                    <textarea asp-for="Description" class="form-control" rows="4" placeholder="Araç durumu, bakım geçmişi ve diğer detaylar"></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+
+                <h2 class="h5 fw-bold border-bottom pb-2 mb-3">Araç Özellikleri</h2>
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <fieldset class="h-100 border rounded-4 p-3">
+                            <legend class="float-none w-auto px-2 fs-6 fw-bold">Standart / Açık Özellikler</legend>
+                            <p class="small text-muted">İlanda herkese gösterilecek özellikler</p>
+                            @foreach (var feature in standardFeatures)
+                            {
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="SelectedFeatureIds" value="@feature.Id"
+                                           id="feature-@feature.Id" checked="@Model.SelectedFeatureIds.Contains(feature.Id)" />
+                                    <label class="form-check-label" for="feature-@feature.Id">
+                                        <span class="fw-semibold">@feature.Name</span>
+                                        <span class="d-block small text-muted">@feature.Description</span>
+                                    </label>
+                                </div>
+                            }
+                        </fieldset>
+                    </div>
+                    <div class="col-lg-6">
+                        <fieldset class="h-100 border rounded-4 p-3">
+                            <legend class="float-none w-auto px-2 fs-6 fw-bold">Aktivasyon Yapılabilir Gizli Özellikler</legend>
+                            <p class="small text-muted">Araçta etkinleştirilebilen özellikler</p>
+                            @foreach (var feature in hiddenFeatures)
+                            {
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="SelectedFeatureIds" value="@feature.Id"
+                                           id="feature-@feature.Id" checked="@Model.SelectedFeatureIds.Contains(feature.Id)" />
+                                    <label class="form-check-label" for="feature-@feature.Id">
+                                        <span class="fw-semibold">@feature.Name</span>
+                                        <span class="d-block small text-muted">@feature.Description</span>
+                                    </label>
+                                </div>
+                            }
+                        </fieldset>
+                    </div>
+                </div>
+                <span asp-validation-for="SelectedFeatureIds" class="text-danger small"></span>
+
+                <button type="submit" class="btn btn-pink-gradient w-100 rounded-pill py-3 fw-bold mt-4">
+                    Araç İlanını Kaydet
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

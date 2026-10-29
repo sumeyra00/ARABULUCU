@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-	<ProjectReference Include="..\..\src\Core\ARABULUCU.Core.csproj" />
+	<ProjectReference Include="..\..\BLL\ARABULUCU.BLL.csproj" />
+	<ProjectReference Include="..\..\DAL\ARABULUCU.DAL.csproj" />
   </ItemGroup>
 </Project>
