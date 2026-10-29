@@ -25,7 +25,17 @@
                                 <td><strong>@item.Title</strong></td>
                                 <td>@item.Category</td>
                                 <td><small class="text-muted">@item.Location</small></td>
-                                <td><small class="text-muted">@item.Date.ToString("dd.MM.yyyy HH:mm")</small></td>
+                                <td>
+                                    <small class="text-muted">@item.Date.ToString("dd.MM.yyyy HH:mm")</small><br />
+                                    @if (item.IsItemFound)
+                                    {
+                                        <span class="badge text-bg-success">Bulundu</span>
+                                    }
+                                    @if (item.IsDelivered)
+                                    {
+                                        <span class="badge text-bg-secondary">Teslim edildi</span>
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>

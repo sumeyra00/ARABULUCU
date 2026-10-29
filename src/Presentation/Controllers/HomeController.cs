@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using ARABULUCU.BLL.DTOs;
+using ARABULUCU.BLL.Services;
 using ARABULUCU.DAL.Data;
 using ARABULUCU.ENT.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -44,14 +46,35 @@ public class HomeController : Controller
 
     private readonly ApplicationDbContext _dbContext;
     private readonly IWebHostEnvironment _environment;
+    private readonly ILostItemListingService _listingService;
 
-    public HomeController(ApplicationDbContext dbContext, IWebHostEnvironment environment)
+    public HomeController(
+        ApplicationDbContext dbContext,
+        IWebHostEnvironment environment,
+        ILostItemListingService listingService)
     {
         _dbContext = dbContext;
         _environment = environment;
+        _listingService = listingService;
     }
 
-    public IActionResult Index() => View();
+    [HttpGet]
+    public async Task<IActionResult> Index([FromQuery] ItemSearchCriteria criteria)
+    {
+        var result = await _listingService.SearchAsync(criteria);
+        ViewBag.Categories = await _dbContext.Categories
+            .AsNoTracking()
+            .OrderBy(category => category.Name)
+            .Select(category => category.Name)
+            .ToListAsync();
+
+        return View(new ItemSearchViewModel
+        {
+            Criteria = criteria,
+            Items = result.Items,
+            ValidationError = result.ValidationError
+        });
+    }
 
     public IActionResult Login() => RedirectToAction("Login", "Account");
 
@@ -64,8 +87,8 @@ public class HomeController : Controller
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public Task<IActionResult> KayipOlustur(ItemReportViewModel model) =>
-        SaveItemAsync(model, isFound: false);
+    public Task<IActionResult> KayipOlustur(ItemReportViewModel report) =>
+        SaveItemAsync(report, isFound: false);
 
     [Authorize]
     [HttpGet]
@@ -74,8 +97,8 @@ public class HomeController : Controller
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public Task<IActionResult> BulunanOlustur(ItemReportViewModel model) =>
-        SaveItemAsync(model, isFound: true);
+    public Task<IActionResult> BulunanOlustur(ItemReportViewModel report) =>
+        SaveItemAsync(report, isFound: true);
 
     [Authorize]
     [HttpGet]
@@ -104,8 +127,10 @@ public class HomeController : Controller
                 Title = item.Title,
                 Category = item.Category.Name,
                 Location = item.Location,
-                Date = item.CreatedAt,
-                IsFound = item.IsFound
+                Date = item.EventDate,
+                IsFound = item.IsFound,
+                IsItemFound = item.IsItemFound,
+                IsDelivered = item.IsDelivered
             })
             .ToListAsync();
 
@@ -118,7 +143,21 @@ public class HomeController : Controller
         });
     }
 
-    public IActionResult Detay() => View("~/Views/Ilan/Detay.cshtml");
+    [HttpGet]
+    public async Task<IActionResult> Detay(int? ilanId, int? id)
+    {
+        var item = await _listingService.GetByIdAsync(ilanId ?? id ?? 0);
+        if (item is null)
+        {
+            return View("~/Views/Ilan/Detay.cshtml", new ItemDetailViewModel());
+        }
+
+        return View("~/Views/Ilan/Detay.cshtml", new ItemDetailViewModel
+        {
+            Item = item,
+            Recommendations = await _listingService.GetRecommendationsAsync(item)
+        });
+    }
 
     public IActionResult Mesajlar() => View("~/Views/Home/Mesajlar.cshtml");
 
@@ -229,8 +268,11 @@ public class HomeController : Controller
                     : model.Description.Trim(),
                 ImagePath = imagePath,
                 Location = location,
-                CreatedAt = model.ItemDate!.Value,
+                CreatedAt = DateTime.UtcNow,
+                EventDate = model.ItemDate!.Value,
                 IsFound = isFound,
+                IsItemFound = isFound,
+                IsDelivered = isFound && model.ItemStatus == "delivered",
                 UserId = userId,
                 Category = category
             };
@@ -248,6 +290,10 @@ public class HomeController : Controller
                     IsHidden = true
                 }
             };
+
+            AddVisibleFeature(features, lostItem.Id, "Brand", model.Brand);
+            AddVisibleFeature(features, lostItem.Id, "Model", model.Model);
+            AddVisibleFeature(features, lostItem.Id, "Color", model.Color);
 
             if (!isFound)
             {
@@ -307,6 +353,19 @@ public class HomeController : Controller
             : "Kayıp ilanınız yayınlandı ve kaydedildi.";
         return RedirectToAction(nameof(Profil));
     }
+
+    private static void AddVisibleFeature(List<LostItemFeature> features, int itemId, string key, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            features.Add(new LostItemFeature
+            {
+                LostItemId = itemId,
+                Key = key,
+                Value = value.Trim()
+            });
+        }
+    }
 }
 
 public class ItemReportViewModel
@@ -329,6 +388,15 @@ public class ItemReportViewModel
 
     [StringLength(2000)]
     public string? Description { get; set; }
+
+    [StringLength(100)]
+    public string? Brand { get; set; }
+
+    [StringLength(100)]
+    public string? Model { get; set; }
+
+    [StringLength(100)]
+    public string? Color { get; set; }
 
     [StringLength(300)]
     public string? SecurityQuestion { get; set; }
@@ -360,4 +428,19 @@ public class UserItemViewModel
     public string Location { get; set; } = string.Empty;
     public DateTime Date { get; set; }
     public bool IsFound { get; set; }
+    public bool IsItemFound { get; set; }
+    public bool IsDelivered { get; set; }
+}
+
+public class ItemSearchViewModel
+{
+    public ItemSearchCriteria Criteria { get; set; } = new();
+    public IReadOnlyList<LostItem> Items { get; set; } = [];
+    public string? ValidationError { get; set; }
+}
+
+public class ItemDetailViewModel
+{
+    public LostItem? Item { get; set; }
+    public IReadOnlyList<RecommendedItem> Recommendations { get; set; } = [];
 }

@@ -80,6 +80,23 @@
                         <span asp-validation-for="Description" class="text-danger small"></span>
                     </div>
                     <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Brand" class="form-label fw-semibold">Marka (isteğe bağlı)</label>
+                            <input asp-for="Brand" class="form-control" />
+                            <span asp-validation-for="Brand" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Model" class="form-label fw-semibold">Model (isteğe bağlı)</label>
+                            <input asp-for="Model" class="form-control" />
+                            <span asp-validation-for="Model" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Color" class="form-label fw-semibold">Renk (isteğe bağlı)</label>
+                            <input asp-for="Color" class="form-control" />
+                            <span asp-validation-for="Color" class="text-danger small"></span>
+                        </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="SecurityQuestion" class="form-label fw-semibold">Doğrulama Sorusu</label>
                             <input asp-for="SecurityQuestion" class="form-control" placeholder="Örn: Anahtarlıktaki figür ne?" />

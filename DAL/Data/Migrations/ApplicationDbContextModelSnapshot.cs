@@ -106,6 +106,9 @@ namespace ARABULUCU.DAL.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("EventDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -114,6 +117,12 @@ namespace ARABULUCU.DAL.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsFound")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsItemFound")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDelivered")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Location")
@@ -158,6 +167,8 @@ namespace ARABULUCU.DAL.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LostItemId");
 
                     b.ToTable("LostItemFeatures");
                 });
@@ -544,7 +555,15 @@ namespace ARABULUCU.DAL.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasMany("ARABULUCU.ENT.Entities.LostItemFeature", "Features")
+                        .WithOne()
+                        .HasForeignKey("LostItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Category");
+
+                    b.Navigation("Features");
 
                     b.Navigation("User");
                 });

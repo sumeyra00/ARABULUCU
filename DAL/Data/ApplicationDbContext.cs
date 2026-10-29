@@ -38,6 +38,12 @@ namespace ARABULUCU.DAL.Data
                 .HasForeignKey(item => item.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<LostItem>()
+                .HasMany(item => item.Features)
+                .WithOne()
+                .HasForeignKey(feature => feature.LostItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<Notification>()
                 .HasOne(notification => notification.User)
                 .WithMany(user => user.Notifications)
