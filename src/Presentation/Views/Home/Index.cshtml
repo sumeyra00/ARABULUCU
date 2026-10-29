@@ -2,6 +2,13 @@
     ViewData["Title"] = "Ana Sayfa";
 }
 
+@if (TempData["FoundItemSuccess"] is string foundItemSuccess)
+{
+    <div class="container pt-3">
+        <div class="alert alert-success mb-0" role="status">@foundItemSuccess</div>
+    </div>
+}
+
 <!-- HERO BÖLÜMÜ -->
 <div class="position-relative overflow-hidden py-5" style="background: radial-gradient(circle at 50% 15%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%);">
 

@@ -101,12 +101,19 @@
 
             <!-- Sağ Butonlar -->
             <div class="d-flex align-items-center gap-2">
+                <a asp-controller="Home" asp-action="Profil" class="btn btn-light rounded-pill px-3 fw-bold">İlanlarım</a>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <a href="/Home/Profil" class="btn btn-light rounded-pill px-3 fw-bold">İlanlarım</a>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                        <button type="submit" class="btn btn-outline-danger rounded-pill px-3 fw-bold">Çıkış Yap</button>
+                    </form>
                 }
-                <a href="/Account/Login" class="btn btn-outline-danger rounded-pill px-4 fw-bold" style="border-color: #FF5E7E; color: #FF5E7E;">Giriş Yap</a>
-                <a href="/Account/Register" class="btn text-white rounded-pill px-4 fw-bold" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">Üye Ol</a>
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-outline-danger rounded-pill px-4 fw-bold" style="border-color: #FF5E7E; color: #FF5E7E;">Giriş Yap</a>
+                    <a asp-controller="Account" asp-action="Register" class="btn text-white rounded-pill px-4 fw-bold" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">Üye Ol</a>
+                }
+                <button class="btn-menu-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" aria-controls="sideMenu">Menü</button>
             </div>
 
         </div>
@@ -129,22 +136,22 @@
             <!-- Üst Kısım: Menü Linkleri -->
             <div>
                 <nav class="d-flex flex-column gap-2">
-                    <a href="/Home/Profil" class="drawer-link">
+                    <a asp-controller="Home" asp-action="Profil" class="drawer-link">
                         <i class="bi bi-person-circle"></i>
                         <span>Hesabım / Profilim</span>
                     </a>
-                    <a href="/Home/Mesajlar" class="drawer-link">
+                    <a asp-controller="Home" asp-action="Mesajlar" class="drawer-link">
                         <i class="bi bi-chat-dots-fill"></i>
                         <div class="d-flex align-items-center justify-content-between flex-grow-1">
                             <span>Mesajlarım</span>
                             <span class="badge rounded-pill text-white px-2 py-1" style="background-color: #FF6082; font-size: 0.7rem;">Canlı</span>
                         </div>
                     </a>
-                    <a href="/Home/Hakkimizda" class="drawer-link">
+                    <a asp-controller="Home" asp-action="Hakkimizda" class="drawer-link">
                         <i class="bi bi-info-circle-fill"></i>
                         <span>Hakkımızda</span>
                     </a>
-                    <a href="/Home/Iletisim" class="drawer-link">
+                    <a asp-controller="Home" asp-action="Iletisim" class="drawer-link">
                         <i class="bi bi-envelope-fill"></i>
                         <span>İletişim & Yardım</span>
                     </a>
