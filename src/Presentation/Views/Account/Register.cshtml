@@ -1,110 +1,62 @@
-﻿@model ARABULUCU.Web.Controllers.RegisterViewModel
+@model RegisterViewModel
+
 @{
     ViewData["Title"] = "Üye Ol";
 }
 
 <div class="position-relative overflow-hidden py-5 d-flex align-items-center justify-content-center" style="background: radial-gradient(circle at 50% 20%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: calc(100vh - 160px);">
-
-    <!-- Sevimli Süs Figürleri -->
-    <div class="position-absolute d-none d-lg-block" style="top: 10%; left: 10%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">🌸</div>
-    <div class="position-absolute d-none d-lg-block" style="top: 15%; right: 12%; font-size: 2.2rem; transform: rotate(18deg); user-select: none;">✨</div>
-    <div class="position-absolute d-none d-lg-block" style="bottom: 12%; left: 12%; font-size: 2rem; transform: rotate(12deg); user-select: none;">📝</div>
-    <div class="position-absolute d-none d-lg-block" style="bottom: 15%; right: 10%; font-size: 2.2rem; transform: rotate(-12deg); user-select: none;">💖</div>
-
     <div class="container position-relative" style="z-index: 2; max-width: 480px;">
-        <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);">
-            
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="card-body p-4 p-sm-5">
-                <!-- Başlık & İkon -->
                 <div class="text-center mb-4">
-                    <div class="rounded-circle text-white d-inline-flex align-items-center justify-content-center fw-bold shadow-sm mb-3" style="width: 52px; height: 52px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); font-size: 1.5rem;">
-                        ✨
-                    </div>
+                    <div class="rounded-circle text-white d-inline-flex align-items-center justify-content-center shadow-sm mb-3" style="width: 52px; height: 52px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); font-size: 1.5rem;">✨</div>
                     <h3 class="fw-bold text-dark mb-1">Aramıza Katıl</h3>
                     <p class="text-muted small mb-0">Kampüste kaybolan veya bulunan eşyaları bildirmek için hesabını oluştur.</p>
                 </div>
 
-                    <!-- Kayıt Formu -->
-                    <form method="post" action="/Account/Register">
-                        @Html.AntiForgeryToken()
-                        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
-                        
-                        <!-- Ad Soyad -->
-                        <div class="mb-3">
-                            <label for="fullName" class="form-label fw-semibold">Ad Soyad</label>
-                            <input type="text" class="form-control" id="fullName" name="DisplayName" value="@Model.DisplayName" placeholder="Adınız ve Soyadınız" required />
-                            @Html.ValidationMessageFor(model => model.DisplayName, "", new { @class = "text-danger small" })
-                        </div>
+                <form asp-controller="Account" asp-action="Register" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    <input asp-for="ReturnUrl" type="hidden" />
 
-                        <!-- E-posta -->
-                        <div class="mb-3">
-                            <label for="email" class="form-label fw-semibold">Üniversite E-posta Adresi</label>
-                            <input type="email" class="form-control" id="email" name="Email" value="@Model.Email" placeholder="ogrenciNo@cumhuriyet.edu.tr" required />
-                            @Html.ValidationMessageFor(model => model.Email, "", new { @class = "text-danger small" })
-                        </div>
-
-                        <!-- Telefon Numarası -->
-                        <div class="mb-3">
-                            <label for="phone" class="form-label fw-semibold">Telefon Numarası (Opsiyonel)</label>
-                            <input type="tel" class="form-control" id="phone" name="PhoneNumber" value="@Model.PhoneNumber" placeholder="05XX XXX XX XX" />
-                            @Html.ValidationMessageFor(model => model.PhoneNumber, "", new { @class = "text-danger small" })
-                            <div class="form-text small text-muted">Eşya teslimlerinde iletişim kolaylığı sağlamak içindir.</div>
-                        </div>
-
-                        <!-- Şifre Alanları -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="password" class="form-label fw-semibold">Şifre</label>
-                                <input type="password" class="form-control" id="password" name="Password" placeholder="En az 8 karakter, bir büyük harf ve bir rakam" required />
-                                @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger small" })
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="confirmPassword" class="form-label fw-semibold">Şifre Tekrar</label>
-                                <input type="password" class="form-control" id="confirmPassword" name="ConfirmPassword" placeholder="Şifrenizi tekrar girin" required />
-                                @Html.ValidationMessageFor(model => model.ConfirmPassword, "", new { @class = "text-danger small" })
-                            </div>
-                        </div>
-
-                        <!-- Şartlar & Onay -->
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="terms" name="TermsAccepted" value="true" required />
-                            <label class="form-check-label small" for="terms">
-                                <a href="#" class="text-decoration-none">Kullanım Koşulları</a> ve <a href="#" class="text-decoration-none">KVKK Aydınlatma Metnini</a> okudum, onaylıyorum.
-                            </label>
-                            @Html.ValidationMessageFor(model => model.TermsAccepted, "", new { @class = "text-danger small d-block" })
-                        </div>
-
-                    <!-- Üye Ol Butonu -->
-                    <button type="submit" class="btn w-100 rounded-pill py-2 fw-bold text-white shadow-sm mb-3" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">
-                        Hesap Oluştur
-                    </button>
-
-                    <!-- Ayraç -->
-                    <div class="d-flex align-items-center my-3">
-                        <hr class="flex-grow-1 text-muted opacity-25">
-                        <span class="px-3 text-muted small">veya</span>
-                        <hr class="flex-grow-1 text-muted opacity-25">
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label fw-semibold"></label>
+                        <input asp-for="FullName" class="form-control" placeholder="Adınız ve Soyadınız" autocomplete="name" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
                     </div>
-
-                    <!-- Google ile Kayıt Ol -->
-                    <button type="button" class="btn btn-light border w-100 rounded-pill py-2 fw-semibold text-dark small shadow-sm d-flex align-items-center justify-content-center gap-2">
-                        <svg width="18" height="18" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                        </svg>
-                        Google ile Kayıt Ol
-                    </button>
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label fw-semibold"></label>
+                        <input asp-for="Email" class="form-control" placeholder="ogrenciNo@cumhuriyet.edu.tr" autocomplete="email" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="PhoneNumber" class="form-label fw-semibold"></label>
+                        <input asp-for="PhoneNumber" class="form-control" placeholder="05XX XXX XX XX" autocomplete="tel" />
+                        <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label fw-semibold"></label>
+                        <input asp-for="Password" class="form-control" placeholder="Şifreniz" autocomplete="new-password" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ConfirmPassword" class="form-label fw-semibold"></label>
+                        <input asp-for="ConfirmPassword" class="form-control" placeholder="Şifrenizi tekrar girin" autocomplete="new-password" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input asp-for="TermsAccepted" class="form-check-input" />
+                        <label asp-for="TermsAccepted" class="form-check-label small">
+                            Kullanım koşullarını ve KVKK metnini okudum, onaylıyorum.
+                        </label>
+                        <span asp-validation-for="TermsAccepted" class="text-danger small d-block"></span>
+                    </div>
+                    <button type="submit" class="btn w-100 rounded-pill py-2 fw-bold text-white" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">Hesap Oluştur</button>
                 </form>
-
-                <!-- Alt Yönlendirme (Giriş Yap) -->
-                <div class="card-footer bg-light text-center py-3">
-                    <span class="small text-muted">Zaten hesabınız var mı? </span>
-                    <a href="/Account/Login" class="small text-decoration-none fw-bold">Giriş Yap</a>
-                </div>
             </div>
-
+            <div class="card-footer bg-light text-center py-3">
+                <span class="small text-muted">Zaten hesabınız var mı? </span>
+                <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" class="small text-decoration-none fw-bold">Giriş Yap</a>
+            </div>
         </div>
     </div>
 </div>

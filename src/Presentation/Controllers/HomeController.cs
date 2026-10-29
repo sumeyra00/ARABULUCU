@@ -53,9 +53,9 @@ public class HomeController : Controller
 
     public IActionResult Index() => View();
 
-    public IActionResult Login() => View("~/Views/Account/Login.cshtml");
+    public IActionResult Login() => RedirectToAction("Login", "Account");
 
-    public IActionResult Register() => View("~/Views/Account/Register.cshtml");
+    public IActionResult Register() => RedirectToAction("Register", "Account");
 
     [Authorize]
     [HttpGet]
@@ -123,6 +123,10 @@ public class HomeController : Controller
     public IActionResult Mesajlar() => View("~/Views/Home/Mesajlar.cshtml");
 
     public IActionResult KonumPaylas() => View("~/Views/Home/KonumPaylas.cshtml");
+
+    public IActionResult Hakkimizda() => View("~/Views/Home/Hakkimizda.cshtml");
+
+    public IActionResult Iletisim() => View("~/Views/Home/Iletisim.cshtml");
 
     public IActionResult Privacy() => View();
 
@@ -220,7 +224,9 @@ public class HomeController : Controller
             var lostItem = new LostItem
             {
                 Title = model.Title.Trim(),
-                Description = isFound ? "Buluntu eşya bildirimi." : model.Description!.Trim(),
+                Description = string.IsNullOrWhiteSpace(model.Description)
+                    ? "Buluntu eşya bildirimi."
+                    : model.Description.Trim(),
                 ImagePath = imagePath,
                 Location = location,
                 CreatedAt = model.ItemDate!.Value,
@@ -330,7 +336,7 @@ public class ItemReportViewModel
     [StringLength(300)]
     public string? SecurityAnswer { get; set; }
 
-    public string? ItemStatus { get; set; }
+    public string? ItemStatus { get; set; } = "with_me";
 
     [StringLength(300)]
     public string? DeliveredTo { get; set; }

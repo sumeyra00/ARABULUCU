@@ -96,6 +96,79 @@ public static class SqliteDatabaseInitializer
         """CREATE UNIQUE INDEX IF NOT EXISTS "UserNameIndex" ON "AspNetUsers" ("NormalizedUserName")"""
     ];
 
+    private static readonly string[] ApplicationSchema = [
+        """
+        CREATE TABLE IF NOT EXISTS "Categories" (
+            "Id" INTEGER NOT NULL CONSTRAINT "PK_Categories" PRIMARY KEY AUTOINCREMENT,
+            "Name" TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS "ContactMessages" (
+            "Id" INTEGER NOT NULL CONSTRAINT "PK_ContactMessages" PRIMARY KEY AUTOINCREMENT,
+            "LostItemId" INTEGER NOT NULL,
+            "FromUserId" TEXT NOT NULL,
+            "Message" TEXT NOT NULL,
+            "SentAt" TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS "LostItemFeatures" (
+            "Id" INTEGER NOT NULL CONSTRAINT "PK_LostItemFeatures" PRIMARY KEY AUTOINCREMENT,
+            "LostItemId" INTEGER NOT NULL,
+            "Key" TEXT NOT NULL,
+            "Value" TEXT NOT NULL,
+            "IsHidden" INTEGER NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS "UserProfiles" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_UserProfiles" PRIMARY KEY,
+            "DisplayName" TEXT NOT NULL,
+            "Email" TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS "LostItems" (
+            "Id" INTEGER NOT NULL CONSTRAINT "PK_LostItems" PRIMARY KEY AUTOINCREMENT,
+            "Title" TEXT NOT NULL,
+            "Description" TEXT NOT NULL,
+            "ImagePath" TEXT NULL,
+            "Location" TEXT NOT NULL,
+            "CreatedAt" TEXT NOT NULL,
+            "IsFound" INTEGER NOT NULL,
+            "UserId" TEXT NOT NULL,
+            "CategoryId" INTEGER NOT NULL,
+            CONSTRAINT "FK_LostItems_Categories_CategoryId"
+                FOREIGN KEY ("CategoryId") REFERENCES "Categories" ("Id") ON DELETE RESTRICT,
+            CONSTRAINT "FK_LostItems_UserProfiles_UserId"
+                FOREIGN KEY ("UserId") REFERENCES "UserProfiles" ("Id") ON DELETE RESTRICT
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS "Notifications" (
+            "Id" INTEGER NOT NULL CONSTRAINT "PK_Notifications" PRIMARY KEY AUTOINCREMENT,
+            "UserId" TEXT NOT NULL,
+            "Message" TEXT NOT NULL,
+            "IsRead" INTEGER NOT NULL,
+            "CreatedAt" TEXT NOT NULL,
+            "LostItemId" INTEGER NULL,
+            CONSTRAINT "FK_Notifications_LostItems_LostItemId"
+                FOREIGN KEY ("LostItemId") REFERENCES "LostItems" ("Id"),
+            CONSTRAINT "FK_Notifications_UserProfiles_UserId"
+                FOREIGN KEY ("UserId") REFERENCES "UserProfiles" ("Id") ON DELETE CASCADE
+        )
+        """,
+        """CREATE INDEX IF NOT EXISTS "IX_LostItems_CategoryId" ON "LostItems" ("CategoryId")""",
+        """CREATE INDEX IF NOT EXISTS "IX_LostItems_UserId" ON "LostItems" ("UserId")""",
+        """CREATE INDEX IF NOT EXISTS "IX_Notifications_LostItemId" ON "Notifications" ("LostItemId")""",
+        """CREATE INDEX IF NOT EXISTS "IX_Notifications_UserId" ON "Notifications" ("UserId")""",
+        """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (1, 'Cüzdan')""",
+        """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (2, 'Anahtar')""",
+        """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (3, 'Telefon')""",
+        """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (4, 'Kulaklık')"""
+    ];
+
     public static async Task InitializeAsync(ApplicationDbContext dbContext)
     {
         var migrations = dbContext.Database.GetMigrations().ToArray();
@@ -105,7 +178,12 @@ public static class SqliteDatabaseInitializer
         {
             var connection = dbContext.Database.GetDbConnection();
             var tableNames = await GetTableNamesAsync(connection);
-            if (tableNames.Contains("UserProfiles") && migrations.Length > 0)
+            var hasLegacyApplicationSchema = tableNames.Contains("Categories")
+                || tableNames.Contains("LostItems")
+                || tableNames.Contains("UserProfiles")
+                || tableNames.Contains("Notifications");
+
+            if (hasLegacyApplicationSchema && migrations.Length > 0)
             {
                 var migrationHistory = await GetAppliedMigrationIdsAsync(connection, tableNames);
                 var initialMigration = migrations[0];
@@ -140,6 +218,196 @@ public static class SqliteDatabaseInitializer
         }
 
         await dbContext.Database.MigrateAsync();
+        await EnsureLegacyIdentityUserSchemaAsync(dbContext);
+        await EnsureApplicationSchemaAsync(dbContext);
+    }
+
+    private static async Task EnsureLegacyIdentityUserSchemaAsync(ApplicationDbContext dbContext)
+    {
+        var connection = dbContext.Database.GetDbConnection();
+        await dbContext.Database.OpenConnectionAsync();
+
+        try
+        {
+            var columns = new HashSet<string>(StringComparer.Ordinal);
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = """PRAGMA table_info("AspNetUsers")""";
+                await using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    columns.Add(reader.GetString(1));
+                }
+            }
+
+            if (!columns.Contains("DisplayName"))
+            {
+                return;
+            }
+
+            var identityColumns = new[]
+            {
+                "Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail",
+                "EmailConfirmed", "PasswordHash", "SecurityStamp", "ConcurrencyStamp",
+                "PhoneNumber", "PhoneNumberConfirmed", "TwoFactorEnabled", "LockoutEnd",
+                "LockoutEnabled", "AccessFailedCount"
+            };
+            if (identityColumns.Any(column => !columns.Contains(column)))
+            {
+                throw new InvalidOperationException(
+                    "The legacy AspNetUsers table has an unsupported schema and cannot be upgraded safely.");
+            }
+
+            await dbContext.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = OFF");
+            try
+            {
+                await using var transaction = await dbContext.Database.BeginTransactionAsync();
+
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    """
+                    INSERT OR IGNORE INTO "UserProfiles" ("Id", "DisplayName", "Email")
+                    SELECT "Id", "DisplayName", COALESCE("Email", '')
+                    FROM "AspNetUsers"
+                    """);
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    """
+                    UPDATE "UserProfiles"
+                    SET "DisplayName" = (
+                        SELECT "DisplayName" FROM "AspNetUsers" WHERE "AspNetUsers"."Id" = "UserProfiles"."Id"
+                    )
+                    WHERE trim("DisplayName") = ''
+                      AND EXISTS (SELECT 1 FROM "AspNetUsers" WHERE "AspNetUsers"."Id" = "UserProfiles"."Id")
+                    """);
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    """
+                    CREATE TABLE "__AspNetUsers_new" (
+                        "Id" TEXT NOT NULL CONSTRAINT "PK_AspNetUsers" PRIMARY KEY,
+                        "UserName" TEXT NULL,
+                        "NormalizedUserName" TEXT NULL,
+                        "Email" TEXT NULL,
+                        "NormalizedEmail" TEXT NULL,
+                        "EmailConfirmed" INTEGER NOT NULL,
+                        "PasswordHash" TEXT NULL,
+                        "SecurityStamp" TEXT NULL,
+                        "ConcurrencyStamp" TEXT NULL,
+                        "PhoneNumber" TEXT NULL,
+                        "PhoneNumberConfirmed" INTEGER NOT NULL,
+                        "TwoFactorEnabled" INTEGER NOT NULL,
+                        "LockoutEnd" TEXT NULL,
+                        "LockoutEnabled" INTEGER NOT NULL,
+                        "AccessFailedCount" INTEGER NOT NULL
+                    )
+                    """);
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    """
+                    INSERT INTO "__AspNetUsers_new" (
+                        "Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail",
+                        "EmailConfirmed", "PasswordHash", "SecurityStamp", "ConcurrencyStamp",
+                        "PhoneNumber", "PhoneNumberConfirmed", "TwoFactorEnabled", "LockoutEnd",
+                        "LockoutEnabled", "AccessFailedCount"
+                    )
+                    SELECT
+                        "Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail",
+                        "EmailConfirmed", "PasswordHash", "SecurityStamp", "ConcurrencyStamp",
+                        "PhoneNumber", "PhoneNumberConfirmed", "TwoFactorEnabled", "LockoutEnd",
+                        "LockoutEnabled", "AccessFailedCount"
+                    FROM "AspNetUsers"
+                    """);
+                await dbContext.Database.ExecuteSqlRawAsync("DROP TABLE \"AspNetUsers\"");
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    "ALTER TABLE \"__AspNetUsers_new\" RENAME TO \"AspNetUsers\"");
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    """CREATE INDEX "EmailIndex" ON "AspNetUsers" ("NormalizedEmail")""");
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    """CREATE UNIQUE INDEX "UserNameIndex" ON "AspNetUsers" ("NormalizedUserName")""");
+
+                await transaction.CommitAsync();
+            }
+            finally
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = ON");
+            }
+
+            await using var foreignKeyCheck = connection.CreateCommand();
+            foreignKeyCheck.CommandText = """PRAGMA foreign_key_check""";
+            await using var violations = await foreignKeyCheck.ExecuteReaderAsync();
+            if (await violations.ReadAsync())
+            {
+                throw new InvalidOperationException(
+                    "The legacy AspNetUsers schema upgrade resulted in a SQLite foreign-key violation.");
+            }
+        }
+        finally
+        {
+            await dbContext.Database.CloseConnectionAsync();
+        }
+    }
+
+    private static async Task EnsureApplicationSchemaAsync(ApplicationDbContext dbContext)
+    {
+        var indexStart = Array.FindIndex(
+            ApplicationSchema,
+            statement => statement.StartsWith("CREATE INDEX", StringComparison.Ordinal));
+
+        foreach (var statement in ApplicationSchema.Take(indexStart))
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(statement);
+        }
+
+        await EnsureLegacyLostItemColumnsAsync(dbContext);
+
+        foreach (var statement in ApplicationSchema.Skip(indexStart))
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(statement);
+        }
+    }
+
+    private static async Task EnsureLegacyLostItemColumnsAsync(ApplicationDbContext dbContext)
+    {
+        var connection = dbContext.Database.GetDbConnection();
+        await dbContext.Database.OpenConnectionAsync();
+
+        HashSet<string> columns;
+        try
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText = """PRAGMA table_info("LostItems")""";
+            await using var reader = await command.ExecuteReaderAsync();
+            columns = new HashSet<string>(StringComparer.Ordinal);
+            while (await reader.ReadAsync())
+            {
+                columns.Add(reader.GetString(1));
+            }
+        }
+        finally
+        {
+            await dbContext.Database.CloseConnectionAsync();
+        }
+
+        var missingUserId = !columns.Contains("UserId");
+        var missingCategoryId = !columns.Contains("CategoryId");
+        if (!missingUserId && !missingCategoryId)
+        {
+            return;
+        }
+
+        if (await dbContext.LostItems.CountAsync() > 0)
+        {
+            throw new InvalidOperationException(
+                "The SQLite database contains existing lost-item records without the required ownership or category fields. Back up and map those records before starting the application.");
+        }
+
+        if (missingUserId)
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """ALTER TABLE "LostItems" ADD COLUMN "UserId" TEXT NOT NULL DEFAULT ''""");
+        }
+
+        if (missingCategoryId)
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """ALTER TABLE "LostItems" ADD COLUMN "CategoryId" INTEGER NOT NULL DEFAULT 1""");
+        }
     }
 
     private static async Task<HashSet<string>> GetTableNamesAsync(DbConnection connection)
