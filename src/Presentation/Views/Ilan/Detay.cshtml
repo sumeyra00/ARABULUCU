@@ -1,177 +1,82 @@
-﻿@{
+@model ARABULUCU.Web.Controllers.ItemDetailViewModel
+
+@{
     ViewData["Title"] = "İlan Detayı";
 }
 
-<div class="position-relative overflow-hidden py-5" style="background: radial-gradient(circle at 50% 15%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: 100vh;">
+<div class="container py-5" style="max-width: 1050px;">
+    <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill mb-4">&larr; İlanlara dön</a>
 
-    <!-- Sevimli Süs Figürleri -->
-    <div class="position-absolute d-none d-lg-block" style="top: 5%; left: 4%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">🌸</div>
-    <div class="position-absolute d-none d-lg-block" style="top: 8%; right: 5%; font-size: 2.4rem; transform: rotate(18deg); user-select: none;">✨</div>
-    <div class="position-absolute d-none d-lg-block" style="bottom: 8%; left: 5%; font-size: 2.2rem; transform: rotate(12deg); user-select: none;">💖</div>
-    <div class="position-absolute d-none d-lg-block" style="bottom: 10%; right: 4%; font-size: 2rem; transform: rotate(-12deg); user-select: none;">🎒</div>
-
-    <div class="container position-relative" style="z-index: 2; max-width: 1050px;">
-
-        <!-- Geri Dön Butonu -->
-        <div class="mb-3">
-            <a href="/" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border">
-                &larr; Ana Sayfaya Dön
-            </a>
-        </div>
-
-        <div class="row g-4">
-
-            <!-- Sol Kolon: Maskelenmiş Görsel & Güvenlik Kilidi -->
-            <div class="col-lg-5">
-                <div class="card border-0 shadow-lg rounded-4 overflow-hidden h-100" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);">
-
-                    <!-- Maskelenmiş / Bulanık Görsel Alanı -->
-                    <div class="position-relative d-flex align-items-center justify-content-center text-center p-4" style="min-height: 360px; background: linear-gradient(135deg, #FFF9FA 0%, #FFF0F4 100%);">
-                        <div style="filter: blur(10px); opacity: 0.3; font-size: 6rem; user-select: none;">
-                            🎒
-                        </div>
-
-                        <!-- Kilit Katmanı (Overlay) -->
-                        <div class="position-absolute top-50 start-50 translate-middle w-85 p-4 rounded-4 shadow border text-center" style="background: rgba(255, 255, 255, 0.95); border-color: #FFD9E2 !important; max-width: 320px;">
-                            <div class="fs-1 mb-2">🔒</div>
-                            <h6 class="fw-bold mb-1 text-dark">Görsel Maskelenmiştir</h6>
-                            <p class="small text-muted mb-3" style="font-size: 0.8rem;">
-                                Gizliliği korumak amacıyla görsel gizlenmiştir. Eşyanın size ait olduğunu doğrulamak için soruya cevap verin.
-                            </p>
-                            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-bold text-white shadow-sm w-100" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;" data-bs-toggle="modal" data-bs-target="#verificationModal">
-                                ✨ Doğrulama Sorusunu Yanıtla
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="card-footer bg-white border-top small text-muted text-center py-3" style="border-color: rgba(255, 96, 130, 0.15) !important;">
-                        🌸 Kampüs İçi Güvenli Eşleşme Devrede
-                    </div>
+    @if (Model.Item is null)
+    {
+        <div class="alert alert-info" role="status">Bu ilan bulunamadı veya artık görüntülenemiyor.</div>
+    }
+    else
+    {
+        var item = Model.Item;
+        <article class="card border-0 shadow-sm rounded-4 mb-5">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <span class="badge @(item.IsFound ? "text-bg-success" : "text-bg-danger")">@(item.IsFound ? "Bulunan eşya ilanı" : "Kayıp eşya ilanı")</span>
+                    <span class="badge text-bg-light">@item.Category.Name</span>
+                    <span class="badge text-bg-light">İlan #@item.Id</span>
                 </div>
+                <h1 class="h2 fw-bold">@item.Title</h1>
+                <div class="row g-3 my-3">
+                    <div class="col-md-6"><strong>Konum:</strong> @item.Location</div>
+                    <div class="col-md-6"><strong>Olay tarihi:</strong> @item.EventDate.ToString("dd.MM.yyyy HH:mm")</div>
+                    <div class="col-md-6"><strong>İlan oluşturulma tarihi:</strong> @item.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                    <div class="col-md-6"><strong>Bulunma durumu:</strong> @(item.IsItemFound ? "Bulundu" : "Henüz bulunmadı")</div>
+                    <div class="col-md-6"><strong>Teslim durumu:</strong> @(item.IsDelivered ? "Teslim edildi" : "Henüz teslim edilmedi")</div>
+                </div>
+                <h2 class="h5 fw-bold mt-4">Açıklama</h2>
+                <p class="text-secondary">@item.Description</p>
+
+                @if (item.Features.Count > 0)
+                {
+                    <h2 class="h5 fw-bold mt-4">Eşya özellikleri</h2>
+                    <dl class="row mb-4">
+                        @foreach (var feature in item.Features.Where(feature => !feature.IsHidden))
+                        {
+                            <dt class="col-sm-3">@feature.Key</dt>
+                            <dd class="col-sm-9">@feature.Value</dd>
+                        }
+                    </dl>
+                }
+
+                <a asp-controller="Home" asp-action="Mesajlar" asp-route-ilanId="@item.Id" class="btn btn-danger rounded-pill px-4">İlan sahibiyle iletişime geç</a>
             </div>
+        </article>
 
-            <!-- Sağ Kolon: İlan Bilgileri & Sohbet Başlatma -->
-            <div class="col-lg-7">
-                <div class="card border-0 shadow-lg rounded-4 overflow-hidden h-100" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);">
-                    <div class="card-body p-4 p-md-5 d-flex flex-column">
-
-                        <!-- Durum & Kategori Rozetleri -->
-                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge rounded-pill px-3 py-2 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
-                                    🔍 Kayıp Eşya
-                                </span>
-                                <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background-color: #FFF0F4; color: #FF416C; border: 1px solid #FFD9E2;">
-                                    🎒 Çanta & Sırt Çantası
-                                </span>
-                            </div>
-                            <span class="badge rounded-pill bg-light text-muted border px-3 py-2 small">İlan No: #10482</span>
-                        </div>
-
-                        <!-- İlan Başlığı -->
-                        <h3 class="fw-bold mb-2 text-dark">Siyah Deri Sırt Çantası</h3>
-                        <p class="text-muted small mb-4">
-                            <i class="bi bi-clock me-1 text-danger"></i> İlan Tarihi: 19 Ekim 2026
-                        </p>
-
-                        <!-- Detay Bilgi Kutuları -->
-                        <div class="row g-3 mb-4">
-                            <div class="col-sm-6">
-                                <div class="p-3 rounded-4 border" style="background-color: #FFFDFD; border-color: #FFD9E2 !important;">
-                                    <div class="small text-muted fw-semibold">Konum</div>
-                                    <div class="fw-bold text-dark mt-1">📍 Merkez Kütüphane (2. Kat)</div>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="p-3 rounded-4 border" style="background-color: #FFFDFD; border-color: #FFD9E2 !important;">
-                                    <div class="small text-muted fw-semibold">Tarih / Saat</div>
-                                    <div class="fw-bold text-dark mt-1">📅 18 Ekim 2026, 14:30</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Açıklama -->
-                        <div class="mb-4">
-                            <h6 class="fw-bold text-dark mb-2">Açıklama:</h6>
-                            <p class="text-secondary small mb-0 p-3 rounded-4 bg-light border">
-                                İçinde ders notları, hesap makinesi ve kırmızı bir kalemlik vardı. Sol askısında hafif bir aşınma izi bulunmaktadır. Eşyayı gören veya bulan kişinin iletişime geçmesi rica olunur.
-                            </p>
-                        </div>
-
-                        <!-- İlan Sahibi Bilgisi -->
-                        <div class="p-3 rounded-4 border mb-4 mt-auto" style="background-color: #FFFDFD; border-color: #FFD9E2 !important;">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 46px; height: 46px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
-                                        FN
+        <section aria-labelledby="recommendations-title">
+            <h2 id="recommendations-title" class="h4 fw-bold mb-3">Benzer ilanlar</h2>
+            @if (Model.Recommendations.Count == 0)
+            {
+                <p class="text-muted">Şu anda eşleşen başka ilan bulunamadı.</p>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var recommendation in Model.Recommendations)
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            <article class="card border-0 shadow-sm rounded-4 h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between gap-2 mb-2">
+                                        <span class="badge @(recommendation.Item.IsFound ? "text-bg-success" : "text-bg-danger")">@(recommendation.Item.IsFound ? "Bulunan" : "Kayıp")</span>
+                                        <span class="badge text-bg-primary">@recommendation.SimilarityPercent.ToString("0.#")% benzer</span>
                                     </div>
-                                    <div>
-                                        <div class="fw-bold text-dark">Fatmanur A.</div>
-                                        <div class="small text-muted">Öğrenci • Mühendislik Fakültesi</div>
-                                    </div>
+                                    <h3 class="h5 fw-bold">@recommendation.Item.Title</h3>
+                                    <p class="small text-muted mb-1">@recommendation.Item.Category.Name</p>
+                                    <p class="small mb-1">@recommendation.Item.Location</p>
+                                    <p class="small mb-3">Olay tarihi: @recommendation.Item.EventDate.ToString("dd.MM.yyyy HH:mm")</p>
+                                    <a asp-controller="Home" asp-action="Detay" asp-route-ilanId="@recommendation.Item.Id" class="btn btn-outline-primary btn-sm rounded-pill">İlanı görüntüle</a>
                                 </div>
-                                <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-1 small">
-                                    ● Aktif
-                                </span>
-                            </div>
+                            </article>
                         </div>
-
-                        <!-- CHAT / MESAJLAŞMA BUTONLARI -->
-                        <div class="row g-2">
-                            <div class="col-md-7">
-                                <a href="/Home/Mesajlar?ilanId=@ViewData["IlanId"]" class="btn rounded-pill fw-bold w-100 py-3 text-white shadow-sm d-flex align-items-center justify-content-center gap-2" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">
-                                    💬 İlan Sahibiyle Sohbet Başlat
-                                </a>
-                            </div>
-                            <div class="col-md-5">
-                                <a href="/Home/Mesajlar" class="btn btn-light border rounded-pill fw-semibold w-100 py-3 shadow-none">
-                                    Tüm Mesajlara Git
-                                </a>
-                            </div>
-                        </div>
-
-                    </div>
+                    }
                 </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-
-<!-- DOĞRULAMA SORUSU MODAL PENCERESİ -->
-<div class="modal fade" id="verificationModal" tabindex="-1" aria-labelledby="verificationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-
-            <div class="modal-header border-bottom py-3 px-4" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
-                <h6 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="verificationModalLabel">
-                    <span>🔒</span> Sahiplik Doğrulama Adımı
-                </h6>
-                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Kapat"></button>
-            </div>
-
-            <div class="modal-body p-4">
-                <p class="small text-muted mb-3">
-                    İlan sahibinin hazırladığı bu soruya doğru cevap vererek görselin kilidini açabilir ve eşleşmeyi doğrulayabilirsiniz.
-                </p>
-                <div class="p-3 rounded-4 border fw-semibold small mb-3" style="background-color: #FFF7F9; border-color: #FFD9E2 !important; color: #1E293B;">
-                    ❓ <strong>Soru:</strong> "Çantanın ön gözündeki küçük anahtarlıkta hangi figür vardı?"
-                </div>
-                <div>
-                    <label for="claimantAnswer" class="form-label small fw-semibold text-secondary">Cevabınız</label>
-                    <input type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" id="claimantAnswer" placeholder="Cevabınızı buraya yazın..." />
-                </div>
-            </div>
-
-            <div class="modal-footer border-top-0 px-4 pb-4 pt-0 d-flex gap-2">
-                <button type="button" class="btn btn-light rounded-pill px-4 py-2 fw-semibold border shadow-none" data-bs-dismiss="modal">
-                    Vazgeç
-                </button>
-                <button type="button" class="btn rounded-pill px-4 py-2 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">
-                    Cevabı Onayla & Kilidi Aç
-                </button>
-            </div>
-
-        </div>
-    </div>
+            }
+        </section>
+    }
 </div>

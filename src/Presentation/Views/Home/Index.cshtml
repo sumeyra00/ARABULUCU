@@ -1,217 +1,127 @@
+@model ARABULUCU.Web.Controllers.ItemSearchViewModel
+
 @{
     ViewData["Title"] = "Ana Sayfa";
+    var categories = ViewBag.Categories as IEnumerable<string> ?? Array.Empty<string>();
 }
 
-@if (TempData["FoundItemSuccess"] is string foundItemSuccess)
-{
-    <div class="container pt-3">
-        <div class="alert alert-success mb-0" role="status">@foundItemSuccess</div>
-    </div>
-}
-
-<!-- HERO BÖLÜMÜ -->
-<div class="position-relative overflow-hidden py-5" style="background: radial-gradient(circle at 50% 15%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%);">
-
-    <!-- Sevimli Süs Figürleri -->
-    <div class="position-absolute d-none d-lg-block" style="top: 12%; left: 4%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">✨</div>
-    <div class="position-absolute d-none d-lg-block" style="top: 15%; right: 5%; font-size: 2rem; transform: rotate(15deg); user-select: none;">💖</div>
-    <div class="position-absolute d-none d-lg-block" style="bottom: 20%; left: 6%; font-size: 2rem; transform: rotate(10deg); user-select: none;">🌸</div>
-    <div class="position-absolute d-none d-lg-block" style="bottom: 18%; right: 6%; font-size: 2rem; transform: rotate(-10deg); user-select: none;">🔑</div>
-
-    <div class="container position-relative py-4 text-center" style="z-index: 2; max-width: 900px;">
-        
-        <!-- Ana Başlık -->
-        <h1 class="fw-bolder text-dark mb-4 display-5" style="letter-spacing: -1px; line-height: 1.25;">
-            Bir şey mi kaybettiniz,<br>yoksa bir şey mi buldunuz?
-        </h1>
-
-        <!-- Eylem Butonları (Kayıp / Bulunan) -->
-        <div class="row g-3 justify-content-center mb-5">
-            <div class="col-sm-6 col-md-5">
-                <a href="/Home/KayipOlustur" class="card border-0 text-decoration-none shadow-sm h-100 rounded-4 overflow-hidden" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); transition: transform 0.2s ease, box-shadow 0.2s ease;">
-                    <div class="card-body p-3 p-md-4 d-flex align-items-center gap-3 text-white text-start">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: rgba(255, 255, 255, 0.25); font-size: 1.5rem; flex-shrink: 0;">
-                            🔍
-                        </div>
-                        <div>
-                            <h5 class="fw-bold mb-0">Bir Şey Kaybettim</h5>
-                            <small class="text-white-50">Kayıp İlanı Ver &rarr;</small>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-sm-6 col-md-5">
-                <a href="/Home/BulunanOlustur" class="card border text-decoration-none shadow-sm h-100 rounded-4 overflow-hidden" style="background: #FFF5F7; border-color: #FFD9E2 !important; transition: transform 0.2s ease, box-shadow 0.2s ease;">
-                    <div class="card-body p-3 p-md-4 d-flex align-items-center gap-3 text-start">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: #FFE2EA; font-size: 1.5rem; flex-shrink: 0;">
-                            🎁
-                        </div>
-                        <div>
-                            <h5 class="fw-bold mb-0 text-dark">Bir Şey Buldum</h5>
-                            <small class="text-muted">Bulunan Eşya Bildir &rarr;</small>
-                        </div>
-                    </div>
-                </a>
+<section class="py-5" style="background: radial-gradient(circle at 50% 15%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%);">
+    <div class="container" style="max-width: 1100px;">
+        <div class="text-center mb-5">
+            <h1 class="fw-bolder text-dark mb-3">Bir şey mi kaybettiniz, yoksa bir şey mi buldunuz?</h1>
+            <p class="text-muted mb-4">İlanları filtreleyin veya yeni bir kayıp/buluntu bildirimi oluşturun.</p>
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                <a asp-action="KayipOlustur" class="btn btn-danger rounded-pill px-4">Kayıp İlanı Ver</a>
+                <a asp-action="BulunanOlustur" class="btn btn-success rounded-pill px-4">Bulunan Eşya Bildir</a>
             </div>
         </div>
-        <!-- Arama ve Filtre Çubuğu -->
-<div class="card border-0 shadow-sm rounded-pill p-2 bg-white mx-auto" style="max-width: 920px; border: 1.5px solid #FFD9E2 !important;">
-    <div class="row g-2 align-items-center px-3 py-1">
-        
-        <!-- Arama Kelimesi -->
-        <div class="col-md-4 d-flex align-items-center gap-2 border-end-md">
-            <span class="text-muted fs-5">🔍</span>
-            <input type="text" class="form-control border-0 shadow-none px-1 small" placeholder="Ne arıyorsunuz? (Örn: Cüzdan, USB...)" />
-        </div>
 
-        <!-- Kategori (Datalist: Hem Seçilebilir Hem Yazılabilir) -->
-        <div class="col-md-4 border-end-md">
-            <input list="kategoriListesi" class="form-control border-0 shadow-none small text-dark" placeholder="Kategori seçin veya yazın..." />
-            <datalist id="kategoriListesi">
-                <option value="Cüzdan & Para"></option>
-                <option value="Öğrenci Kimliği & Kart"></option>
-                <option value="Anahtar & Anahtarlık"></option>
-                <option value="Telefon & Tablet"></option>
-                <option value="Dizüstü Bilgisayar & Şarj"></option>
-                <option value="Kulaklık & Aksesuar"></option>
-                <option value="Çanta & Sırt Çantası"></option>
-                <option value="Gözlük & Saat"></option>
-                <option value="Giyim, Mont & Atkı"></option>
-                <option value="Kitap, Defter & Not"></option>
-                <option value="Su Matarası & Termos"></option>
-                <option value="Diğer Kişisel Eşyalar"></option>
-            </datalist>
-        </div>
-
-        <!-- Konum / Fakülteler (Datalist: SCÜ Yerleşkesi) -->
-        <div class="col-md-4">
-            <input list="konumListesi" class="form-control border-0 shadow-none small text-dark" placeholder="Konum seçin veya yazın..." />
-            <datalist id="konumListesi">
-                <!-- Ortak Alanlar -->
-                <option value="Merkez Yemekhane"></option>
-                <option value="Merkez Kütüphane"></option>
-                <option value="Merkezi Kafeterya"></option>
-                <option value="Öğrenci İşleri Daire Bşk."></option>
-                <option value="Kapalı Spor Salonu"></option>
-                <option value="Stadyum & Halı Sahalar"></option>
-                <option value="Kültür Merkezi"></option>
-                <!-- Fakülteler -->
-                <option value="Mühendislik Fakültesi"></option>
-                <option value="Tıp Fakültesi"></option>
-                <option value="Diş Hekimliği Fakültesi"></option>
-                <option value="Eczacılık Fakültesi"></option>
-                <option value="Sağlık Bilimleri Fakültesi"></option>
-                <option value="Fen Fakültesi"></option>
-                <option value="Edebiyat Fakültesi"></option>
-                <option value="İktisadi ve İdari Bilimler Fakültesi"></option>
-                <option value="İlahiyat Fakültesi"></option>
-                <option value="Eğitim Fakültesi"></option>
-                <option value="İletişim Fakültesi"></option>
-                <option value="Mimarlık, Güzel Sanatlar ve Tasarım Fakültesi"></option>
-                <option value="Hukuk Fakültesi"></option>
-                <option value="Turizm Fakültesi"></option>
-                <option value="Veteriner Fakültesi"></option>
-                <option value="Sivas Teknik Bilimler MYO"></option>
-                <option value="Cumhuriyet MYO"></option>
-            </datalist>
-        </div>
-
-    </div>
-</div>
-
-                <!-- Kategori Seçimi -->
-                <div class="col-md-3 border-end-md">
-                    <select class="form-select border-0 shadow-none small text-secondary">
-                        <option selected>Kategori Seçin</option>
-                        <option value="1">Elektronik</option>
-                        <option value="2">Çanta & Cüzdan</option>
-                        <option value="3">Kimlik & Kart</option>
-                        <option value="4">Giyim & Aksesuar</option>
-                        <option value="5">Diğer</option>
+        <form asp-controller="Home" asp-action="Index" method="get" class="card border-0 shadow-sm rounded-4 p-3 p-md-4 mb-5">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Criteria.Query" class="form-label">Başlık veya açıklama</label>
+                    <input asp-for="Criteria.Query" name="Query" class="form-control" placeholder="Örn. siyah cüzdan" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Criteria.Category" class="form-label">Kategori</label>
+                    <select asp-for="Criteria.Category" name="Category" class="form-select">
+                        <option value="">Tüm kategoriler</option>
+                        @foreach (var category in categories)
+                        {
+                            <option value="@category">@category</option>
+                        }
                     </select>
                 </div>
-
-                <!-- Konum Seçimi -->
                 <div class="col-md-4">
-                    <select class="form-select border-0 shadow-none small text-secondary">
-                        <option selected>Konum (Tüm Kampüs)</option>
-                        <option value="1">Merkez Yemekhane</option>
-                        <option value="2">Merkez Kütüphane</option>
-                        <option value="3">Mühendislik Fakültesi</option>
-                        <option value="4">İktisadi ve İdari Bil. Fak.</option>
-                        <option value="5">Spor Salonu / Çevresi</option>
+                    <label asp-for="Criteria.Location" class="form-label">Konum</label>
+                    <input asp-for="Criteria.Location" name="Location" class="form-control" placeholder="Konumda ara" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Criteria.IsFound" class="form-label">İlan türü</label>
+                    <select asp-for="Criteria.IsFound" name="IsFound" class="form-select">
+                        <option value="">Kayıp ve bulunan</option>
+                        <option value="false">Kayıp</option>
+                        <option value="true">Bulunan</option>
                     </select>
                 </div>
-
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<!-- SON İLANLAR VİTRİNİ -->
-<div class="container py-5">
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <div>
-            <h4 class="fw-bold text-dark mb-1">Son Bildirilen Eşyalar</h4>
-            <p class="text-muted small mb-0">Kampüste son 24 saatte paylaşılan güncel ilanlar</p>
-        </div>
-        <a href="#" class="btn btn-sm btn-pink-outline rounded-pill px-3 py-2 fw-semibold">Tümünü Gör</a>
-    </div>
-
-    <div class="row g-4">
-        <!-- İlan Kartı 1 -->
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="background: white; border: 1px solid #FFE2EA !important;">
-                <div class="p-4 text-center" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFF7F9 100%);">
-                    <div style="font-size: 3.5rem;">🎒</div>
+                <div class="col-md-4">
+                    <label asp-for="Criteria.IsItemFound" class="form-label">Bulunma durumu</label>
+                    <select asp-for="Criteria.IsItemFound" name="IsItemFound" class="form-select">
+                        <option value="">Tümü</option>
+                        <option value="false">Henüz bulunmadı</option>
+                        <option value="true">Bulundu</option>
+                    </select>
                 </div>
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="badge rounded-pill text-white px-3 py-1 small" style="background: #FF6082;">Kayıp</span>
-                        <span class="small text-muted">2 saat önce</span>
+                <div class="col-md-4">
+                    <label asp-for="Criteria.Brand" class="form-label">Marka</label>
+                    <input asp-for="Criteria.Brand" name="Brand" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Criteria.Model" class="form-label">Model</label>
+                    <input asp-for="Criteria.Model" name="Model" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Criteria.Color" class="form-label">Renk</label>
+                    <input asp-for="Criteria.Color" name="Color" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Criteria.EventDateFrom" class="form-label">Olay tarihi başlangıcı</label>
+                    <input asp-for="Criteria.EventDateFrom" type="date" name="EventDateFrom" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Criteria.EventDateTo" class="form-label">Olay tarihi bitişi</label>
+                    <input asp-for="Criteria.EventDateTo" type="date" name="EventDateTo" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Criteria.IsDelivered" class="form-label">Teslim durumu</label>
+                    <select asp-for="Criteria.IsDelivered" name="IsDelivered" class="form-select">
+                        <option value="">Tümü</option>
+                        <option value="false">Teslim edilmedi</option>
+                        <option value="true">Teslim edildi</option>
+                    </select>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">Filtrele</button>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Temizle</a>
+                </div>
+            </div>
+        </form>
+
+        @if (Model.ValidationError is not null)
+        {
+            <div class="alert alert-danger" role="alert">@Model.ValidationError</div>
+        }
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 fw-bold mb-0">İlanlar</h2>
+            <span class="text-muted small">@Model.Items.Count sonuç</span>
+        </div>
+        @if (Model.Items.Count == 0)
+        {
+            <div class="alert alert-light border text-center">Filtrelerinize uygun ilan bulunamadı.</div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <article class="card border-0 shadow-sm rounded-4 h-100">
+                            <div class="card-body d-flex flex-column">
+                                <div class="d-flex justify-content-between gap-2 mb-2">
+                                    <span class="badge @(item.IsFound ? "text-bg-success" : "text-bg-danger")">@(item.IsFound ? "Bulunan" : "Kayıp")</span>
+                                    <span class="badge text-bg-light">@item.Category.Name</span>
+                                </div>
+                                <h3 class="h5 fw-bold">@item.Title</h3>
+                                <p class="text-muted small mb-2">@item.Location</p>
+                                <p class="small mb-2">Olay tarihi: @item.EventDate.ToString("dd.MM.yyyy HH:mm")</p>
+                                <p class="small mb-3">@(item.IsItemFound ? "Eşya bulundu" : "Eşya henüz bulunmadı") · @(item.IsDelivered ? "Teslim edildi" : "Teslim edilmedi")</p>
+                                <a asp-controller="Home" asp-action="Detay" asp-route-ilanId="@item.Id" class="btn btn-outline-danger rounded-pill mt-auto">İlan detayları</a>
+                            </div>
+                        </article>
                     </div>
-                    <h6 class="fw-bold text-dark mb-1">Siyah Deri Sırt Çantası</h6>
-                    <p class="text-muted small mb-3">📍 Merkez Kütüphane (2. Kat)</p>
-                    <a href="/Home/Detay" class="btn btn-sm w-100 rounded-pill fw-semibold" style="background: #FFF0F4; color: #FF416C; border: 1px solid #FFD9E2;">Detayları Gör</a>
-                </div>
+                }
             </div>
-        </div>
-
-        <!-- İlan Kartı 2 -->
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="background: white; border: 1px solid #FFE2EA !important;">
-                <div class="p-4 text-center" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFF7F9 100%);">
-                    <div style="font-size: 3.5rem;">💳</div>
-                </div>
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="badge rounded-pill text-white px-3 py-1 small" style="background: #10B981;">Bulundu</span>
-                        <span class="small text-muted">Dün</span>
-                    </div>
-                    <h6 class="fw-bold text-dark mb-1">Öğrenci Kimlik Kartı</h6>
-                    <p class="text-muted small mb-3">📍 Yemekhane Girişi</p>
-                    <a href="/Home/Detay" class="btn btn-sm w-100 rounded-pill fw-semibold" style="background: #FFF0F4; color: #FF416C; border: 1px solid #FFD9E2;">Detayları Gör</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- İlan Kartı 3 -->
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="background: white; border: 1px solid #FFE2EA !important;">
-                <div class="p-4 text-center" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFF7F9 100%);">
-                    <div style="font-size: 3.5rem;">🔑</div>
-                </div>
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="badge rounded-pill text-white px-3 py-1 small" style="background: #FF6082;">Kayıp</span>
-                        <span class="small text-muted">3 gün önce</span>
-                    </div>
-                    <h6 class="fw-bold text-dark mb-1">Mavi Anahtarlık & 2 Anahtar</h6>
-                    <p class="text-muted small mb-3">📍 Mühendislik Fakültesi B Blok</p>
-                    <a href="/Home/Detay" class="btn btn-sm w-100 rounded-pill fw-semibold" style="background: #FFF0F4; color: #FF416C; border: 1px solid #FFD9E2;">Detayları Gör</a>
-                </div>
-            </div>
-        </div>
+        }
     </div>
-</div>
+</section>

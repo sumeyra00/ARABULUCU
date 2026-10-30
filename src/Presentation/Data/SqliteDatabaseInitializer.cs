@@ -118,7 +118,9 @@ public static class SqliteDatabaseInitializer
             "LostItemId" INTEGER NOT NULL,
             "Key" TEXT NOT NULL,
             "Value" TEXT NOT NULL,
-            "IsHidden" INTEGER NOT NULL
+            "IsHidden" INTEGER NOT NULL,
+            CONSTRAINT "FK_LostItemFeatures_LostItems_LostItemId"
+                FOREIGN KEY ("LostItemId") REFERENCES "LostItems" ("Id") ON DELETE CASCADE
         )
         """,
         """
@@ -136,7 +138,10 @@ public static class SqliteDatabaseInitializer
             "ImagePath" TEXT NULL,
             "Location" TEXT NOT NULL,
             "CreatedAt" TEXT NOT NULL,
+            "EventDate" TEXT NOT NULL DEFAULT '1970-01-01 00:00:00',
             "IsFound" INTEGER NOT NULL,
+            "IsItemFound" INTEGER NOT NULL DEFAULT 0,
+            "IsDelivered" INTEGER NOT NULL DEFAULT 0,
             "UserId" TEXT NOT NULL,
             "CategoryId" INTEGER NOT NULL,
             CONSTRAINT "FK_LostItems_Categories_CategoryId"
@@ -159,6 +164,7 @@ public static class SqliteDatabaseInitializer
                 FOREIGN KEY ("UserId") REFERENCES "UserProfiles" ("Id") ON DELETE CASCADE
         )
         """,
+        """CREATE INDEX IF NOT EXISTS "IX_LostItemFeatures_LostItemId" ON "LostItemFeatures" ("LostItemId")""",
         """CREATE INDEX IF NOT EXISTS "IX_LostItems_CategoryId" ON "LostItems" ("CategoryId")""",
         """CREATE INDEX IF NOT EXISTS "IX_LostItems_UserId" ON "LostItems" ("UserId")""",
         """CREATE INDEX IF NOT EXISTS "IX_Notifications_LostItemId" ON "Notifications" ("LostItemId")""",
@@ -384,14 +390,17 @@ public static class SqliteDatabaseInitializer
             await dbContext.Database.CloseConnectionAsync();
         }
 
+        var missingEventDate = !columns.Contains("EventDate");
+        var missingIsItemFound = !columns.Contains("IsItemFound");
+        var missingIsDelivered = !columns.Contains("IsDelivered");
         var missingUserId = !columns.Contains("UserId");
         var missingCategoryId = !columns.Contains("CategoryId");
-        if (!missingUserId && !missingCategoryId)
+        if (!missingEventDate && !missingIsItemFound && !missingIsDelivered && !missingUserId && !missingCategoryId)
         {
             return;
         }
 
-        if (await dbContext.LostItems.CountAsync() > 0)
+        if ((missingUserId || missingCategoryId) && await dbContext.LostItems.CountAsync() > 0)
         {
             throw new InvalidOperationException(
                 "The SQLite database contains existing lost-item records without the required ownership or category fields. Back up and map those records before starting the application.");
@@ -407,6 +416,38 @@ public static class SqliteDatabaseInitializer
         {
             await dbContext.Database.ExecuteSqlRawAsync(
                 """ALTER TABLE "LostItems" ADD COLUMN "CategoryId" INTEGER NOT NULL DEFAULT 1""");
+        }
+
+        if (missingEventDate)
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """ALTER TABLE "LostItems" ADD COLUMN "EventDate" TEXT NOT NULL DEFAULT '1970-01-01 00:00:00'""");
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """UPDATE "LostItems" SET "EventDate" = "CreatedAt" """);
+        }
+
+        if (missingIsItemFound)
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """ALTER TABLE "LostItems" ADD COLUMN "IsItemFound" INTEGER NOT NULL DEFAULT 0""");
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """UPDATE "LostItems" SET "IsItemFound" = "IsFound" """);
+        }
+
+        if (missingIsDelivered)
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """ALTER TABLE "LostItems" ADD COLUMN "IsDelivered" INTEGER NOT NULL DEFAULT 0""");
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """
+                UPDATE "LostItems"
+                SET "IsDelivered" = CASE WHEN EXISTS (
+                    SELECT 1 FROM "LostItemFeatures"
+                    WHERE "LostItemFeatures"."LostItemId" = "LostItems"."Id"
+                      AND "LostItemFeatures"."Key" = 'ItemStatus'
+                      AND "LostItemFeatures"."Value" = 'delivered'
+                ) THEN 1 ELSE 0 END
+                """);
         }
     }
 
