@@ -159,7 +159,29 @@ public class HomeController : Controller
         });
     }
 
-    public IActionResult Mesajlar() => View("~/Views/Home/Mesajlar.cshtml");
+    [HttpGet]
+    public async Task<IActionResult> Mesajlar(int? ilanId)
+    {
+        if (ilanId.HasValue)
+        {
+            var item = await _listingService.GetByIdAsync(ilanId.Value);
+            if (item is null)
+            {
+                return NotFound();
+            }
+
+            return View("~/Views/Home/Mesajlar.cshtml", new MessagesViewModel
+            {
+                Item = item
+            });
+        }
+
+        var result = await _listingService.SearchAsync(new ItemSearchCriteria());
+        return View("~/Views/Home/Mesajlar.cshtml", new MessagesViewModel
+        {
+            AvailableItems = result.Items
+        });
+    }
 
     public IActionResult KonumPaylas() => View("~/Views/Home/KonumPaylas.cshtml");
 
@@ -443,4 +465,10 @@ public class ItemDetailViewModel
 {
     public LostItem? Item { get; set; }
     public IReadOnlyList<RecommendedItem> Recommendations { get; set; } = [];
+}
+
+public class MessagesViewModel
+{
+    public LostItem? Item { get; set; }
+    public IReadOnlyList<LostItem> AvailableItems { get; set; } = [];
 }

@@ -136,22 +136,22 @@
             <!-- Üst Kısım: Menü Linkleri -->
             <div>
                 <nav class="d-flex flex-column gap-2">
-                    <a asp-controller="Home" asp-action="Profil" class="drawer-link">
+                    <a href="/Home/Profil" class="drawer-link" data-bs-dismiss="offcanvas">
                         <i class="bi bi-person-circle"></i>
                         <span>Hesabım / Profilim</span>
                     </a>
-                    <a asp-controller="Home" asp-action="Mesajlar" class="drawer-link">
+                    <a href="/Home/Mesajlar" class="drawer-link" data-bs-dismiss="offcanvas">
                         <i class="bi bi-chat-dots-fill"></i>
                         <div class="d-flex align-items-center justify-content-between flex-grow-1">
                             <span>Mesajlarım</span>
                             <span class="badge rounded-pill text-white px-2 py-1" style="background-color: #FF6082; font-size: 0.7rem;">Canlı</span>
                         </div>
                     </a>
-                    <a asp-controller="Home" asp-action="Hakkimizda" class="drawer-link">
+                    <a href="/Home/Hakkimizda" class="drawer-link" data-bs-dismiss="offcanvas">
                         <i class="bi bi-info-circle-fill"></i>
                         <span>Hakkımızda</span>
                     </a>
-                    <a asp-controller="Home" asp-action="Iletisim" class="drawer-link">
+                    <a href="/Home/Iletisim" class="drawer-link" data-bs-dismiss="offcanvas">
                         <i class="bi bi-envelope-fill"></i>
                         <span>İletişim & Yardım</span>
                     </a>
@@ -170,14 +170,14 @@
                     </button>
                     <ul class="dropdown-menu w-100 rounded-4 shadow-sm border-0 mt-1 p-2">
                         <li>
-                            <a class="dropdown-item rounded-3 py-2 fw-semibold small d-flex align-items-center gap-2 active" href="#" style="background-color: #FFF0F4; color: #FF416C;">
+                            <span class="dropdown-item rounded-3 py-2 fw-semibold small d-flex align-items-center gap-2 active" aria-current="true" style="background-color: #FFF0F4; color: #FF416C;">
                                 <span>🇹🇷</span> Türkçe
-                            </a>
+                            </span>
                         </li>
                         <li>
-                            <a class="dropdown-item rounded-3 py-2 fw-semibold small d-flex align-items-center gap-2" href="#">
-                                <span>🇬🇧</span> English
-                            </a>
+                            <span class="dropdown-item py-2 small text-muted" aria-disabled="true">
+                                🇬🇧 English (yakında)
+                            </span>
                         </li>
                     </ul>
                 </div>

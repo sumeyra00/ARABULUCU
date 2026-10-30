@@ -9,8 +9,14 @@ namespace ARABULUCU.DAL.Data
         {
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
-            // Web katmanındaki appsettings.json dosyanızdaki SQLite bağlantı yolunu buraya veriyoruz
-            optionsBuilder.UseSqlite("Data Source=arabulucu.db"); // veya arkadaşlarınızın kullandığı connection string neyse
+            var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException(
+                    "ConnectionStrings__DefaultConnection ortam değişkeni ayarlanmamış.");
+            }
+
+            optionsBuilder.UseNpgsql(connectionString);
 
             return new ApplicationDbContext(optionsBuilder.Options);
         }

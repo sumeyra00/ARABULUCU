@@ -39,6 +39,10 @@ namespace ARABULUCU.DAL.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<LostItem>()
+                .Property(item => item.EventDate)
+                .HasColumnType("timestamp without time zone");
+
+            modelBuilder.Entity<LostItem>()
                 .HasMany(item => item.Features)
                 .WithOne()
                 .HasForeignKey(feature => feature.LostItemId)

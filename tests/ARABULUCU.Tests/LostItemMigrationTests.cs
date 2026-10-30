@@ -1,7 +1,5 @@
-using System;
-using System.Threading.Tasks;
 using ARABULUCU.DAL.Data;
-using Microsoft.Data.Sqlite;
+using ARABULUCU.ENT.Entities;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -10,38 +8,20 @@ namespace ARABULUCU.Tests;
 public sealed class LostItemMigrationTests
 {
     [Fact]
-    public async Task Migration_PreservesLegacyEventDateAndMapsIndependentStatuses()
+    public void EventDate_UsesLocalTimestampWhileCreatedAtUsesUtcTimestamp()
     {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlite(connection)
+            .UseNpgsql("Host=localhost;Database=arabulucu;Username=unused;Password=unused")
             .Options;
-        await using var db = new ApplicationDbContext(options);
+        using var db = new ApplicationDbContext(options);
 
-        await db.Database.MigrateAsync("20261029133317_AddVehicleListingsAndFeatures");
-        await db.Database.ExecuteSqlRawAsync(
-            """INSERT INTO "UserProfiles" ("Id", "DisplayName", "Email") VALUES ('owner', 'Owner', 'owner@example.com')""");
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            INSERT INTO "LostItems"
-                ("Title", "Description", "Location", "CreatedAt", "IsFound", "UserId", "CategoryId")
-            VALUES
-                ('Legacy found item', 'Description', 'Library', '2026-10-01 10:00:00', 1, 'owner', 1)
-            """);
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            INSERT INTO "LostItemFeatures" ("LostItemId", "Key", "Value", "IsHidden")
-            VALUES (1, 'ItemStatus', 'delivered', 1)
-            """);
+        var lostItem = db.Model.FindEntityType(typeof(LostItem))!;
 
-        await db.Database.MigrateAsync();
-
-        var migrated = await db.LostItems.AsNoTracking().SingleAsync();
-        Assert.Equal(new DateTime(2026, 10, 1, 10, 0, 0), migrated.EventDate);
-        Assert.True(migrated.IsFound);
-        Assert.True(migrated.IsItemFound);
-        Assert.True(migrated.IsDelivered);
-        Assert.NotEqual(migrated.EventDate, migrated.CreatedAt);
+        Assert.Equal(
+            "timestamp without time zone",
+            lostItem.FindProperty(nameof(LostItem.EventDate))!.GetColumnType());
+        Assert.Equal(
+            "timestamp with time zone",
+            lostItem.FindProperty(nameof(LostItem.CreatedAt))!.GetColumnType());
     }
 }

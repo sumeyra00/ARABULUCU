@@ -1,7 +1,46 @@
-﻿@{
+﻿@model ARABULUCU.Web.Controllers.MessagesViewModel
+@{
     ViewData["Title"] = "Mesajlarım";
 }
 
+@if (Model.Item is null)
+{
+    <section class="py-5" style="background: radial-gradient(circle at 50% 20%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: 100vh;">
+        <div class="container" style="max-width: 900px;">
+            <a href="/" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border mb-4">&larr; Ana Sayfaya Dön</a>
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+                <h1 class="h3 fw-bold mb-2">Mesajlaşmak için bir ilan seçin</h1>
+                <p class="text-muted mb-4">İlan sahibiyle sohbet başlatmak için ilgili ilanı açın.</p>
+                @if (Model.AvailableItems.Count == 0)
+                {
+                    <div class="alert alert-light border mb-0">
+                        Henüz mesajlaşılabilecek bir ilan yok. Önce bir kayıp veya bulunan eşya ilanı oluşturun.
+                    </div>
+                }
+                else
+                {
+                    <div class="list-group">
+                        @foreach (var item in Model.AvailableItems)
+                        {
+                            <a href="@Url.Action("Mesajlar", "Home", new { ilanId = item.Id })"
+                               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 py-3">
+                                <span>
+                                    <strong>@item.Title</strong>
+                                    <span class="d-block small text-muted">@item.Category.Name · @item.Location</span>
+                                </span>
+                                <span class="badge rounded-pill @(item.IsFound ? "text-bg-success" : "text-bg-danger")">
+                                    @(item.IsFound ? "Bulunan" : "Kayıp")
+                                </span>
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+else
+{
 <!-- Leaflet Harita Kütüphanesi -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -13,11 +52,11 @@
     <div class="position-absolute d-none d-lg-block" style="bottom: 8%; left: 4%; font-size: 2rem; transform: rotate(12deg); user-select: none;">✨</div>
     <div class="position-absolute d-none d-lg-block" style="bottom: 10%; right: 5%; font-size: 2.2rem; transform: rotate(-12deg); user-select: none;">📍</div>
 
-    <div class="container position-relative" style="z-index: 2;" id="chatApp" data-item-id="@ViewData["IlanId"]">
+    <div class="container position-relative" style="z-index: 2;" id="chatApp" data-item-id="@Model.Item.Id">
 
         <!-- Üst Geri Dön Butonu -->
         <div class="mb-3">
-            <a href="/Home/Detay?ilanId=@ViewData["IlanId"]" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border">
+            <a href="@Url.Action("Detay", "Home", new { ilanId = Model.Item.Id })" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border">
                 &larr; İlan Detayına Dön
             </a>
         </div>
@@ -36,14 +75,14 @@
                     </div>
 
                     <div class="list-group list-group-flush">
-                        <a href="#" class="list-group-item list-group-item-action p-3 border-bottom border-0 border-start border-4" style="background-color: #FFF0F4; border-left-color: #FF6082 !important;" aria-current="true">
+                        <a href="@Url.Action("Mesajlar", "Home", new { ilanId = Model.Item.Id })" class="list-group-item list-group-item-action p-3 border-bottom border-0 border-start border-4" style="background-color: #FFF0F4; border-left-color: #FF6082 !important;" aria-current="page">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0" style="width: 44px; height: 44px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
-                                    #@ViewData["IlanId"]
+                                    #@Model.Item.Id
                                 </div>
                                 <div class="flex-grow-1 overflow-hidden">
                                     <div class="d-flex align-items-center justify-content-between mb-1">
-                                        <span class="fw-bold text-dark">İlan #@ViewData["IlanId"]</span>
+                                        <span class="fw-bold text-dark">İlan #@Model.Item.Id</span>
                                         <small id="chatStatus" class="badge rounded-pill bg-white text-muted border px-2 py-1" style="font-size: 0.7rem;">Bağlanıyor...</small>
                                     </div>
                                     <div class="small fw-semibold text-secondary text-truncate">İlan Sahibi ile Sohbet</div>
@@ -64,12 +103,12 @@
                                 💬
                             </div>
                             <div>
-                                <div class="fw-bold text-dark">İlan #@ViewData["IlanId"] Sohbeti</div>
+                                <div class="fw-bold text-dark">İlan #@Model.Item.Id Sohbeti</div>
                                 <small class="text-success fw-semibold" style="font-size: 0.75rem;">● SignalR Canlı Bağlantı</small>
                             </div>
                         </div>
                         <div>
-                            <a href="/Home/Detay?ilanId=@ViewData["IlanId"]" class="btn btn-sm rounded-pill px-3 fw-semibold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
+                            <a href="@Url.Action("Detay", "Home", new { ilanId = Model.Item.Id })" class="btn btn-sm rounded-pill px-3 fw-semibold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
                                 İlanı Gör
                             </a>
                         </div>
@@ -343,3 +382,4 @@
         });
     }
 </script>
+}

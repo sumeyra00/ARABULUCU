@@ -18,6 +18,15 @@ Depo kökünde PowerShell açıp şu komutu çalıştırın:
 dotnet run --project .\src\Presentation\ARABULUCU.Web.csproj
 ```
 
+Uygulama başlangıçta PostgreSQL migration'larını çalıştırır. Bağlantı dizesini depoya koymak yerine User Secrets'a kaydedin:
+
+```powershell
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=<Supabase pooler host>;Port=5432;Database=postgres;Username=<Supabase pooler user>;Password=<database password>;SSL Mode=Require;Trust Server Certificate=true" --project .\src\Presentation\ARABULUCU.Web.csproj
+dotnet run --project .\src\Presentation\ARABULUCU.Web.csproj
+```
+
+Supabase Dashboard'da **Connect** bölümünden **Session pooler** bağlantı bilgilerini alın. Projenin doğrudan `db.<project-ref>.supabase.co` veritabanı adresi yalnızca IPv6 DNS kaydı döndürebilir; internet bağlantınız IPv6 desteklemiyorsa bu adres çözümlenemez. Bu durumda doğrudan bağlantı yerine Session pooler host, kullanıcı adı ve port değerlerini kullanın. Parolayı kaynak koda veya sohbete eklemeyin.
+
 Visual Studio kullanıyorsanız `ARABULUCU.slnx` dosyasını açın ve `ARABULUCU.Web` projesini başlangıç projesi olarak seçin.
 
 ## Şifre sıfırlama e-postası
