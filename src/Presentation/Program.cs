@@ -4,10 +4,11 @@ using ARABULUCU.DAL.Repositories;
 using ARABULUCU.BLL.Services;
 using ARABULUCU.ENT.Entities;
 using ARABULUCU.Web.Hubs;
-using ARABULUCU.Web.Data;
 using ARABULUCU.Web.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using System.Net.Sockets;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,9 +16,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDataProtection().SetApplicationName("ARABULUCU");
 
-// DbContext: burada geliştirme için SQLite kullanalım. Connection string appsettings.json'dan alınabilir.
+// Doğrudan Supabase Session Pooler bağlantı dizesi
+var connectionString = "Host=aws-0-eu-west-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.joxwercozcyuoumfueen;Password=Sümeyra123.";
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=arabulucu.db"));
+    options.UseNpgsql(connectionString));
+
 
 builder.Services
     .AddIdentity<IdentityUser, IdentityRole>(options =>
@@ -53,7 +57,19 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await SqliteDatabaseInitializer.InitializeAsync(dbContext);
+    try
+    {
+        await dbContext.Database.MigrateAsync();
+    }
+    catch (NpgsqlException exception) when (
+        exception.GetBaseException() is SocketException socketException &&
+        socketException.SocketErrorCode is SocketError.HostNotFound or SocketError.TryAgain or SocketError.NoData)
+    {
+        var host = new NpgsqlConnectionStringBuilder(connectionString).Host;
+        throw new InvalidOperationException(
+            $"PostgreSQL sunucusunun adresi çözümlenemedi: '{host}'. Supabase Dashboard > Connect > Session pooler adresini kullanın; doğrudan veritabanı adresi IPv6 gerektirebilir.",
+            exception);
+    }
 }
 
 if (!app.Environment.IsDevelopment())
