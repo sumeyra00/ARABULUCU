@@ -313,9 +313,9 @@ public class HomeController : Controller
                 }
             };
 
-            AddFeature(features, lostItem.Id, "Brand", model.Brand, isFound && model.HideBrand);
-            AddFeature(features, lostItem.Id, "Model", model.Model, isFound && model.HideModel);
-            AddFeature(features, lostItem.Id, "Color", model.Color, isFound && model.HideColor);
+            AddFeature(features, lostItem.Id, "Brand", model.Brand, isFound);
+            AddFeature(features, lostItem.Id, "Model", model.Model, isFound);
+            AddFeature(features, lostItem.Id, "Color", model.Color, isFound);
 
             if (!isFound)
             {
@@ -420,17 +420,11 @@ public class ItemReportViewModel
     [StringLength(100)]
     public string? Brand { get; set; }
 
-    public bool HideBrand { get; set; }
-
     [StringLength(100)]
     public string? Model { get; set; }
 
-    public bool HideModel { get; set; }
-
     [StringLength(100)]
     public string? Color { get; set; }
-
-    public bool HideColor { get; set; }
 
     [StringLength(300)]
     public string? SecurityQuestion { get; set; }

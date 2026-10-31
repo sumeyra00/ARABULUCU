@@ -75,6 +75,46 @@ public sealed class LostItemListingServiceTests
     }
 
     [Fact]
+    public async Task SearchAsync_FoundItemsOnlyMatchPublicTitleAndIgnoreHiddenMetadataFilters()
+    {
+        await using var connection = await CreateDatabaseAsync();
+        await using var db = CreateContext(connection);
+        var (owner, wallet, _) = AddBaseEntities(db);
+        var found = Item(
+            owner,
+            wallet,
+            "Blue thermos",
+            "Private detail word",
+            "Private location",
+            new DateTime(2026, 10, 20));
+        found.IsFound = true;
+        found.IsItemFound = true;
+        found.IsDelivered = true;
+        found.Features.Add(new LostItemFeature { Key = "Brand", Value = "Private brand", IsHidden = true });
+        db.LostItems.Add(found);
+        await db.SaveChangesAsync();
+        var service = CreateService(db);
+
+        var titleSearch = await service.SearchAsync(new ItemSearchCriteria
+        {
+            Query = "thermos",
+            Category = "a category that does not match",
+            Location = "a location that does not match",
+            EventDateFrom = new DateTime(2030, 1, 1),
+            IsItemFound = false,
+            IsDelivered = false,
+            Brand = "a brand that does not match"
+        });
+        var privateDescriptionSearch = await service.SearchAsync(new ItemSearchCriteria
+        {
+            Query = "Private detail word"
+        });
+
+        Assert.Contains(titleSearch.Items, item => item.Id == found.Id);
+        Assert.DoesNotContain(privateDescriptionSearch.Items, item => item.Id == found.Id);
+    }
+
+    [Fact]
     public async Task SearchAsync_IncludesEventDateBoundsAndRejectsAnInvalidRange()
     {
         await using var connection = await CreateDatabaseAsync();

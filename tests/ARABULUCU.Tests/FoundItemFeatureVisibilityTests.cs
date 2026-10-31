@@ -61,11 +61,8 @@ public sealed class FoundItemFeatureVisibilityTests
             SecurityQuestion = "Termosun içindeki etiket ne renk?",
             ItemStatus = "with_me",
             Brand = "TermosCo",
-            HideBrand = true,
             Model = "500 ml",
-            HideModel = false,
-            Color = "Mavi",
-            HideColor = true
+            Color = "Mavi"
         });
 
         Assert.IsType<RedirectToActionResult>(result);
@@ -74,7 +71,7 @@ public sealed class FoundItemFeatureVisibilityTests
             .ToDictionaryAsync(feature => feature.Key, feature => feature);
 
         Assert.True(features["Brand"].IsHidden);
-        Assert.False(features["Model"].IsHidden);
+        Assert.True(features["Model"].IsHidden);
         Assert.True(features["Color"].IsHidden);
         Assert.True(features["SecurityQuestion"].IsHidden);
     }

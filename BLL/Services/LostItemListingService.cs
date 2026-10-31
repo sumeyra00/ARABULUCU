@@ -83,9 +83,19 @@ public sealed class LostItemListingService : ILostItemListingService
     {
         if (!string.IsNullOrWhiteSpace(criteria.Query) &&
             !Contains(item.Title, criteria.Query) &&
-            !Contains(item.Description, criteria.Query))
+            (item.IsFound || !Contains(item.Description, criteria.Query)))
         {
             return false;
+        }
+
+        if (criteria.IsFound.HasValue && item.IsFound != criteria.IsFound.Value)
+        {
+            return false;
+        }
+
+        if (item.IsFound)
+        {
+            return true;
         }
 
         if (!string.IsNullOrWhiteSpace(criteria.Category) &&
@@ -99,8 +109,7 @@ public sealed class LostItemListingService : ILostItemListingService
             return false;
         }
 
-        if (criteria.IsFound.HasValue && item.IsFound != criteria.IsFound.Value ||
-            criteria.IsItemFound.HasValue && item.IsItemFound != criteria.IsItemFound.Value ||
+        if (criteria.IsItemFound.HasValue && item.IsItemFound != criteria.IsItemFound.Value ||
             criteria.IsDelivered.HasValue && item.IsDelivered != criteria.IsDelivered.Value)
         {
             return false;
