@@ -14,5 +14,6 @@
   <ItemGroup>
 	<ProjectReference Include="..\..\BLL\ARABULUCU.BLL.csproj" />
 	<ProjectReference Include="..\..\DAL\ARABULUCU.DAL.csproj" />
+	<ProjectReference Include="..\..\src\Presentation\ARABULUCU.Web.csproj" />
   </ItemGroup>
 </Project>
