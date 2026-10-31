@@ -4,7 +4,7 @@ Kampüs kayıp eşya bulma ve iletişim platformu.
 
 ## Buluntu eşya özelliklerinin görünürlüğü
 
-Buluntu eşya formunda marka, model ve renk bilgileri ayrı ayrı ilanda gösterilebilir veya gizlenebilir. Gizli bilgiler kaydedilir ancak ilan detayında ve herkese açık aramalarda gösterilmez.
+Buluntu eşya ilanında başlık dışındaki bilgiler (kategori, konum, tarihler, açıklama, durum ve özellikler) herkese açık sayfalarda gösterilmez. Marka, model ve renk verileri kaydedilir ancak gizli tutulur.
 
 ## Uygulamayı çalıştırma
 

@@ -107,31 +107,19 @@
                             <label asp-for="Brand" class="form-label fw-semibold">Marka (isteğe bağlı)</label>
                             <input asp-for="Brand" class="form-control" />
                             <span asp-validation-for="Brand" class="text-danger small"></span>
-                            <div class="form-check mt-2">
-                                <input asp-for="HideBrand" class="form-check-input" />
-                                <label asp-for="HideBrand" class="form-check-label small">İlanda gizle</label>
-                            </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label asp-for="Model" class="form-label fw-semibold">Model (isteğe bağlı)</label>
                             <input asp-for="Model" class="form-control" />
                             <span asp-validation-for="Model" class="text-danger small"></span>
-                            <div class="form-check mt-2">
-                                <input asp-for="HideModel" class="form-check-input" />
-                                <label asp-for="HideModel" class="form-check-label small">İlanda gizle</label>
-                            </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label asp-for="Color" class="form-label fw-semibold">Renk (isteğe bağlı)</label>
                             <input asp-for="Color" class="form-control" />
                             <span asp-validation-for="Color" class="text-danger small"></span>
-                            <div class="form-check mt-2">
-                                <input asp-for="HideColor" class="form-check-input" />
-                                <label asp-for="HideColor" class="form-check-label small">İlanda gizle</label>
-                            </div>
                         </div>
                     </div>
-                    <p class="form-text">“İlanda gizle” seçtiğiniz marka, model veya renk bilgisi saklanır ancak ilan detayında ve herkese açık aramalarda gösterilmez.</p>
+                    <p class="form-text">Bulunan eşya ilanlarında başlık dışındaki bilgiler herkese açık olarak gösterilmez.</p>
                     <div class="mb-4">
                         <label for="itemPhoto" class="form-label fw-semibold">Fotoğraf (İsteğe bağlı)</label>
                         <input class="form-control" type="file" id="itemPhoto" name="itemPhoto" accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp" />
