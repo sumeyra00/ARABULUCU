@@ -9,32 +9,26 @@
         <div class="container" style="max-width: 900px;">
             <a href="/" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border mb-4">&larr; Ana Sayfaya Dön</a>
             <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
-                <h1 class="h3 fw-bold mb-2">Mesajlaşmak için bir ilan seçin</h1>
-                <p class="text-muted mb-4">İlan sahibiyle sohbet başlatmak için ilgili ilanı açın.</p>
-                @if (Model.AvailableItems.Count == 0)
+                <h1 class="h3 fw-bold mb-2">Eşleşmelerim</h1>
+                <p class="text-muted mb-4">Yalnızca açık kayıp ve bulunan ilanlar arasında en az %50 benzerlik bulunan eşleşmelerde sohbet başlatabilirsiniz.</p>
+                @if (Model.AvailableMatches.Count == 0)
                 {
                     <div class="alert alert-light border mb-0">
-                        Henüz mesajlaşılabilecek bir ilan yok. Önce bir kayıp veya bulunan eşya ilanı oluşturun.
+                        Henüz sohbet edilebilir bir eşleşmeniz yok. İlanlar filtrelenip eşleştiğinde burada görünecek.
                     </div>
                 }
                 else
                 {
                     <div class="list-group">
-                        @foreach (var item in Model.AvailableItems)
+                        @foreach (var match in Model.AvailableMatches)
                         {
-                            <a href="@Url.Action("Mesajlar", "Home", new { ilanId = item.Id })"
+                            <a href="@Url.Action("Mesajlar", "Home", new { ilanId = match.Item.Id, eslesenIlanId = match.MatchedItem.Id })"
                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 py-3">
                                 <span>
-                                    <strong>@item.Title</strong>
-                                    @if (!item.IsFound)
-                                    {
-                                        <span class="d-block small text-muted">@item.Category.Name · @item.Location</span>
-                                    }
+                                    <strong>@match.Item.Title ↔ @match.MatchedItem.Title</strong>
+                                    <span class="d-block small text-muted">İlanlar %@match.SimilarityPercent benzer</span>
                                 </span>
-                                @if (!item.IsFound)
-                                {
-                                    <span class="badge rounded-pill text-bg-danger">Kayıp</span>
-                                }
+                                <span class="badge rounded-pill text-bg-success">Eşleşti · Sohbet et</span>
                             </a>
                         }
                     </div>
@@ -56,7 +50,10 @@ else
     <div class="position-absolute d-none d-lg-block" style="bottom: 8%; left: 4%; font-size: 2rem; transform: rotate(12deg); user-select: none;">✨</div>
     <div class="position-absolute d-none d-lg-block" style="bottom: 10%; right: 5%; font-size: 2.2rem; transform: rotate(-12deg); user-select: none;">📍</div>
 
-    <div class="container position-relative" style="z-index: 2;" id="chatApp" data-item-id="@Model.Item.Id">
+    <div class="container position-relative" style="z-index: 2;" id="chatApp"
+         data-item-id="@Model.Item.Id"
+         data-matched-item-id="@Model.MatchedItem!.Id"
+         data-user-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value">
 
         <!-- Üst Geri Dön Butonu -->
         <div class="mb-3">
@@ -79,17 +76,17 @@ else
                     </div>
 
                     <div class="list-group list-group-flush">
-                        <a href="@Url.Action("Mesajlar", "Home", new { ilanId = Model.Item.Id })" class="list-group-item list-group-item-action p-3 border-bottom border-0 border-start border-4" style="background-color: #FFF0F4; border-left-color: #FF6082 !important;" aria-current="page">
+                        <a href="@Url.Action("Mesajlar", "Home", new { ilanId = Model.Item.Id, eslesenIlanId = Model.MatchedItem!.Id })" class="list-group-item list-group-item-action p-3 border-bottom border-0 border-start border-4" style="background-color: #FFF0F4; border-left-color: #FF6082 !important;" aria-current="page">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0" style="width: 44px; height: 44px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
                                     #@Model.Item.Id
                                 </div>
                                 <div class="flex-grow-1 overflow-hidden">
                                     <div class="d-flex align-items-center justify-content-between mb-1">
-                                        <span class="fw-bold text-dark">İlan #@Model.Item.Id</span>
+                                        <span class="fw-bold text-dark">@Model.Item.Title ↔ @Model.MatchedItem!.Title</span>
                                         <small id="chatStatus" class="badge rounded-pill bg-white text-muted border px-2 py-1" style="font-size: 0.7rem;">Bağlanıyor...</small>
                                     </div>
-                                    <div class="small fw-semibold text-secondary text-truncate">İlan Sahibi ile Sohbet</div>
+                                    <div class="small fw-semibold text-secondary text-truncate">Eşleşme sohbeti</div>
                                     <p class="small text-muted mb-0 text-truncate" style="font-size: 0.75rem;">SignalR ile canlı mesajlaşma</p>
                                 </div>
                             </div>
@@ -107,7 +104,7 @@ else
                                 💬
                             </div>
                             <div>
-                                <div class="fw-bold text-dark">İlan #@Model.Item.Id Sohbeti</div>
+                                <div class="fw-bold text-dark">@Model.Item.Title ↔ @Model.MatchedItem!.Title</div>
                                 <small class="text-success fw-semibold" style="font-size: 0.75rem;">● SignalR Canlı Bağlantı</small>
                             </div>
                         </div>
@@ -206,17 +203,10 @@ else
     const chatInput = document.getElementById('chatInput');
     const sendButton = document.getElementById('sendButton');
     const conversationId = Number(chatApp.dataset.itemId);
-    const nameStorageKey = 'arabulucu-chat-display-name';
-    let displayName = localStorage.getItem(nameStorageKey);
-    if (!displayName) {
-        displayName = window.prompt('Sohbette kullanılacak adınız:')?.trim();
-        if (displayName) {
-            localStorage.setItem(nameStorageKey, displayName);
-        }
-    }
+    const matchedConversationId = Number(chatApp.dataset.matchedItemId);
 
     function appendMessage(message) {
-        const ownMessage = message.sender === displayName;
+        const ownMessage = message.senderUserId === chatApp.dataset.userId;
         const wrapper = document.createElement('div');
         wrapper.className = `d-flex flex-column ${ownMessage ? 'align-items-end' : 'align-items-start'} mb-3`;
 
@@ -268,7 +258,7 @@ else
     });
 
     async function joinConversation() {
-        const history = await connection.invoke('JoinConversation', conversationId, displayName);
+        const history = await connection.invoke('JoinConversation', conversationId, matchedConversationId);
         chatMessages.replaceChildren();
         history.forEach(appendMessage);
         chatStatus.textContent = 'Bağlandı';
@@ -277,13 +267,6 @@ else
     }
 
     async function connect() {
-        if (!displayName) {
-            chatStatus.textContent = 'Ad gerekli';
-            chatStatus.className = 'badge rounded-pill bg-warning text-dark border px-2 py-1';
-            chatInput.disabled = true;
-            return;
-        }
-
         try {
             await connection.start();
             await joinConversation();
