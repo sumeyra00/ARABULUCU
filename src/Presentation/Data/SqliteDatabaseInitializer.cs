@@ -1,4 +1,4 @@
-using System.Data.Common;
+﻿using System.Data.Common;
 using ARABULUCU.DAL.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -163,10 +163,10 @@ public static class SqliteDatabaseInitializer
         """CREATE INDEX IF NOT EXISTS "IX_LostItems_UserId" ON "LostItems" ("UserId")""",
         """CREATE INDEX IF NOT EXISTS "IX_Notifications_LostItemId" ON "Notifications" ("LostItemId")""",
         """CREATE INDEX IF NOT EXISTS "IX_Notifications_UserId" ON "Notifications" ("UserId")""",
-        """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (1, 'Cüzdan')""",
+        """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (1, 'CÃ¼zdan')""",
         """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (2, 'Anahtar')""",
         """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (3, 'Telefon')""",
-        """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (4, 'Kulaklık')"""
+        """INSERT OR IGNORE INTO "Categories" ("Id", "Name") VALUES (4, 'KulaklÄ±k')"""
     ];
 
     public static async Task InitializeAsync(ApplicationDbContext dbContext)
@@ -445,3 +445,5 @@ public static class SqliteDatabaseInitializer
         return migrationIds;
     }
 }
+
+
