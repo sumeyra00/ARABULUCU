@@ -313,9 +313,9 @@ public class HomeController : Controller
                 }
             };
 
-            AddVisibleFeature(features, lostItem.Id, "Brand", model.Brand);
-            AddVisibleFeature(features, lostItem.Id, "Model", model.Model);
-            AddVisibleFeature(features, lostItem.Id, "Color", model.Color);
+            AddFeature(features, lostItem.Id, "Brand", model.Brand, isFound && model.HideBrand);
+            AddFeature(features, lostItem.Id, "Model", model.Model, isFound && model.HideModel);
+            AddFeature(features, lostItem.Id, "Color", model.Color, isFound && model.HideColor);
 
             if (!isFound)
             {
@@ -376,7 +376,12 @@ public class HomeController : Controller
         return RedirectToAction(nameof(Profil));
     }
 
-    private static void AddVisibleFeature(List<LostItemFeature> features, int itemId, string key, string? value)
+    private static void AddFeature(
+        List<LostItemFeature> features,
+        int itemId,
+        string key,
+        string? value,
+        bool isHidden)
     {
         if (!string.IsNullOrWhiteSpace(value))
         {
@@ -384,7 +389,8 @@ public class HomeController : Controller
             {
                 LostItemId = itemId,
                 Key = key,
-                Value = value.Trim()
+                Value = value.Trim(),
+                IsHidden = isHidden
             });
         }
     }
@@ -414,11 +420,17 @@ public class ItemReportViewModel
     [StringLength(100)]
     public string? Brand { get; set; }
 
+    public bool HideBrand { get; set; }
+
     [StringLength(100)]
     public string? Model { get; set; }
 
+    public bool HideModel { get; set; }
+
     [StringLength(100)]
     public string? Color { get; set; }
+
+    public bool HideColor { get; set; }
 
     [StringLength(300)]
     public string? SecurityQuestion { get; set; }

@@ -46,7 +46,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // DAL repository kayıtları (IItemRepository kullanılıyor)
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
-builder.Services.AddScoped<IVehicleListingService, VehicleListingService>();
 builder.Services.AddScoped<ILostItemListingService, LostItemListingService>();
 builder.Services.AddSingleton<ILostItemSimilarityService, LostItemSimilarityService>();
 
