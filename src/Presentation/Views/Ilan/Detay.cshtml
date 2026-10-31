@@ -46,7 +46,6 @@
                     }
                 }
 
-                <a asp-controller="Home" asp-action="Mesajlar" asp-route-ilanId="@item.Id" class="btn btn-danger rounded-pill px-4">İlan sahibiyle iletişime geç</a>
             </div>
         </article>
 
@@ -78,7 +77,18 @@
                                         <p class="small mb-1">@recommendation.Item.Location</p>
                                         <p class="small mb-3">Olay tarihi: @recommendation.Item.EventDate.ToString("dd.MM.yyyy HH:mm")</p>
                                     }
-                                    <a asp-controller="Home" asp-action="Detay" asp-route-ilanId="@recommendation.Item.Id" class="btn btn-outline-primary btn-sm rounded-pill">İlanı görüntüle</a>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <a asp-controller="Home" asp-action="Detay" asp-route-ilanId="@recommendation.Item.Id" class="btn btn-outline-primary btn-sm rounded-pill">İlanı görüntüle</a>
+                                        @if (recommendation.SimilarityPercent >= 50 &&
+                                            item.UserId != recommendation.Item.UserId &&
+                                            (Model.CurrentUserId == item.UserId || Model.CurrentUserId == recommendation.Item.UserId))
+                                        {
+                                            <a asp-controller="Home" asp-action="Mesajlar"
+                                               asp-route-ilanId="@item.Id"
+                                               asp-route-eslesenIlanId="@recommendation.Item.Id"
+                                               class="btn btn-danger btn-sm rounded-pill">Eşleşme sohbetini aç</a>
+                                        }
+                                    </div>
                                 </div>
                             </article>
                         </div>

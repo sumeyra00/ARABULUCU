@@ -76,8 +76,14 @@ namespace ARABULUCU.DAL.Data.Migrations
                     b.Property<int>("LostItemId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("MatchedLostItemId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Message")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SenderUserId")
                         .HasColumnType("text");
 
                     b.Property<DateTime>("SentAt")

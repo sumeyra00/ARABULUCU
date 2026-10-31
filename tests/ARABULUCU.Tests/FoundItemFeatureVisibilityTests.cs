@@ -86,6 +86,12 @@ public sealed class FoundItemFeatureVisibilityTests
 
         public Task<IReadOnlyList<RecommendedItem>> GetRecommendationsAsync(LostItem item, int limit = 5) =>
             Task.FromResult<IReadOnlyList<RecommendedItem>>([]);
+
+        public Task<bool> CanChatAsync(string userId, int itemId, int matchedItemId) =>
+            Task.FromResult(false);
+
+        public Task<IReadOnlyList<ChatMatch>> GetChatMatchesAsync(string userId) =>
+            Task.FromResult<IReadOnlyList<ChatMatch>>([]);
     }
 
     private sealed class TestWebHostEnvironment : IWebHostEnvironment
