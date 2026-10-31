@@ -155,31 +155,47 @@ public class HomeController : Controller
         return View("~/Views/Ilan/Detay.cshtml", new ItemDetailViewModel
         {
             Item = item,
-            Recommendations = await _listingService.GetRecommendationsAsync(item)
+            Recommendations = await _listingService.GetRecommendationsAsync(item),
+            CurrentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
         });
     }
 
+    [Authorize]
     [HttpGet]
-    public async Task<IActionResult> Mesajlar(int? ilanId)
+    public async Task<IActionResult> Mesajlar(int? ilanId, int? eslesenIlanId)
     {
-        if (ilanId.HasValue)
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
         {
+            return Challenge();
+        }
+
+        if (ilanId.HasValue || eslesenIlanId.HasValue)
+        {
+            if (!ilanId.HasValue ||
+                !eslesenIlanId.HasValue ||
+                !await _listingService.CanChatAsync(userId, ilanId.Value, eslesenIlanId.Value))
+            {
+                return NotFound();
+            }
+
             var item = await _listingService.GetByIdAsync(ilanId.Value);
-            if (item is null)
+            var matchedItem = await _listingService.GetByIdAsync(eslesenIlanId.Value);
+            if (item is null || matchedItem is null)
             {
                 return NotFound();
             }
 
             return View("~/Views/Home/Mesajlar.cshtml", new MessagesViewModel
             {
-                Item = item
+                Item = item,
+                MatchedItem = matchedItem
             });
         }
 
-        var result = await _listingService.SearchAsync(new ItemSearchCriteria());
         return View("~/Views/Home/Mesajlar.cshtml", new MessagesViewModel
         {
-            AvailableItems = result.Items
+            AvailableMatches = await _listingService.GetChatMatchesAsync(userId)
         });
     }
 
@@ -471,10 +487,12 @@ public class ItemDetailViewModel
 {
     public LostItem? Item { get; set; }
     public IReadOnlyList<RecommendedItem> Recommendations { get; set; } = [];
+    public string? CurrentUserId { get; set; }
 }
 
 public class MessagesViewModel
 {
     public LostItem? Item { get; set; }
-    public IReadOnlyList<LostItem> AvailableItems { get; set; } = [];
+    public LostItem? MatchedItem { get; set; }
+    public IReadOnlyList<ChatMatch> AvailableMatches { get; set; } = [];
 }

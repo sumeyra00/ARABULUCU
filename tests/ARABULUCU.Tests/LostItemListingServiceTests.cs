@@ -207,6 +207,33 @@ public sealed class LostItemListingServiceTests
     }
 
     [Fact]
+    public async Task CanChatAsync_OnlyAllowsOwnersOfOpenOppositeTypeMatches()
+    {
+        await using var connection = await CreateDatabaseAsync();
+        await using var db = CreateContext(connection);
+        var (owner, wallet, _) = AddBaseEntities(db);
+        var finder = new UserProfile { Id = "finder", DisplayName = "Finder", Email = "finder@example.com" };
+        var stranger = new UserProfile { Id = "stranger", DisplayName = "Stranger", Email = "stranger@example.com" };
+        db.UserProfiles.AddRange(finder, stranger);
+        var lost = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        var found = Item(finder, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        found.IsFound = true;
+        found.IsItemFound = true;
+        db.LostItems.AddRange(lost, found);
+        await db.SaveChangesAsync();
+        var service = CreateService(db);
+
+        Assert.True(await service.CanChatAsync(owner.Id, lost.Id, found.Id));
+        Assert.True(await service.CanChatAsync(finder.Id, found.Id, lost.Id));
+        Assert.False(await service.CanChatAsync(stranger.Id, lost.Id, found.Id));
+        Assert.False(await service.CanChatAsync(owner.Id, lost.Id, lost.Id));
+
+        found.IsDelivered = true;
+        await db.SaveChangesAsync();
+        Assert.False(await service.CanChatAsync(owner.Id, lost.Id, found.Id));
+    }
+
+    [Fact]
     public async Task GetByIdAsyncAndSimilarity_ExcludeHiddenFeatures()
     {
         await using var connection = await CreateDatabaseAsync();

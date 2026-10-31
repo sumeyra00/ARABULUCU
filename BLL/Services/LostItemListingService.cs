@@ -7,6 +7,8 @@ namespace ARABULUCU.BLL.Services;
 
 public sealed class LostItemListingService : ILostItemListingService
 {
+    private const decimal MinimumChatMatchScore = 50;
+
     private readonly ApplicationDbContext _dbContext;
     private readonly ILostItemSimilarityService _similarityService;
 
@@ -78,6 +80,76 @@ public sealed class LostItemListingService : ILostItemListingService
             .Take(limit)
             .ToList();
     }
+
+    public async Task<bool> CanChatAsync(string userId, int itemId, int matchedItemId)
+    {
+        if (string.IsNullOrWhiteSpace(userId) || itemId == matchedItemId)
+        {
+            return false;
+        }
+
+        var items = await _dbContext.LostItems
+            .AsNoTracking()
+            .Where(item => item.Id == itemId || item.Id == matchedItemId)
+            .Include(item => item.Category)
+            .Include(item => item.Features.Where(feature => !feature.IsHidden))
+            .ToListAsync();
+
+        if (items.Count != 2)
+        {
+            return false;
+        }
+
+        var item = items.Single(candidate => candidate.Id == itemId);
+        var matchedItem = items.Single(candidate => candidate.Id == matchedItemId);
+        return CanChatBetween(item, matchedItem, userId);
+    }
+
+    public async Task<IReadOnlyList<ChatMatch>> GetChatMatchesAsync(string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return [];
+        }
+
+        var listings = await _dbContext.LostItems
+            .AsNoTracking()
+            .Include(item => item.Category)
+            .Include(item => item.Features.Where(feature => !feature.IsHidden))
+            .ToListAsync();
+
+        var ownedListings = listings.Where(item => item.UserId == userId).ToArray();
+        return ownedListings
+            .SelectMany(item => listings
+                .Where(candidate => candidate.UserId != userId)
+                .Select(candidate => new ChatMatch
+                {
+                    Item = item,
+                    MatchedItem = candidate,
+                    SimilarityPercent = _similarityService.CalculateScore(item, candidate)
+                }))
+            .Where(match => CanChatBetween(match.Item, match.MatchedItem, userId))
+            .OrderByDescending(match => match.SimilarityPercent)
+            .ThenByDescending(match => match.Item.EventDate)
+            .ToList();
+    }
+
+    private bool CanChatBetween(LostItem item, LostItem matchedItem, string userId)
+    {
+        if (item.IsFound == matchedItem.IsFound ||
+            item.UserId == matchedItem.UserId ||
+            (item.UserId != userId && matchedItem.UserId != userId) ||
+            !IsOpen(item) ||
+            !IsOpen(matchedItem))
+        {
+            return false;
+        }
+
+        return _similarityService.CalculateScore(item, matchedItem) >= MinimumChatMatchScore;
+    }
+
+    private static bool IsOpen(LostItem item) =>
+        !item.IsDelivered && (item.IsFound || !item.IsItemFound);
 
     private static bool Matches(LostItem item, ItemSearchCriteria criteria)
     {
