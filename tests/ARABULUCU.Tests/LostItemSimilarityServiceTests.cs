@@ -8,60 +8,111 @@ namespace ARABULUCU.Tests;
 public sealed class LostItemSimilarityServiceTests
 {
     [Fact]
-    public void CalculateScore_GivesHigherScoreToEventsThatAreCloserInTime()
+    public void CalculateScore_CategoryContributesItsNormalizedWeight()
     {
         var service = new LostItemSimilarityService();
-        var lost = Item("wallet", new DateTime(2026, 10, 20));
-        var close = Item("wallet", new DateTime(2026, 10, 21));
-        var distant = Item("wallet", new DateTime(2026, 11, 9));
+        var first = Item("blue wallet", "leather", "north hall", "Wallets");
+        var second = Item("red keys", "metal", "south field", "Keys");
+        var baseline = service.CalculateScore(first, second);
 
-        Assert.True(service.CalculateScore(lost, close) > service.CalculateScore(lost, distant));
-        Assert.InRange(service.CalculateScore(lost, distant), 0, 100);
+        second.Category!.Name = "wallets";
+
+        Assert.Equal(0, baseline);
+        Assert.Equal(31.25m, service.CalculateScore(first, second));
     }
 
     [Fact]
-    public void CalculateScore_UsesEventDateAndNeverCreatedAt()
+    public void CalculateScore_ItemTextContributesItsNormalizedWeight()
     {
         var service = new LostItemSimilarityService();
-        var first = Item("wallet", new DateTime(2026, 10, 20));
-        var second = Item("wallet", new DateTime(2026, 10, 21));
-        var baseline = service.CalculateScore(first, second);
+        var first = Item("blue wallet", "leather", "north hall", "Wallets");
+        var second = Item("red keys", "metal", "south field", "Keys");
 
-        second.CreatedAt = second.CreatedAt.AddYears(10);
+        second.Title = first.Title;
+        second.Description = first.Description;
 
-        Assert.Equal(baseline, service.CalculateScore(first, second));
+        Assert.Equal(50m, service.CalculateScore(first, second));
     }
 
     [Fact]
-    public void CalculateScore_IgnoresHiddenFeaturesAndBoundsMissingData()
+    public void CalculateScore_LocationUsesCaseInsensitiveSubstringMatching()
     {
         var service = new LostItemSimilarityService();
-        var first = new LostItem
-        {
-            Title = "blue wallet",
-            EventDate = new DateTime(2026, 10, 20)
-        };
-        var second = new LostItem
-        {
-            Title = "red keys",
-            EventDate = new DateTime(2026, 10, 20)
-        };
+        var first = Item("blue wallet", "leather", "Central Library, second floor", "Wallets");
+        var second = Item("red keys", "metal", "central library", "Keys");
+
+        Assert.Equal(18.75m, service.CalculateScore(first, second));
+
+        second.Location = "   ";
+        Assert.Equal(0m, service.CalculateScore(first, second));
+    }
+
+    [Fact]
+    public void CalculateScore_VisibleFeaturesContributeToItemText()
+    {
+        var service = new LostItemSimilarityService();
+        var first = Item("blue wallet", "leather", "north hall", "Wallets");
+        var second = Item("red keys", "metal", "south field", "Keys");
         var baseline = service.CalculateScore(first, second);
+
+        first.Features.Add(new LostItemFeature { Key = "Brand", Value = "Acme", IsHidden = false });
+        second.Features.Add(new LostItemFeature { Key = "Brand", Value = "Acme", IsHidden = false });
+
+        Assert.Equal(0m, baseline);
+        Assert.True(service.CalculateScore(first, second) > baseline);
+    }
+
+    [Fact]
+    public void CalculateScore_IgnoresHiddenFeatures()
+    {
+        var service = new LostItemSimilarityService();
+        var first = Item("blue wallet", "leather", "north hall", "Wallets");
+        var second = Item("red keys", "metal", "south field", "Keys");
+        var baseline = service.CalculateScore(first, second);
+
         first.Features.Add(new LostItemFeature { Key = "Secret", Value = "exact secret", IsHidden = true });
         second.Features.Add(new LostItemFeature { Key = "Secret", Value = "exact secret", IsHidden = true });
 
         Assert.Equal(baseline, service.CalculateScore(first, second));
-        Assert.InRange(service.CalculateScore(first, second), 0, 100);
     }
 
-    private static LostItem Item(string title, DateTime eventDate) =>
+    [Fact]
+    public void CalculateScore_EventDateDoesNotAffectScore()
+    {
+        var service = new LostItemSimilarityService();
+        var first = Item("blue wallet", "leather", "north hall", "Wallets");
+        var second = Item("blue wallet", "leather", "north hall", "Wallets");
+        var baseline = service.CalculateScore(first, second);
+
+        first.EventDate = new DateTime(2020, 1, 1);
+        second.EventDate = new DateTime(2030, 12, 31);
+
+        Assert.Equal(baseline, service.CalculateScore(first, second));
+    }
+
+    [Fact]
+    public void CalculateScore_RenormalizesAvailableComponentsAndHandlesMissingData()
+    {
+        var service = new LostItemSimilarityService();
+        var noDataFirst = Item("", "", "", "");
+        var noDataSecond = Item("", "", "", "");
+        var categoryOnlyFirst = Item("", "", "", "Wallets");
+        var categoryOnlySecond = Item("", "", "", "wallets");
+        var partialFirst = Item("blue wallet", "", "", "Wallets");
+        var partialSecond = Item("red keys", "", "", "Wallets");
+
+        Assert.Equal(0m, service.CalculateScore(noDataFirst, noDataSecond));
+        Assert.Equal(100m, service.CalculateScore(categoryOnlyFirst, categoryOnlySecond));
+        Assert.Equal(38.46m, service.CalculateScore(partialFirst, partialSecond));
+        Assert.InRange(service.CalculateScore(partialFirst, partialSecond), 0m, 100m);
+    }
+
+    private static LostItem Item(string title, string description, string location, string category) =>
         new()
         {
             Title = title,
-            Description = "Leather wallet",
-            Location = "Central Library",
-            Category = new Category { Name = "Wallets" },
-            EventDate = eventDate,
-            CreatedAt = DateTime.UtcNow
+            Description = description,
+            Location = location,
+            Category = new Category { Name = category }
         };
 }

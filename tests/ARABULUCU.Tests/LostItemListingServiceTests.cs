@@ -239,10 +239,15 @@ public sealed class LostItemListingServiceTests
         await using var connection = await CreateDatabaseAsync();
         await using var db = CreateContext(connection);
         var (owner, wallet, keys) = AddBaseEntities(db);
+        var otherOwner = new UserProfile { Id = "other", DisplayName = "Other", Email = "other@example.com" };
+        db.UserProfiles.Add(otherOwner);
         var lost = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
-        var found = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        var found = Item(otherOwner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
         found.IsFound = true;
         found.IsItemFound = true;
+        var ownFound = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        ownFound.IsFound = true;
+        ownFound.IsItemFound = true;
         var lostOtherType = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
         lostOtherType.IsItemFound = true;
         var delivered = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
@@ -250,7 +255,7 @@ public sealed class LostItemListingServiceTests
         delivered.IsItemFound = true;
         delivered.IsDelivered = true;
         var sameType = Item(owner, keys, "Blue wallet", "Leather", "Central Library", DateTime.Today);
-        db.LostItems.AddRange(lost, found, lostOtherType, delivered, sameType);
+        db.LostItems.AddRange(lost, found, ownFound, lostOtherType, delivered, sameType);
         await db.SaveChangesAsync();
         var service = CreateService(db);
 
@@ -259,11 +264,74 @@ public sealed class LostItemListingServiceTests
         Assert.Single(recommendations);
         Assert.Equal(found.Id, recommendations[0].Item.Id);
         Assert.True(recommendations[0].Item.IsFound);
+        Assert.DoesNotContain(recommendations, recommendation => recommendation.Item.UserId == owner.Id);
         Assert.Null(await service.GetByIdAsync(int.MaxValue));
 
         found.IsDelivered = true;
         await db.SaveChangesAsync();
         Assert.Empty(await service.GetRecommendationsAsync(lost));
+    }
+
+    [Fact]
+    public async Task GetRecommendationsAsync_MatchesOppositeTypesInBothDirections()
+    {
+        await using var connection = await CreateDatabaseAsync();
+        await using var db = CreateContext(connection);
+        var (owner, wallet, _) = AddBaseEntities(db);
+        var other = new UserProfile { Id = "other", DisplayName = "Other", Email = "other@example.com" };
+        db.UserProfiles.Add(other);
+        var lost = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        var found = Item(other, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        found.IsFound = true;
+        found.IsItemFound = true;
+        var otherLost = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        var otherFound = Item(other, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        otherFound.IsFound = true;
+        otherFound.IsItemFound = true;
+        db.LostItems.AddRange(lost, found, otherLost, otherFound);
+        await db.SaveChangesAsync();
+        var service = CreateService(db);
+
+        var lostRecommendations = await service.GetRecommendationsAsync(lost);
+        var foundRecommendations = await service.GetRecommendationsAsync(found);
+
+        Assert.Equal(2, lostRecommendations.Count);
+        Assert.All(lostRecommendations, recommendation => Assert.True(recommendation.Item.IsFound));
+        Assert.Equal(2, foundRecommendations.Count);
+        Assert.All(foundRecommendations, recommendation => Assert.False(recommendation.Item.IsFound));
+    }
+
+    [Theory]
+    [InlineData(49.99, false)]
+    [InlineData(50, true)]
+    [InlineData(50.01, true)]
+    public async Task GetRecommendationsAsync_OnlyReturnsRecommendationsAtOrAboveFiftyPercent(
+        double score,
+        bool expectedVisible)
+    {
+        await using var connection = await CreateDatabaseAsync();
+        await using var db = CreateContext(connection);
+        var (owner, wallet, _) = AddBaseEntities(db);
+        var other = new UserProfile { Id = "other", DisplayName = "Other", Email = "other@example.com" };
+        db.UserProfiles.Add(other);
+        var source = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        var candidate = Item(other, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        candidate.IsFound = true;
+        candidate.IsItemFound = true;
+        db.LostItems.AddRange(source, candidate);
+        await db.SaveChangesAsync();
+        var service = new LostItemListingService(
+            db,
+            new ItemRepository(db),
+            new FixedScoreSimilarityService((decimal)score));
+
+        var recommendations = await service.GetRecommendationsAsync(source);
+
+        Assert.Equal(expectedVisible, recommendations.Count == 1);
+        if (expectedVisible)
+        {
+            Assert.Equal((decimal)score, Assert.Single(recommendations).SimilarityPercent);
+        }
     }
 
     [Fact]
@@ -279,7 +347,11 @@ public sealed class LostItemListingServiceTests
         var found = Item(finder, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
         found.IsFound = true;
         found.IsItemFound = true;
-        db.LostItems.AddRange(lost, found);
+        var anotherLost = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        var anotherFound = Item(finder, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        anotherFound.IsFound = true;
+        anotherFound.IsItemFound = true;
+        db.LostItems.AddRange(lost, found, anotherLost, anotherFound);
         await db.SaveChangesAsync();
         var service = CreateService(db);
 
@@ -287,10 +359,77 @@ public sealed class LostItemListingServiceTests
         Assert.True(await service.CanChatAsync(finder.Id, found.Id, lost.Id));
         Assert.False(await service.CanChatAsync(stranger.Id, lost.Id, found.Id));
         Assert.False(await service.CanChatAsync(owner.Id, lost.Id, lost.Id));
+        Assert.False(await service.CanChatAsync(owner.Id, lost.Id, anotherLost.Id));
+        Assert.False(await service.CanChatAsync(finder.Id, found.Id, anotherFound.Id));
 
         found.IsDelivered = true;
         await db.SaveChangesAsync();
         Assert.False(await service.CanChatAsync(owner.Id, lost.Id, found.Id));
+
+        found.IsDelivered = false;
+        lost.IsItemFound = true;
+        await db.SaveChangesAsync();
+        Assert.False(await service.CanChatAsync(owner.Id, lost.Id, found.Id));
+    }
+
+    [Theory]
+    [InlineData(49.99, false)]
+    [InlineData(50, true)]
+    [InlineData(50.01, true)]
+    public async Task CanChatAsync_EnforcesFiftyPercentSimilarityBoundary(double score, bool expected)
+    {
+        await using var connection = await CreateDatabaseAsync();
+        await using var db = CreateContext(connection);
+        var (owner, wallet, _) = AddBaseEntities(db);
+        var finder = new UserProfile { Id = "finder", DisplayName = "Finder", Email = "finder@example.com" };
+        db.UserProfiles.Add(finder);
+        var lost = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        var found = Item(finder, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        found.IsFound = true;
+        found.IsItemFound = true;
+        db.LostItems.AddRange(lost, found);
+        await db.SaveChangesAsync();
+        var service = new LostItemListingService(
+            db,
+            new ItemRepository(db),
+            new FixedScoreSimilarityService((decimal)score));
+
+        Assert.Equal(expected, await service.CanChatAsync(owner.Id, lost.Id, found.Id));
+    }
+
+    [Fact]
+    public async Task GetChatMatchesAsync_OnlyReturnsOpenOppositeTypeItems()
+    {
+        await using var connection = await CreateDatabaseAsync();
+        await using var db = CreateContext(connection);
+        var (owner, wallet, _) = AddBaseEntities(db);
+        var other = new UserProfile { Id = "other", DisplayName = "Other", Email = "other@example.com" };
+        db.UserProfiles.Add(other);
+        var ownLost = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        var ownFound = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        ownFound.IsFound = true;
+        ownFound.IsItemFound = true;
+        var otherLost = Item(other, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        var otherFound = Item(other, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        otherFound.IsFound = true;
+        otherFound.IsItemFound = true;
+        var closedLost = Item(other, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        closedLost.IsItemFound = true;
+        var closedFound = Item(other, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        closedFound.IsFound = true;
+        closedFound.IsItemFound = true;
+        closedFound.IsDelivered = true;
+        db.LostItems.AddRange(ownLost, ownFound, otherLost, otherFound, closedLost, closedFound);
+        await db.SaveChangesAsync();
+        var service = CreateService(db);
+
+        var matches = await service.GetChatMatchesAsync(owner.Id);
+
+        Assert.Equal(2, matches.Count);
+        Assert.All(matches, match => Assert.NotEqual(match.Item.IsFound, match.MatchedItem.IsFound));
+        Assert.All(matches, match => Assert.True(match.Item.IsFound || !match.Item.IsItemFound));
+        Assert.All(matches, match => Assert.True(match.MatchedItem.IsFound || !match.MatchedItem.IsItemFound));
+        Assert.All(matches, match => Assert.False(match.Item.IsDelivered || match.MatchedItem.IsDelivered));
     }
 
     [Fact]
@@ -319,6 +458,11 @@ public sealed class LostItemListingServiceTests
 
     private static LostItemListingService CreateService(ApplicationDbContext db) =>
         new(db, new ItemRepository(db), new LostItemSimilarityService());
+
+    private sealed class FixedScoreSimilarityService(decimal score) : ILostItemSimilarityService
+    {
+        public decimal CalculateScore(LostItem first, LostItem second) => score;
+    }
 
     private static ApplicationDbContext CreateContext(SqliteConnection connection) =>
         new(new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlite(connection).Options);

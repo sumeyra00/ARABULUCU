@@ -156,9 +156,13 @@ public class HomeController : Controller
         {
             Item = item,
             Recommendations = await _listingService.GetRecommendationsAsync(item),
+            CanStartChat = IsOpen(item),
             CurrentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
         });
     }
+
+    private static bool IsOpen(LostItem item) =>
+        !item.IsDelivered && (item.IsFound || !item.IsItemFound);
 
     [Authorize]
     [HttpGet]
@@ -487,6 +491,7 @@ public class ItemDetailViewModel
 {
     public LostItem? Item { get; set; }
     public IReadOnlyList<RecommendedItem> Recommendations { get; set; } = [];
+    public bool CanStartChat { get; set; }
     public string? CurrentUserId { get; set; }
 }
 

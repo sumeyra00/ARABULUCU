@@ -17,33 +17,40 @@
         <article class="card border-0 shadow-sm rounded-4 mb-5">
             <div class="card-body p-4 p-md-5">
                 <h1 class="h2 fw-bold">@item.Title</h1>
-                @if (!item.IsFound)
-                {
-                    <div class="d-flex flex-wrap gap-2 mb-3 mt-3">
+                <div class="d-flex flex-wrap gap-2 mb-3 mt-3">
+                    @if (!item.IsFound)
+                    {
                         <span class="badge text-bg-danger">Kayıp eşya ilanı</span>
-                        <span class="badge text-bg-light">@item.Category.Name</span>
-                    </div>
-                    <div class="row g-3 my-3">
-                        <div class="col-md-6"><strong>Konum:</strong> @item.Location</div>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-success">Bulunan eşya ilanı</span>
+                    }
+                    <span class="badge text-bg-light">@item.Category.Name</span>
+                </div>
+                <div class="row g-3 my-3">
+                    <div class="col-md-6"><strong>Konum:</strong> @item.Location</div>
+                    @if (!item.IsFound)
+                    {
                         <div class="col-md-6"><strong>Olay tarihi:</strong> @item.EventDate.ToString("dd.MM.yyyy HH:mm")</div>
                         <div class="col-md-6"><strong>İlan oluşturulma tarihi:</strong> @item.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
                         <div class="col-md-6"><strong>Bulunma durumu:</strong> @(item.IsItemFound ? "Bulundu" : "Henüz bulunmadı")</div>
                         <div class="col-md-6"><strong>Teslim durumu:</strong> @(item.IsDelivered ? "Teslim edildi" : "Henüz teslim edilmedi")</div>
-                    </div>
-                    <h2 class="h5 fw-bold mt-4">Açıklama</h2>
-                    <p class="text-secondary">@item.Description</p>
-
-                    @if (item.Features.Count > 0)
-                    {
-                        <h2 class="h5 fw-bold mt-4">Eşya özellikleri</h2>
-                        <dl class="row mb-4">
-                            @foreach (var feature in item.Features.Where(feature => !feature.IsHidden))
-                            {
-                                <dt class="col-sm-3">@feature.Key</dt>
-                                <dd class="col-sm-9">@feature.Value</dd>
-                            }
-                        </dl>
                     }
+                </div>
+                <h2 class="h5 fw-bold mt-4">Açıklama</h2>
+                <p class="text-secondary">@item.Description</p>
+
+                @if (item.Features.Any(feature => !feature.IsHidden))
+                {
+                    <h2 class="h5 fw-bold mt-4">Eşya özellikleri</h2>
+                    <dl class="row mb-4">
+                        @foreach (var feature in item.Features.Where(feature => !feature.IsHidden))
+                        {
+                            <dt class="col-sm-3">@feature.Key</dt>
+                            <dd class="col-sm-9">@feature.Value</dd>
+                        }
+                    </dl>
                 }
 
             </div>
@@ -67,8 +74,12 @@
                                         @if (!recommendation.Item.IsFound)
                                         {
                                             <span class="badge text-bg-danger">Kayıp</span>
-                                            <span class="badge text-bg-primary">@recommendation.SimilarityPercent.ToString("0.#")% benzer</span>
                                         }
+                                        else
+                                        {
+                                            <span class="badge text-bg-success">Bulunan</span>
+                                        }
+                                        <span class="badge text-bg-primary">@recommendation.SimilarityPercent.ToString("0.#")% benzer</span>
                                     </div>
                                     <h3 class="h5 fw-bold">@recommendation.Item.Title</h3>
                                     @if (!recommendation.Item.IsFound)
@@ -79,7 +90,10 @@
                                     }
                                     <div class="d-flex gap-2 flex-wrap">
                                         <a asp-controller="Home" asp-action="Detay" asp-route-ilanId="@recommendation.Item.Id" class="btn btn-outline-primary btn-sm rounded-pill">İlanı görüntüle</a>
-                                        @if (recommendation.SimilarityPercent >= 50 &&
+                                        @if (Model.CanStartChat &&
+                                            !recommendation.Item.IsDelivered &&
+                                            (recommendation.Item.IsFound || !recommendation.Item.IsItemFound) &&
+                                            recommendation.SimilarityPercent >= 50 &&
                                             item.UserId != recommendation.Item.UserId &&
                                             (Model.CurrentUserId == item.UserId || Model.CurrentUserId == recommendation.Item.UserId))
                                         {
