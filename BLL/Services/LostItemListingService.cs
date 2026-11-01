@@ -1,5 +1,6 @@
 using ARABULUCU.BLL.DTOs;
 using ARABULUCU.DAL.Data;
+using ARABULUCU.DAL.Repositories;
 using ARABULUCU.ENT.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,13 +11,16 @@ public sealed class LostItemListingService : ILostItemListingService
     private const decimal MinimumChatMatchScore = 50;
 
     private readonly ApplicationDbContext _dbContext;
+    private readonly IItemRepository _itemRepository;
     private readonly ILostItemSimilarityService _similarityService;
 
     public LostItemListingService(
         ApplicationDbContext dbContext,
+        IItemRepository itemRepository,
         ILostItemSimilarityService similarityService)
     {
         _dbContext = dbContext;
+        _itemRepository = itemRepository;
         _similarityService = similarityService;
     }
 
@@ -28,17 +32,66 @@ public sealed class LostItemListingService : ILostItemListingService
             return new ItemSearchResult { ValidationError = "Başlangıç tarihi bitiş tarihinden sonra olamaz." };
         }
 
-        var items = await _dbContext.LostItems
+        IQueryable<LostItem> items = _itemRepository.Query()
             .AsNoTracking()
             .Include(item => item.Category)
-            .Include(item => item.Features.Where(feature => !feature.IsHidden))
-            .ToListAsync();
+            .Include(item => item.Features.Where(feature => !feature.IsHidden));
 
-        var results = items
-            .Where(item => Matches(item, criteria))
+        if (!string.IsNullOrWhiteSpace(criteria.Query))
+        {
+            var query = Normalize(criteria.Query);
+            items = items.Where(item =>
+                item.Title.ToLower().Contains(query) ||
+                item.Description.ToLower().Contains(query));
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.Category))
+        {
+            var category = Normalize(criteria.Category);
+            items = items.Where(item => item.Category.Name.ToLower() == category);
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.Location))
+        {
+            var location = Normalize(criteria.Location);
+            items = items.Where(item => item.Location.ToLower().Contains(location));
+        }
+
+        if (criteria.IsFound.HasValue)
+        {
+            items = items.Where(item => item.IsFound == criteria.IsFound.Value);
+        }
+
+        if (criteria.EventDateFrom.HasValue)
+        {
+            var from = criteria.EventDateFrom.Value.Date;
+            items = items.Where(item => item.EventDate.Date >= from);
+        }
+
+        if (criteria.EventDateTo.HasValue)
+        {
+            var to = criteria.EventDateTo.Value.Date;
+            items = items.Where(item => item.EventDate.Date <= to);
+        }
+
+        if (criteria.IsItemFound.HasValue)
+        {
+            items = items.Where(item => item.IsItemFound == criteria.IsItemFound.Value);
+        }
+
+        if (criteria.IsDelivered.HasValue)
+        {
+            items = items.Where(item => item.IsDelivered == criteria.IsDelivered.Value);
+        }
+
+        items = WhereFeatureMatches(items, "Brand", criteria.Brand);
+        items = WhereFeatureMatches(items, "Model", criteria.Model);
+        items = WhereFeatureMatches(items, "Color", criteria.Color);
+
+        var results = await items
             .OrderByDescending(item => item.EventDate)
             .ThenByDescending(item => item.CreatedAt)
-            .ToList();
+            .ToListAsync();
 
         return new ItemSearchResult { Items = results };
     }
@@ -151,60 +204,23 @@ public sealed class LostItemListingService : ILostItemListingService
     private static bool IsOpen(LostItem item) =>
         !item.IsDelivered && (item.IsFound || !item.IsItemFound);
 
-    private static bool Matches(LostItem item, ItemSearchCriteria criteria)
+    private static IQueryable<LostItem> WhereFeatureMatches(
+        IQueryable<LostItem> items,
+        string key,
+        string? value)
     {
-        if (!string.IsNullOrWhiteSpace(criteria.Query) &&
-            !Contains(item.Title, criteria.Query) &&
-            (item.IsFound || !Contains(item.Description, criteria.Query)))
+        if (string.IsNullOrWhiteSpace(value))
         {
-            return false;
+            return items;
         }
 
-        if (criteria.IsFound.HasValue && item.IsFound != criteria.IsFound.Value)
-        {
-            return false;
-        }
-
-        if (item.IsFound)
-        {
-            return true;
-        }
-
-        if (!string.IsNullOrWhiteSpace(criteria.Category) &&
-            !string.Equals(item.Category?.Name, criteria.Category.Trim(), StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        if (!string.IsNullOrWhiteSpace(criteria.Location) && !Contains(item.Location, criteria.Location))
-        {
-            return false;
-        }
-
-        if (criteria.IsItemFound.HasValue && item.IsItemFound != criteria.IsItemFound.Value ||
-            criteria.IsDelivered.HasValue && item.IsDelivered != criteria.IsDelivered.Value)
-        {
-            return false;
-        }
-
-        if (criteria.EventDateFrom.HasValue && item.EventDate.Date < criteria.EventDateFrom.Value.Date ||
-            criteria.EventDateTo.HasValue && item.EventDate.Date > criteria.EventDateTo.Value.Date)
-        {
-            return false;
-        }
-
-        return MatchesFeature(item, "Brand", criteria.Brand) &&
-            MatchesFeature(item, "Model", criteria.Model) &&
-            MatchesFeature(item, "Color", criteria.Color);
+        var normalizedKey = Normalize(key);
+        var normalizedValue = Normalize(value);
+        return items.Where(item => item.Features.Any(feature =>
+            !feature.IsHidden &&
+            feature.Key.ToLower() == normalizedKey &&
+            feature.Value.ToLower().Contains(normalizedValue)));
     }
 
-    private static bool MatchesFeature(LostItem item, string key, string? value) =>
-        string.IsNullOrWhiteSpace(value) ||
-        item.Features.Any(feature =>
-            !feature.IsHidden &&
-            string.Equals(feature.Key, key, StringComparison.OrdinalIgnoreCase) &&
-            Contains(feature.Value, value));
-
-    private static bool Contains(string? value, string search) =>
-        value?.Contains(search.Trim(), StringComparison.OrdinalIgnoreCase) == true;
+    private static string Normalize(string value) => value.Trim().ToLowerInvariant();
 }
