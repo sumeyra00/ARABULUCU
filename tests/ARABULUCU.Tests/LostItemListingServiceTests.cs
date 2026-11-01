@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using ARABULUCU.BLL.DTOs;
 using ARABULUCU.BLL.Services;
 using ARABULUCU.DAL.Data;
+using ARABULUCU.DAL.Repositories;
 using ARABULUCU.ENT.Entities;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -75,7 +76,7 @@ public sealed class LostItemListingServiceTests
     }
 
     [Fact]
-    public async Task SearchAsync_FoundItemsOnlyMatchPublicTitleAndIgnoreHiddenMetadataFilters()
+    public async Task SearchAsync_FoundItemsApplyPublicFiltersAndIgnoreHiddenMetadataFilters()
     {
         await using var connection = await CreateDatabaseAsync();
         await using var db = CreateContext(connection);
@@ -95,7 +96,7 @@ public sealed class LostItemListingServiceTests
         await db.SaveChangesAsync();
         var service = CreateService(db);
 
-        var titleSearch = await service.SearchAsync(new ItemSearchCriteria
+        var nonMatchingPublicFilters = await service.SearchAsync(new ItemSearchCriteria
         {
             Query = "thermos",
             Category = "a category that does not match",
@@ -105,13 +106,72 @@ public sealed class LostItemListingServiceTests
             IsDelivered = false,
             Brand = "a brand that does not match"
         });
-        var privateDescriptionSearch = await service.SearchAsync(new ItemSearchCriteria
+        var titleSearch = await service.SearchAsync(new ItemSearchCriteria { Query = "thermos" });
+        var descriptionSearch = await service.SearchAsync(new ItemSearchCriteria
         {
             Query = "Private detail word"
         });
 
+        Assert.DoesNotContain(nonMatchingPublicFilters.Items, item => item.Id == found.Id);
         Assert.Contains(titleSearch.Items, item => item.Id == found.Id);
-        Assert.DoesNotContain(privateDescriptionSearch.Items, item => item.Id == found.Id);
+        Assert.Contains(descriptionSearch.Items, item => item.Id == found.Id);
+        Assert.DoesNotContain(titleSearch.Items.SelectMany(item => item.Features), feature => feature.IsHidden);
+    }
+
+    [Fact]
+    public async Task SearchAsync_FoundItemsMatchDescriptionAndCombineAllFilters()
+    {
+        await using var connection = await CreateDatabaseAsync();
+        await using var db = CreateContext(connection);
+        var (owner, wallet, keys) = AddBaseEntities(db);
+        var matching = Item(owner, wallet, "Blue thermos", "Contains a library card", "Central Library", new DateTime(2026, 10, 20));
+        matching.IsFound = true;
+        matching.IsItemFound = true;
+        var wrongCategory = Item(owner, keys, "Blue thermos", "Contains a library card", "Central Library", new DateTime(2026, 10, 20));
+        wrongCategory.IsFound = true;
+        wrongCategory.IsItemFound = true;
+        var wrongLocation = Item(owner, wallet, "Blue thermos", "Contains a library card", "Cafeteria", new DateTime(2026, 10, 20));
+        wrongLocation.IsFound = true;
+        wrongLocation.IsItemFound = true;
+        db.LostItems.AddRange(matching, wrongCategory, wrongLocation);
+        await db.SaveChangesAsync();
+        var service = CreateService(db);
+
+        var descriptionResults = await service.SearchAsync(new ItemSearchCriteria { Query = "LIBRARY CARD" });
+        var combined = await service.SearchAsync(new ItemSearchCriteria
+        {
+            Query = "THERMOS",
+            Category = "WALLETS",
+            Location = "LIBRARY",
+            IsFound = true,
+            EventDateFrom = new DateTime(2026, 10, 20),
+            EventDateTo = new DateTime(2026, 10, 20),
+            IsItemFound = true,
+            IsDelivered = false
+        });
+
+        Assert.Equal(3, descriptionResults.Items.Count);
+        Assert.Equal(matching.Id, Assert.Single(combined.Items).Id);
+    }
+
+    [Fact]
+    public async Task SearchAsync_HiddenFeatureCannotMatchAndIsNotReturned()
+    {
+        await using var connection = await CreateDatabaseAsync();
+        await using var db = CreateContext(connection);
+        var (owner, wallet, _) = AddBaseEntities(db);
+        var item = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        item.Features.Add(new LostItemFeature { Key = "Brand", Value = "Private brand", IsHidden = true });
+        item.Features.Add(new LostItemFeature { Key = "Color", Value = "Navy", IsHidden = false });
+        db.LostItems.Add(item);
+        await db.SaveChangesAsync();
+        var service = CreateService(db);
+
+        var hiddenMatch = await service.SearchAsync(new ItemSearchCriteria { Brand = "private" });
+        var visibleMatch = await service.SearchAsync(new ItemSearchCriteria { Color = "navy" });
+
+        Assert.Empty(hiddenMatch.Items);
+        Assert.DoesNotContain(Assert.Single(visibleMatch.Items).Features, feature => feature.IsHidden);
     }
 
     [Fact]
@@ -258,7 +318,7 @@ public sealed class LostItemListingServiceTests
     }
 
     private static LostItemListingService CreateService(ApplicationDbContext db) =>
-        new(db, new LostItemSimilarityService());
+        new(db, new ItemRepository(db), new LostItemSimilarityService());
 
     private static ApplicationDbContext CreateContext(SqliteConnection connection) =>
         new(new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlite(connection).Options);

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using ARABULUCU.DAL.Data;
@@ -15,6 +16,8 @@ namespace ARABULUCU.DAL.Repositories
         {
             _db = db;
         }
+
+        public IQueryable<LostItem> Query() => _db.LostItems;
 
         public async Task AddAsync(LostItem entity)
         {
