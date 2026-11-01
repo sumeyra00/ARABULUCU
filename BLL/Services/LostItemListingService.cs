@@ -8,6 +8,7 @@ namespace ARABULUCU.BLL.Services;
 
 public sealed class LostItemListingService : ILostItemListingService
 {
+    private const decimal MinimumRecommendationScore = 50;
     private const decimal MinimumChatMatchScore = 50;
 
     private readonly ApplicationDbContext _dbContext;
@@ -114,6 +115,7 @@ public sealed class LostItemListingService : ILostItemListingService
             .AsNoTracking()
             .Where(candidate =>
                 candidate.Id != item.Id &&
+                candidate.UserId != item.UserId &&
                 candidate.IsFound != item.IsFound &&
                 !candidate.IsDelivered &&
                 (candidate.IsFound || !candidate.IsItemFound))
@@ -128,6 +130,7 @@ public sealed class LostItemListingService : ILostItemListingService
                 Item = candidate,
                 SimilarityPercent = _similarityService.CalculateScore(item, candidate)
             })
+            .Where(candidate => candidate.SimilarityPercent >= MinimumRecommendationScore)
             .OrderByDescending(candidate => candidate.SimilarityPercent)
             .ThenByDescending(candidate => candidate.Item.EventDate)
             .Take(limit)

@@ -11,8 +11,11 @@ public interface ILostItemSimilarityService
 public sealed class LostItemSimilarityService : ILostItemSimilarityService
 {
     private static readonly Regex TokenPattern = new(@"[\p{L}\p{N}]+", RegexOptions.Compiled);
+    private const double CategoryWeight = 31.25;
+    private const double ItemTextWeight = 50;
+    private const double LocationWeight = 18.75;
 
-    // Available components are renormalized: category 25%, item text 40%, location 15%, event date 20%.
+    // Available components are renormalized; the weights preserve the original ratios without event date.
     public decimal CalculateScore(LostItem first, LostItem second)
     {
         var weightedScore = 0d;
@@ -21,18 +24,15 @@ public sealed class LostItemSimilarityService : ILostItemSimilarityService
         AddComponent(
             !string.IsNullOrWhiteSpace(first.Category?.Name) && !string.IsNullOrWhiteSpace(second.Category?.Name),
             string.Equals(first.Category?.Name, second.Category?.Name, StringComparison.OrdinalIgnoreCase) ? 1 : 0,
-            25);
+            CategoryWeight);
 
         var firstText = GetItemText(first);
         var secondText = GetItemText(second);
         AddComponent(!string.IsNullOrWhiteSpace(firstText) && !string.IsNullOrWhiteSpace(secondText),
-            TokenSimilarity(firstText, secondText), 40);
+            TokenSimilarity(firstText, secondText), ItemTextWeight);
 
         AddComponent(!string.IsNullOrWhiteSpace(first.Location) && !string.IsNullOrWhiteSpace(second.Location),
-            TokenSimilarity(first.Location, second.Location), 15);
-
-        AddComponent(first.EventDate != default && second.EventDate != default,
-            DateSimilarity(first.EventDate, second.EventDate), 20);
+            LocationSimilarity(first.Location, second.Location), LocationWeight);
 
         if (availableWeight == 0)
         {
@@ -79,10 +79,9 @@ public sealed class LostItemSimilarityService : ILostItemSimilarityService
         return (double)intersection / union;
     }
 
-    private static double DateSimilarity(DateTime first, DateTime second)
-    {
-        // Event dates lose one point for each day apart and contribute nothing after 30 days.
-        var daysApart = Math.Abs((first - second).TotalDays);
-        return Math.Max(0, 1 - daysApart / 30);
-    }
+    private static double LocationSimilarity(string first, string second) =>
+        first.Contains(second, StringComparison.OrdinalIgnoreCase) ||
+        second.Contains(first, StringComparison.OrdinalIgnoreCase)
+            ? 1
+            : 0;
 }
