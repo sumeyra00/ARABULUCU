@@ -1,0 +1,122 @@
+@model ARABULUCU.Web.Controllers.ItemReportViewModel
+
+@{
+    ViewData["Title"] = Model.IsEditMode ? "Kayıp İlanını Güncelle" : "Kayıp İlanı Oluştur";
+}
+
+<div class="py-5" style="background: radial-gradient(circle at 50% 15%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: 100vh;">
+    <div class="container" style="max-width: 760px;">
+        <div class="mb-3">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border">&larr; Ana Sayfaya Dön</a>
+        </div>
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-header border-bottom py-4 px-4 text-center" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
+                <div class="fs-2 mb-2">🔍</div>
+                <h3 class="fw-bold mb-1 text-dark">@(Model.IsEditMode ? "Kayıp İlanını Güncelle" : "Kayıp Eşya İlanı Ver")</h3>
+                <p class="text-muted small mb-0">Kaybettiğiniz eşyanın detaylarını paylaşarak bulunmasını kolaylaştırın.</p>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                <form asp-controller="Home" asp-action="@(Model.IsEditMode ? "Duzenle" : "KayipOlustur")" method="post" enctype="multipart/form-data">
+                    <input asp-for="Id" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    <h6 class="fw-bold mb-3 border-bottom pb-2">Eşya Bilgileri</h6>
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label fw-semibold">İlan Başlığı</label>
+                        <input asp-for="Title" class="form-control" placeholder="Örn: Siyah deri sırt çantası" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Category" class="form-label fw-semibold">Kategori</label>
+                            <select asp-for="Category" class="form-select">
+                                <option value="">Seçiniz...</option>
+                                <option value="canta">Çanta &amp; Sırt Çantası</option>
+                                <option value="anahtar">Anahtar &amp; Aksesuar</option>
+                                <option value="cuzdan">Cüzdan &amp; Kartlık / Kimlik</option>
+                                <option value="elektronik">Kulaklık &amp; Elektronik</option>
+                                <option value="telefon">Telefon &amp; Şarj Aleti</option>
+                                <option value="saat">Akıllı Saat &amp; Takı</option>
+                                <option value="kitap">Kitap &amp; Ders Notu</option>
+                                <option value="diger">Diğer</option>
+                            </select>
+                            <span asp-validation-for="Category" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ItemDate" class="form-label fw-semibold">Kaybolduğu Tarih &amp; Saat</label>
+                            <input asp-for="ItemDate" type="datetime-local" class="form-control" />
+                            <span asp-validation-for="ItemDate" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">Konum Bilgileri</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CampusArea" class="form-label fw-semibold">Kampüs Bölgesi</label>
+                            <select asp-for="CampusArea" class="form-select">
+                                <option value="">Bölge seçiniz...</option>
+                                <option value="yemekhane">Merkez Yemekhane</option>
+                                <option value="kutuphane">Merkez Kütüphane</option>
+                                <option value="kiz_kyk">Kız Öğrenci Yurdu (KYK)</option>
+                                <option value="erkek_kyk">Erkek Öğrenci Yurdu (KYK)</option>
+                                <option value="hastane">Tıp Fakültesi Hastanesi</option>
+                                <option value="muhendislik">Mühendislik Fakültesi</option>
+                                <option value="egitim">Eğitim Fakültesi</option>
+                                <option value="iibf">İİBF</option>
+                                <option value="kafeler">Kampüs Kafeler &amp; Çarşı Alanı</option>
+                                <option value="diger_alan">Diğer Açık Alanlar</option>
+                            </select>
+                            <span asp-validation-for="CampusArea" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="LocationDetail" class="form-label fw-semibold">Detaylı Konum</label>
+                            <input asp-for="LocationDetail" class="form-control" placeholder="Örn: Kütüphane 2. kat" />
+                            <span asp-validation-for="LocationDetail" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">Açıklama ve Doğrulama</h6>
+                    <p class="text-muted small">Konum ve tarih/saat otomatik doğrulama soruları olarak eklenir. İlan sahibiyle iletişim için toplam en az 3 doğru cevap ve 50 puan gerekir.</p>
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label fw-semibold">Eşyanın Belirgin Özellikleri</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Rengi, markası, üzerindeki ayırt edici özellikler..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Brand" class="form-label fw-semibold">Marka (isteğe bağlı)</label>
+                            <input asp-for="Brand" class="form-control" />
+                            <span asp-validation-for="Brand" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Model" class="form-label fw-semibold">Model (isteğe bağlı)</label>
+                            <input asp-for="Model" class="form-control" />
+                            <span asp-validation-for="Model" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Color" class="form-label fw-semibold">Renk (isteğe bağlı)</label>
+                            <input asp-for="Color" class="form-control" />
+                            <span asp-validation-for="Color" class="text-danger small"></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="SecurityQuestion" class="form-label fw-semibold">Gizli doğrulama sorusu</label>
+                        <input asp-for="SecurityQuestion" class="form-control" placeholder="Örn: Çantanın iç cebinde ne var?" autocomplete="off" />
+                        <span asp-validation-for="SecurityQuestion" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="SecurityAnswer" class="form-label fw-semibold">Gizli doğrulama cevabı</label>
+                        <input asp-for="SecurityAnswer" class="form-control" placeholder="Örn: Arka etiketteki sembol" autocomplete="off" />
+                        <span asp-validation-for="SecurityAnswer" class="text-danger small"></span>
+                        <div class="form-text">Soru ve cevap ilan sahibinin belirlediği şekilde doğrulama sırasında kullanılır.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="itemPhoto" class="form-label fw-semibold">Fotoğraf (İsteğe bağlı)</label>
+                        <input class="form-control" type="file" id="itemPhoto" name="itemPhoto" accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp" />
+                        <div class="form-text">En fazla 5 MB; JPG, PNG, GIF veya WebP.</div>
+                    </div>
+                    <button type="submit" class="btn w-100 rounded-pill py-3 fw-bold text-white" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">@(Model.IsEditMode ? "Değişiklikleri Kaydet" : "Kayıp İlanını Yayınla")</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

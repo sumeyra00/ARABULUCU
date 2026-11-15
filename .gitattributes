@@ -1,0 +1,7 @@
+# Bu .gitattributes dosyası: Git depoda belirli dosya türleri için öznitelikler tanımlar
+# (ör. diff renkleri, text olarak işleme). Ekipte ortak ayarlar için kullanın.
+*.cs text diff=csharp
+*.csproj text
+*.sln text
+README.md text
+LICENSE text

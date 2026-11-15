@@ -1,0 +1,48 @@
+﻿@model ARABULUCU.Web.Controllers.ProfileViewModel
+@{
+    ViewData["Title"] = "İlanlarım";
+}
+
+<div class="container py-5">
+    <div class="card shadow-sm border rounded-3 mb-4">
+        <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h4 class="fw-bold mb-1">@Model.DisplayName</h4>
+                <span class="text-muted small">@Model.Email</span>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/Home/KayipOlustur" class="btn btn-outline-danger btn-sm fw-bold">+ Yeni Kayıp İlanı</a>
+                <a href="/Home/BulunanOlustur" class="btn btn-outline-success btn-sm fw-bold">+ Yeni Buluntu Bildir</a>
+            </div>
+        </div>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+        </div>
+    }
+
+    <ul class="nav nav-tabs mb-4" id="profileTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold text-dark" id="lost-tab" data-bs-toggle="tab" data-bs-target="#lost-pane" type="button" role="tab">
+                Kayıp İlanlarım (@Model.LostItems.Count)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold text-secondary" id="found-tab" data-bs-toggle="tab" data-bs-target="#found-pane" type="button" role="tab">
+                Buluntu Eşyalarım (@Model.FoundItems.Count)
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="lost-pane" role="tabpanel" aria-labelledby="lost-tab">
+            @await Html.PartialAsync("_UserItemList", Model.LostItems)
+        </div>
+        <div class="tab-pane fade" id="found-pane" role="tabpanel" aria-labelledby="found-tab">
+            @await Html.PartialAsync("_UserItemList", Model.FoundItems)
+        </div>
+    </div>
+</div>

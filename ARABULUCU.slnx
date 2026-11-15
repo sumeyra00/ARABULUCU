@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/BLL/">
+    <Project Path="BLL/ARABULUCU.BLL.csproj" />
+  </Folder>
+  <Folder Name="/DAL/">
+    <Project Path="DAL/ARABULUCU.DAL.csproj" />
+  </Folder>
+  <Folder Name="/ENT/">
+    <Project Path="ENT/ARABULUCU.ENT.csproj" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Presentation/">
+    <Project Path="src/Presentation/ARABULUCU.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ARABULUCU.Tests/ARABULUCU.Tests.csproj" />
+  </Folder>
+</Solution>

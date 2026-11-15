@@ -1,0 +1,115 @@
+﻿@{
+    ViewData["Title"] = "İletişim & Destek";
+}
+
+<div class="position-relative overflow-hidden py-5" style="background: radial-gradient(circle at 50% 15%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: 100vh;">
+
+    <!-- Sevimli Süs Figürleri -->
+    <div class="position-absolute d-none d-lg-block" style="top: 8%; left: 5%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">💌</div>
+    <div class="position-absolute d-none d-lg-block" style="top: 10%; right: 6%; font-size: 2.4rem; transform: rotate(18deg); user-select: none;">🌸</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 8%; left: 5%; font-size: 2rem; transform: rotate(12deg); user-select: none;">✨</div>
+    <div class="position-absolute d-none d-lg-block" style="bottom: 10%; right: 5%; font-size: 2.2rem; transform: rotate(-12deg); user-select: none;">📞</div>
+
+    <div class="container position-relative" style="z-index: 2; max-width: 960px;">
+        
+        <!-- Üst Geri Dön Butonu -->
+        <div class="mb-3">
+            <a href="/" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border">
+                &larr; Ana Sayfaya Dön
+            </a>
+        </div>
+
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);">
+            
+            <!-- Kart Başlığı -->
+            <div class="card-header border-bottom py-4 px-4 px-md-5 text-center" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
+                <div class="rounded-circle text-white d-inline-flex align-items-center justify-content-center fw-bold shadow-sm mb-3" style="width: 56px; height: 56px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); font-size: 1.6rem; box-shadow: 0 4px 12px rgba(255, 96, 130, 0.35);">
+                    💌
+                </div>
+                <h3 class="fw-bold mb-1 text-dark">Bizimle İletişime Geçin</h3>
+                <p class="text-muted small mb-0">Bir sorun mu yaşıyorsunuz, geri bildiriminiz veya öneriniz mi var? Bize yazmaktan çekinmeyin.</p>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <div class="row g-4">
+                    
+                    <!-- Sol Taraf: İletişim Bilgileri Kartları -->
+                    <div class="col-lg-5">
+                        <div class="d-flex flex-column gap-3 h-100">
+                            
+                            <div class="p-3 rounded-4 border" style="background-color: #FFFDFD; border-color: #FFD9E2 !important;">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background-color: #FFF0F4; font-size: 1.3rem;">
+                                        📍
+                                    </div>
+                                    <div>
+                                        <div class="small text-muted fw-semibold">Konum</div>
+                                        <div class="fw-bold text-dark small">SCÜ Kampüsü, Mühendislik Fakültesi</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 rounded-4 border" style="background-color: #FFFDFD; border-color: #FFD9E2 !important;">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background-color: #FFF0F4; font-size: 1.3rem;">
+                                        📧
+                                    </div>
+                                    <div>
+                                        <div class="small text-muted fw-semibold">E-Posta</div>
+                                        <div class="fw-bold text-dark small">destek@arabulucu.scu.edu.tr</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                           
+
+                            <div class="p-4 rounded-4 border mt-auto text-center" style="background: linear-gradient(135deg, #FFF5F7 0%, #FFFDFD 100%); border-color: #FFD9E2 !important;">
+                                <span class="fs-4">🌸</span>
+                                <h6 class="fw-bold text-dark mt-2 mb-1">Kampüs Dayanışması</h6>
+                                <p class="text-muted small mb-0">Sorularınızı ve hata bildirimlerinizi en kısa sürede inceliyoruz.</p>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Sağ Taraf: Destek & Mesaj Formu -->
+                    <div class="col-lg-7">
+                        <form method="post" action="#">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-secondary">Adınız Soyadınız</label>
+                                <input type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="Örn: Fatmanur ..." required />
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold text-secondary">Öğrenci / Kurumsal E-Posta</label>
+                                    <input type="email" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="ornek@cumhuriyet.edu.tr" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold text-secondary">Konu</label>
+                                    <select class="form-select bg-light border rounded-pill px-3 py-2 shadow-none">
+                                        <option value="Destek">🛠️ Teknik Sorun / Hata Bildirimi</option>
+                                        <option value="GeriBildirim">💡 Öneri & Geri Bildirim</option>
+                                        <option value="Ihlal">⚠️ Şüpheli İlan / Güvenlik İhlali</option>
+                                        <option value="Diger">✨ Diğer</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label small fw-semibold text-secondary">Mesajınız</label>
+                                <textarea rows="5" class="form-control bg-light border rounded-4 p-3 shadow-none" placeholder="Detayları buraya yazabilirsiniz..." required></textarea>
+                            </div>
+
+                            <button type="button" class="btn w-100 rounded-pill py-3 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">
+                                ✨ Mesajı Gönder
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

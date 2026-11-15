@@ -1,0 +1,39 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.dotCover
+
+# Build
+bin/
+obj/
+
+# IDE
+.idea/
+.vscode/
+
+# EF migrations build artifacts
+**/Migrations/
+!/DAL/Data/Migrations/
+!/DAL/Data/Migrations/**
+
+# user secrets
+secrets.json
+
+# logs
+*.log
+
+# database files
+*.db
+*.sqlite
+*.db-shm
+*.db-wal
+*.sqbpro
+
+# npm
+node_modules/
+
+# temp / mac
+*.tmp
+.DS_Store

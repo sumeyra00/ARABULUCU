@@ -1,0 +1,232 @@
+@model ARABULUCU.Web.Controllers.ItemDetailViewModel
+
+@{
+    ViewData["Title"] = "İlan Detayı";
+}
+
+<div class="container py-5" style="max-width: 1050px;">
+    <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill mb-4">&larr; İlanlara dön</a>
+
+    @if (Model.Item is null)
+    {
+        <div class="alert alert-info" role="status">Bu ilan bulunamadı veya artık görüntülenemiyor.</div>
+    }
+    else
+    {
+        var item = Model.Item;
+        <article class="card border-0 shadow-sm rounded-4 mb-5">
+            <div class="card-body p-4 p-md-5">
+                <h1 class="h2 fw-bold">@item.Title</h1>
+                <div class="d-flex flex-wrap gap-2 mb-3 mt-3">
+                    @if (!item.IsFound)
+                    {
+                        <span class="badge text-bg-danger">Kayıp eşya ilanı</span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-success">Bulunan eşya ilanı</span>
+                    }
+                    <span class="badge text-bg-light">@item.Category.Name</span>
+                </div>
+                @if (User.Identity?.IsAuthenticated == true && Model.CurrentUserId != item.UserId)
+                {
+                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#reportListingModal">İlanı şikâyet et</button>
+                }
+                <h2 class="h5 fw-bold mt-4">Olay ve tarih bilgileri</h2>
+                <div class="row g-3 my-3">
+                    @if (Model.ProtectedDetails is not null)
+                    {
+                        <div class="col-md-6"><strong>Konum:</strong> @Model.ProtectedDetails.Location</div>
+                    }
+                    <div class="col-md-6"><strong>@(item.IsFound ? "Bulunma tarihi" : "Olay tarihi"):</strong> @item.EventDate.ToString("dd.MM.yyyy HH:mm")</div>
+                    <div class="col-md-6"><strong>İlan oluşturulma tarihi:</strong> @item.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                    @if (!item.IsFound)
+                    {
+                        <div class="col-md-6"><strong>Bulunma durumu:</strong> @(item.IsItemFound ? "Bulundu" : "Henüz bulunmadı")</div>
+                        <div class="col-md-6"><strong>Teslim durumu:</strong> @(item.IsDelivered ? "Teslim edildi" : "Henüz teslim edilmedi")</div>
+                    }
+                </div>
+                @if (Model.ProtectedDetails is not null)
+                {
+                    <h2 class="h5 fw-bold mt-4">Açıklama</h2>
+                    <p class="text-secondary">@Model.ProtectedDetails.Description</p>
+                }
+                else
+                {
+                    <div class="alert alert-info mt-4">İlanın ayrıntılarını görmek için önce doğrulama sorularını cevaplayın.</div>
+                }
+
+                @if (item.Features.Any(feature => !feature.IsHidden) || Model.ProtectedDetails?.Features.Count > 0)
+                {
+                    <h2 class="h5 fw-bold mt-4">Eşya özellikleri</h2>
+                    <dl class="row mb-4">
+                        @foreach (var feature in item.Features.Where(feature => !feature.IsHidden))
+                        {
+                            <dt class="col-sm-3">@feature.Key</dt>
+                            <dd class="col-sm-9">@feature.Value</dd>
+                        }
+                        @foreach (var feature in Model.ProtectedDetails?.Features ?? [])
+                        {
+                            <dt class="col-sm-3">@feature.Key</dt>
+                            <dd class="col-sm-9">@feature.Value</dd>
+                        }
+                    </dl>
+                }
+
+                @if (Model.StatusHistory.Count > 0)
+                {
+                    <h2 class="h5 fw-bold mt-4">İlan durum geçmişi</h2>
+                    <ul class="list-group list-group-flush">
+                        @foreach (var history in Model.StatusHistory)
+                        {
+                            <li class="list-group-item px-0 d-flex justify-content-between gap-3">
+                                <span><strong>@history.Status</strong>@(string.IsNullOrWhiteSpace(history.Details) ? "" : $" - {history.Details}")</span>
+                                <small class="text-muted text-nowrap">@history.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                            </li>
+                        }
+                    </ul>
+                }
+
+            </div>
+        </article>
+
+        @if (User.Identity?.IsAuthenticated == true && Model.CurrentUserId != item.UserId)
+        {
+            <div class="modal fade" id="reportListingModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-4 border-0 shadow">
+                        <div class="modal-header">
+                            <h2 class="modal-title h5">İlanı şikâyet et</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                        </div>
+                        <form asp-controller="Home" asp-action="ReportListing" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="LostItemId" value="@item.Id" />
+                            <div class="modal-body">
+                                <label class="form-label" for="reportReason">Şikâyet nedeni</label>
+                                <select id="reportReason" name="Reason" class="form-select" required>
+                                    <option value="">Seçiniz</option>
+                                    <option value="Spam">Spam veya sahte ilan</option>
+                                    <option value="Inappropriate">Uygunsuz içerik</option>
+                                    <option value="Fraud">Yanıltıcı bilgi</option>
+                                    <option value="Other">Diğer</option>
+                                </select>
+                                <label class="form-label mt-3" for="reportDetails">Açıklama</label>
+                                <textarea id="reportDetails" name="Details" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Vazgeç</button>
+                                <button type="submit" class="btn btn-danger rounded-pill">Şikâyeti gönder</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <section aria-labelledby="recommendations-title">
+            <h2 id="recommendations-title" class="h4 fw-bold mb-3">Benzer ilanlar</h2>
+            @if (Model.Recommendations.Count == 0)
+            {
+                <p class="text-muted">Şu anda eşleşen başka ilan bulunamadı.</p>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var recommendation in Model.Recommendations)
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            <article class="card border-0 shadow-sm rounded-4 h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between gap-2 mb-2">
+                                        @if (!recommendation.Item.IsFound)
+                                        {
+                                            <span class="badge text-bg-danger">Kayıp</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge text-bg-success">Bulunan</span>
+                                        }
+                                        <span class="badge text-bg-primary">@recommendation.SimilarityPercent.ToString("0.#")% benzer</span>
+                                    </div>
+                                    <h3 class="h5 fw-bold">@recommendation.Item.Title</h3>
+                                     @{
+                                         var verificationItemId = recommendation.Item.UserId == Model.CurrentUserId
+                                             ? item.Id
+                                             : recommendation.Item.Id;
+                                         var chatUrl = Url.Action("Mesajlar", "Home", new { ilanId = item.Id, eslesenIlanId = recommendation.Item.Id });
+                                     }
+                                    @if (!recommendation.Item.IsFound)
+                                    {
+                                        <p class="small text-muted mb-1">@recommendation.Item.Category.Name</p>
+                                        <p class="small mb-3">Olay tarihi: @recommendation.Item.EventDate.ToString("dd.MM.yyyy HH:mm")</p>
+                                    }
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <a asp-controller="Home" asp-action="Detay" asp-route-ilanId="@recommendation.Item.Id" class="btn btn-outline-primary btn-sm rounded-pill">İlanı görüntüle</a>
+                                         @if (Model.CanStartChat &&
+                                              Model.VerifiedRecommendationIds.Contains(verificationItemId) &&
+                                            !recommendation.Item.IsDelivered &&
+                                            (recommendation.Item.IsFound || !recommendation.Item.IsItemFound) &&
+                                            recommendation.SimilarityPercent >= 50 &&
+                                            item.UserId != recommendation.Item.UserId &&
+                                            (Model.CurrentUserId == item.UserId || Model.CurrentUserId == recommendation.Item.UserId))
+                                        {
+                                            <a asp-controller="Home" asp-action="Mesajlar"
+                                               asp-route-ilanId="@item.Id"
+                                               asp-route-eslesenIlanId="@recommendation.Item.Id"
+                                               class="btn btn-danger btn-sm rounded-pill">Eşleşme sohbetini aç</a>
+                                        }
+                                         else if (Model.CanStartChat &&
+                                              Model.CurrentUserId is not null &&
+                                              (Model.CurrentUserId == item.UserId || Model.CurrentUserId == recommendation.Item.UserId) &&
+                                              Model.VerificationQuestions.TryGetValue(verificationItemId, out var questions) &&
+                                             questions.Count > 0)
+                                         {
+                                              <button type="button" class="btn btn-warning btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#verifyRecommendation-@recommendation.Item.Id">İletişime geç</button>
+                                         }
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+
+                         @if (Model.VerificationQuestions.TryGetValue(verificationItemId, out var recommendationQuestions) && recommendationQuestions.Count > 0)
+                         {
+                             <div class="modal fade" id="verifyRecommendation-@recommendation.Item.Id" tabindex="-1" aria-hidden="true">
+                                 <div class="modal-dialog modal-dialog-centered">
+                                     <div class="modal-content rounded-4 border-0 shadow">
+                                         <div class="modal-header">
+                                             <h2 class="modal-title h5">Gizli doğrulama</h2>
+                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                                         </div>
+                                         <form asp-controller="Home" asp-action="Verify" method="post">
+                                             @Html.AntiForgeryToken()
+                                             <div class="modal-body">
+                                                  <input type="hidden" name="ilanId" value="@verificationItemId" />
+                                                 <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                                  <input type="hidden" name="successUrl" value="@chatUrl" />
+                                                 <p class="text-muted small">İlan sahibiyle iletişime geçmeden önce gizli soruları cevaplayın.</p>
+                                                 @for (var index = 0; index < recommendationQuestions.Count; index++)
+                                                 {
+                                                     var question = recommendationQuestions[index];
+                                                     <div class="mb-3">
+                                                         <label class="form-label fw-semibold" for="recommendation-answer-@recommendation.Item.Id-@question.Id">@question.Prompt</label>
+                                                         <input id="recommendation-answer-@recommendation.Item.Id-@question.Id" name="answers[@index].Answer" class="form-control" autocomplete="off" required />
+                                                         <input type="hidden" name="answers[@index].QuestionId" value="@question.Id" />
+                                                     </div>
+                                                 }
+                                             </div>
+                                             <div class="modal-footer">
+                                                 <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Vazgeç</button>
+                                                 <button type="submit" class="btn btn-danger rounded-pill">Doğrula ve devam et</button>
+                                             </div>
+                                         </form>
+                                     </div>
+                                 </div>
+                             </div>
+                         }
+                    }
+                </div>
+            }
+        </section>
+    }
+</div>

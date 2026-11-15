@@ -1,0 +1,169 @@
+@model ARABULUCU.Web.Controllers.ItemSearchViewModel
+
+@{
+    ViewData["Title"] = "Ana Sayfa";
+}
+
+<section class="py-5" style="background: radial-gradient(circle at 50% 15%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%);">
+    <div class="container" style="max-width: 1100px;">
+        <div class="text-center mb-5">
+            <h1 class="fw-bolder text-dark mb-3">Bir şey mi kaybettiniz, yoksa bir şey mi buldunuz?</h1>
+            <p class="text-muted mb-4">İlanları filtreleyin veya yeni bir kayıp/buluntu bildirimi oluşturun.</p>
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                <a asp-action="KayipOlustur" class="btn btn-danger rounded-pill px-4">Kayıp İlanı Ver</a>
+                <a asp-action="BulunanOlustur" class="btn btn-success rounded-pill px-4">Bulunan Eşya Bildir</a>
+                <button type="button" class="btn btn-dark rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#matchingModal">
+                    İlanları Eşleştir
+                </button>
+            </div>
+        </div>
+
+        <div class="modal fade" id="matchingModal" tabindex="-1" aria-labelledby="matchingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content rounded-4 border-0 shadow">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="matchingModalLabel">Akıllı İlan Eşleştirme</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    </div>
+                    <form asp-controller="Home" asp-action="Match" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="modal-body">
+                            <p class="text-muted small">İlan bilgilerini girin. Kategori, konum, başlık ve metin sinyali eşleşmeleriyle en az 50 puan alan ilanlar gösterilir. İletişimden önce ilan sahibinin gizli doğrulama soruları cevaplanır.</p>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="matchingCategory" class="form-label fw-semibold">Kategori</label>
+                                    <select id="matchingCategory" name="Category" class="form-select" required>
+                                        <option value="">Kategori seçin</option>
+                                        <option value="canta">Çanta &amp; Sırt Çantası</option>
+                                        <option value="anahtar">Anahtar &amp; Aksesuar</option>
+                                        <option value="cuzdan">Cüzdan &amp; Kartlık / Kimlik</option>
+                                        <option value="elektronik">Kulaklık &amp; Elektronik</option>
+                                        <option value="telefon">Telefon &amp; Şarj Aleti</option>
+                                        <option value="saat">Akıllı Saat &amp; Takı</option>
+                                        <option value="kitap">Kitap &amp; Ders Notu</option>
+                                        <option value="diger">Diğer</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="matchingTitle" class="form-label fw-semibold">Eşya başlığı</label>
+                                    <input id="matchingTitle" name="Title" class="form-control" required placeholder="Örn: mavi çanta" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="matchingLocation" class="form-label fw-semibold">Kampüs bölgesi</label>
+                                    <input id="matchingLocation" name="Location" class="form-control" required placeholder="Örn: Merkez Kütüphane" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="matchingBrand" class="form-label fw-semibold">Marka</label>
+                                    <input id="matchingBrand" name="Brand" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="matchingModel" class="form-label fw-semibold">Model</label>
+                                    <input id="matchingModel" name="Model" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="matchingColor" class="form-label fw-semibold">Renk</label>
+                                    <input id="matchingColor" name="Color" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="matchingDate" class="form-label fw-semibold">Olay tarihi</label>
+                                    <input id="matchingDate" name="EventDate" type="date" class="form-control" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="matchingTime" class="form-label fw-semibold">Olay saati</label>
+                                    <input id="matchingTime" name="EventTime" type="time" class="form-control" required />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Vazgeç</button>
+                            <button type="submit" class="btn btn-dark rounded-pill">Eşleştir</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.ValidationError is not null)
+        {
+            <div class="alert alert-danger" role="alert">@Model.ValidationError</div>
+        }
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 fw-bold mb-0">İlanlar</h2>
+            <span class="text-muted small">@Model.Items.Count sonuç</span>
+        </div>
+        @if (Model.Items.Count == 0)
+        {
+            <div class="alert alert-light border text-center">Henüz yayınlanmış ilan bulunamadı.</div>
+        }
+        else
+        {
+            <div class="d-flex flex-nowrap gap-3 overflow-auto pb-3" style="scroll-snap-type: x mandatory;">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="flex-shrink-0" style="width: min(86vw, 340px); scroll-snap-align: start;">
+                        <article class="card border-0 shadow-sm rounded-4 h-100">
+                            <div class="card-body d-flex flex-column">
+                                @if (!item.IsFound)
+                                {
+                                    <div class="d-flex justify-content-between gap-2 mb-2">
+                                        <span class="badge text-bg-danger">Kayıp</span>
+                                        <span class="badge text-bg-light">@item.Category.Name</span>
+                                    </div>
+                                }
+                                <h3 class="h5 fw-bold">@item.Title</h3>
+                                @if (!item.IsFound)
+                                {
+                                    <p class="small mb-2">Olay tarihi: @item.EventDate.ToString("dd.MM.yyyy HH:mm")</p>
+                                    <p class="small mb-3">@(item.IsItemFound ? "Eşya bulundu" : "Eşya henüz bulunmadı") · @(item.IsDelivered ? "Teslim edildi" : "Teslim edilmedi")</p>
+                                }
+                            @if (Model.CurrentUserId is not null && Model.CurrentUserId != item.UserId)
+                            {
+                                <button type="button" class="btn btn-danger rounded-pill mt-auto" data-bs-toggle="modal" data-bs-target="#verifyModal-@item.Id">Eşyayı Doğrula</button>
+                            }
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="modal fade" id="verifyModal-@item.Id" tabindex="-1" aria-labelledby="verifyModalLabel-@item.Id" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content rounded-4 border-0 shadow">
+                                <div class="modal-header">
+                                    <h2 class="modal-title h5" id="verifyModalLabel-@item.Id">Eşyayı Doğrula</h2>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                                </div>
+                                <form asp-controller="Home" asp-action="Verify" method="post">
+                                    <div class="modal-body">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ilanId" value="@item.Id" />
+                                        <p class="text-muted small">İlanın sahibi olduğunuzu doğrulamak için aşağıdaki bilgileri girin.</p>
+                                        @if (Model.VerificationQuestions.TryGetValue(item.Id, out var verificationQuestions) && verificationQuestions.Count > 0)
+                                        {
+                                            @for (var index = 0; index < verificationQuestions.Count; index++)
+                                            {
+                                                var question = verificationQuestions[index];
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-semibold" for="answer-@item.Id-@question.Id">@question.Prompt</label>
+                                                    <input id="answer-@item.Id-@question.Id" name="answers[@index].Answer" class="form-control" autocomplete="off" required />
+                                                    <input type="hidden" name="answers[@index].QuestionId" value="@question.Id" />
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="alert alert-warning mb-0">Bu ilan için doğrulama sorusu bulunamadı.</div>
+                                        }
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Vazgeç</button>
+                                        <button type="submit" class="btn btn-danger rounded-pill">Cevapları Gönder</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
