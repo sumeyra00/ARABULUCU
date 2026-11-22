@@ -6,6 +6,7 @@ public sealed class VerificationQuestionDto
 {
     public int Id { get; init; }
     public string Prompt { get; init; } = string.Empty;
+    public int Weight { get; init; }
 }
 
 public sealed class MatchingCriteria
@@ -17,6 +18,8 @@ public sealed class MatchingCriteria
     public string? Model { get; init; }
     public string? Color { get; init; }
     public DateTime EventDate { get; init; }
+    public bool? SourceIsFound { get; init; }
+    public string? CurrentUserId { get; init; }
     public IReadOnlyCollection<VerificationAnswerDto> Answers { get; init; } = [];
 }
 

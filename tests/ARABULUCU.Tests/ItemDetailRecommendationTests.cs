@@ -45,7 +45,7 @@ public sealed class ItemDetailRecommendationTests
 
         Assert.Contains(candidateType, html);
         Assert.Matches(@"73[,.]5% benzer", html);
-        Assert.Contains("Eşleşme sohbetini aç", html);
+         Assert.Contains("İlan sahibi ile iletişime geç", html);
     }
 
     [Theory]
@@ -63,7 +63,7 @@ public sealed class ItemDetailRecommendationTests
         var html = await RenderDetailViewAsync(viewModel, httpContext);
 
         Assert.Matches(@"73[,.]5% benzer", html);
-        Assert.DoesNotContain("Eşleşme sohbetini aç", html);
+         Assert.DoesNotContain("İlan sahibi ile iletişime geç", html);
     }
 
     [Theory]
@@ -85,7 +85,7 @@ public sealed class ItemDetailRecommendationTests
         Assert.True(viewModel.CanStartChat);
         var html = await RenderDetailViewAsync(viewModel, httpContext);
 
-        Assert.DoesNotContain("Eşleşme sohbetini aç", html);
+         Assert.DoesNotContain("İlan sahibi ile iletişime geç", html);
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public sealed class ItemDetailRecommendationTests
         Assert.Null(viewModel.CurrentUserId);
         var html = await RenderDetailViewAsync(viewModel, httpContext);
 
-        Assert.DoesNotContain("Eşleşme sohbetini aç", html);
+         Assert.DoesNotContain("İlan sahibi ile iletişime geç", html);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public sealed class ItemDetailRecommendationTests
         var html = await RenderDetailViewAsync(viewModel, httpContext);
 
         Assert.Contains("Visible color", html);
-        Assert.DoesNotContain("Secret question", html);
+         Assert.Contains("Secret question", html);
         Assert.DoesNotContain("Private answer", html);
     }
 
@@ -147,8 +147,65 @@ public sealed class ItemDetailRecommendationTests
         Assert.Contains("İlanın ayrıntılarını görmek için önce doğrulama sorularını cevaplayın.", html);
         Assert.DoesNotContain("Item description", html);
         Assert.DoesNotContain("Library", html);
-        Assert.DoesNotContain("Secret question", html);
+         Assert.Contains("Secret question", html);
         Assert.DoesNotContain("Private answer", html);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Detay_RendersContactVerificationForBestOwnedOppositeMatch(bool viewedItemIsFound)
+    {
+        var (result, httpContext) = await GetDetailResultAsync(
+            sourceIsFound: viewedItemIsFound,
+            delivered: false,
+            itemFound: viewedItemIsFound);
+        var viewModel = Assert.IsType<ItemDetailViewModel>(result.Model);
+        viewModel.Item!.UserId = "listing-owner";
+        viewModel.ContactMatch = new ChatMatch
+        {
+            Item = Item(3, "source", !viewedItemIsFound, false, viewedItemIsFound),
+            MatchedItem = viewModel.Item,
+            SimilarityPercent = 73.5m
+        };
+        viewModel.VerificationQuestions = new Dictionary<int, IReadOnlyList<VerificationQuestionDto>>
+        {
+            [viewModel.Item.Id] =
+            [
+                new VerificationQuestionDto { Id = 10, Prompt = "Secret question", Weight = 30 },
+                new VerificationQuestionDto { Id = 11, Prompt = "Location", Weight = 20 },
+                new VerificationQuestionDto { Id = 12, Prompt = "Color", Weight = 20 }
+            ]
+        };
+
+        var html = await RenderDetailViewAsync(viewModel, httpContext);
+
+        Assert.Contains("İlan sahibi ile iletişime geç", html);
+        Assert.Contains("contactVerificationModal", html);
+        Assert.Contains("Secret question", html);
+        Assert.Contains("Doğrula ve sohbete geç", html);
+    }
+
+    [Fact]
+    public async Task Detay_RendersDirectChatForAlreadyVerifiedContactMatch()
+    {
+        var (result, httpContext) = await GetDetailResultAsync(
+            sourceIsFound: false,
+            delivered: false,
+            itemFound: false);
+        var viewModel = Assert.IsType<ItemDetailViewModel>(result.Model);
+        viewModel.Item!.UserId = "listing-owner";
+        viewModel.ContactMatch = new ChatMatch
+        {
+            Item = Item(3, "source", true, false, true),
+            MatchedItem = viewModel.Item,
+            SimilarityPercent = 73.5m
+        };
+        viewModel.VerifiedRecommendationIds = new HashSet<int> { viewModel.Item.Id };
+
+        var html = await RenderDetailViewAsync(viewModel, httpContext);
+
+        Assert.Contains("Sohbete Git / Mesaj Gönder", html);
     }
 
     private static async Task<(ViewResult Result, HttpContext HttpContext)> GetDetailResultAsync(
@@ -181,6 +238,7 @@ public sealed class ItemDetailRecommendationTests
         await connection.OpenAsync();
         await using var db = new ApplicationDbContext(
             new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlite(connection).Options);
+        await db.Database.EnsureCreatedAsync();
         var httpContext = new DefaultHttpContext
         {
             User = authenticated
@@ -265,8 +323,13 @@ public sealed class ItemDetailRecommendationTests
         public Task<IReadOnlyList<ChatMatch>> GetChatMatchesAsync(string userId) =>
             Task.FromResult<IReadOnlyList<ChatMatch>>([]);
 
-        public Task<IReadOnlyList<VerificationQuestionDto>> GetVerificationQuestionsAsync(int itemId) =>
-            Task.FromResult<IReadOnlyList<VerificationQuestionDto>>([]);
+        public Task<IReadOnlyList<VerificationQuestionDto>> GetVerificationQuestionsAsync(int itemId, bool includeSecretQuestion = true) =>
+            Task.FromResult<IReadOnlyList<VerificationQuestionDto>>(
+            [
+                new VerificationQuestionDto { Id = 1, Prompt = "Secret question", Weight = 30 },
+                new VerificationQuestionDto { Id = 2, Prompt = "Location", Weight = 20 },
+                new VerificationQuestionDto { Id = 3, Prompt = "Color", Weight = 20 }
+            ]);
 
         public Task<IReadOnlyList<VerificationQuestionDto>> GetMatchingQuestionsAsync() =>
             Task.FromResult<IReadOnlyList<VerificationQuestionDto>>([]);

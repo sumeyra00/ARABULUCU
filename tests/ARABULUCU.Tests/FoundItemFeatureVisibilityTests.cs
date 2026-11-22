@@ -94,7 +94,7 @@ public sealed class FoundItemFeatureVisibilityTests
         public Task<IReadOnlyList<ChatMatch>> GetChatMatchesAsync(string userId) =>
             Task.FromResult<IReadOnlyList<ChatMatch>>([]);
 
-        public Task<IReadOnlyList<VerificationQuestionDto>> GetVerificationQuestionsAsync(int itemId) =>
+        public Task<IReadOnlyList<VerificationQuestionDto>> GetVerificationQuestionsAsync(int itemId, bool includeSecretQuestion = true) =>
             Task.FromResult<IReadOnlyList<VerificationQuestionDto>>([]);
 
         public Task<IReadOnlyList<VerificationQuestionDto>> GetMatchingQuestionsAsync() =>

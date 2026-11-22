@@ -273,6 +273,39 @@ public sealed class LostItemListingServiceTests
     }
 
     [Fact]
+    public async Task FindMatchesAsync_ExcludesCurrentUserAndSameTypeListings()
+    {
+        await using var connection = await CreateDatabaseAsync();
+        await using var db = CreateContext(connection);
+        var (owner, wallet, _) = AddBaseEntities(db);
+        var otherOwner = new UserProfile { Id = "other-matcher", DisplayName = "Other", Email = "other-matcher@example.com" };
+        db.UserProfiles.Add(otherOwner);
+
+        var ownFound = Item(owner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        ownFound.IsFound = true;
+        ownFound.IsItemFound = true;
+        var otherLost = Item(otherOwner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        var otherFound = Item(otherOwner, wallet, "Blue wallet", "Leather", "Central Library", DateTime.Today);
+        otherFound.IsFound = true;
+        otherFound.IsItemFound = true;
+        db.LostItems.AddRange(ownFound, otherLost, otherFound);
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).FindMatchesAsync(new MatchingCriteria
+        {
+            Category = "Wallets",
+            Title = "Blue wallet",
+            Location = "Central Library",
+            EventDate = DateTime.Today,
+            SourceIsFound = false,
+            CurrentUserId = owner.Id
+        });
+
+        var match = Assert.Single(result.Items);
+        Assert.Equal(otherFound.Id, match.Id);
+    }
+
+    [Fact]
     public async Task GetRecommendationsAsync_MatchesOppositeTypesInBothDirections()
     {
         await using var connection = await CreateDatabaseAsync();

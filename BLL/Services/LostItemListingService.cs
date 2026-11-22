@@ -162,20 +162,28 @@ public sealed class LostItemListingService : ILostItemListingService
             .ToList();
     }
 
-    public async Task<IReadOnlyList<VerificationQuestionDto>> GetVerificationQuestionsAsync(int itemId)
+    public async Task<IReadOnlyList<VerificationQuestionDto>> GetVerificationQuestionsAsync(
+        int itemId,
+        bool includeSecretQuestion = true)
     {
         return await _dbContext.LostItemFeatures
             .AsNoTracking()
             // Eski ilanlarda bu bayrak bulunmadığından, yeni şema dışındaki
             // doğrulama alanlarını da okuyabilmeliyiz.
             .Where(feature => feature.LostItemId == itemId &&
+                (includeSecretQuestion ||
+                 (feature.Key != "SecurityQuestion" && feature.Key != "SecurityAnswer")) &&
                 (feature.IsVerificationQuestion ||
+                 feature.Key == "Location" || feature.Key == "EventDate" ||
                  feature.Key == "Brand" || feature.Key == "Model" || feature.Key == "Color" ||
                  feature.Key == "SecurityQuestion" || feature.Key == "SecurityAnswer"))
-            .OrderBy(feature => feature.Id)
+            .OrderBy(feature => feature.Key == "SecurityQuestion" ? 0 :
+                feature.Key == "SecurityAnswer" ? 1 : 2)
+            .ThenBy(feature => feature.Id)
             .Select(feature => new VerificationQuestionDto
             {
                 Id = feature.Id,
+                Weight = GetVerificationWeight(feature),
                 Prompt = feature.Key == "SecurityQuestion"
                     ? feature.Value
                     : GetVerificationPrompt(feature.Key)
@@ -188,6 +196,7 @@ public sealed class LostItemListingService : ILostItemListingService
         var features = await _dbContext.LostItemFeatures
             .AsNoTracking()
             .Where(feature => feature.IsVerificationQuestion ||
+                feature.Key == "Location" || feature.Key == "EventDate" ||
                 feature.Key == "Brand" || feature.Key == "Model" || feature.Key == "Color" ||
                 feature.Key == "SecurityQuestion" || feature.Key == "SecurityAnswer")
             .OrderBy(feature => feature.Id)
@@ -197,6 +206,7 @@ public sealed class LostItemListingService : ILostItemListingService
             .Select(feature => new VerificationQuestionDto
             {
                 Id = feature.Id,
+                Weight = GetVerificationWeight(feature),
                 Prompt = feature.Key == "SecurityQuestion"
                     ? feature.Value
                     : GetVerificationPrompt(feature.Key)
@@ -232,12 +242,14 @@ public sealed class LostItemListingService : ILostItemListingService
                 item.Title.ToLower().Contains(normalizedTitle) &&
                 item.Location.ToLower().Contains(normalizedLocation) &&
                 item.EventDate.Date == criteria.EventDate.Date &&
+                (!criteria.SourceIsFound.HasValue || item.IsFound != criteria.SourceIsFound.Value) &&
+                (string.IsNullOrWhiteSpace(criteria.CurrentUserId) || item.UserId != criteria.CurrentUserId) &&
                 !item.IsDelivered &&
                 !item.IsArchived);
 
-        candidatesQuery = WhereFeatureMatches(candidatesQuery, "Brand", criteria.Brand);
-        candidatesQuery = WhereFeatureMatches(candidatesQuery, "Model", criteria.Model);
-        candidatesQuery = WhereFeatureMatches(candidatesQuery, "Color", criteria.Color);
+        candidatesQuery = WhereFeatureMatches(candidatesQuery, "Brand", criteria.Brand, includeHidden: true);
+        candidatesQuery = WhereFeatureMatches(candidatesQuery, "Model", criteria.Model, includeHidden: true);
+        candidatesQuery = WhereFeatureMatches(candidatesQuery, "Color", criteria.Color, includeHidden: true);
 
         var candidates = await candidatesQuery.ToListAsync();
         var searchItem = new LostItem
@@ -290,6 +302,8 @@ public sealed class LostItemListingService : ILostItemListingService
             .Include(item => item.Features)
             .Where(item => item.Location.ToLower().Contains(normalizedLocation) &&
                 item.EventDate.Date == criteria.EventDate.Date &&
+                (!criteria.SourceIsFound.HasValue || item.IsFound != criteria.SourceIsFound.Value) &&
+                (string.IsNullOrWhiteSpace(criteria.CurrentUserId) || item.UserId != criteria.CurrentUserId) &&
                 !item.IsDelivered &&
                 !item.IsArchived)
             .OrderByDescending(item => item.CreatedAt)
@@ -301,6 +315,7 @@ public sealed class LostItemListingService : ILostItemListingService
                 Item = item,
                 Questions = item.Features.Where(feature =>
                     feature.IsVerificationQuestion ||
+                    feature.Key == "Location" || feature.Key == "EventDate" ||
                     feature.Key == "Brand" || feature.Key == "Model" || feature.Key == "Color" ||
                     feature.Key == "SecurityQuestion" || feature.Key == "SecurityAnswer").ToList()
             })
@@ -356,6 +371,7 @@ public sealed class LostItemListingService : ILostItemListingService
         var questions = await _dbContext.LostItemFeatures
             .Where(feature => feature.LostItemId == itemId &&
                 (feature.IsVerificationQuestion ||
+                 feature.Key == "Location" || feature.Key == "EventDate" ||
                  feature.Key == "Brand" || feature.Key == "Model" || feature.Key == "Color" ||
                  feature.Key == "SecurityQuestion" || feature.Key == "SecurityAnswer"))
             .ToListAsync();
@@ -561,7 +577,8 @@ public sealed class LostItemListingService : ILostItemListingService
     private static IQueryable<LostItem> WhereFeatureMatches(
         IQueryable<LostItem> items,
         string key,
-        string? value)
+        string? value,
+        bool includeHidden = false)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -571,7 +588,7 @@ public sealed class LostItemListingService : ILostItemListingService
         var normalizedKey = Normalize(key);
         var normalizedValue = Normalize(value);
         return items.Where(item => item.Features.Any(feature =>
-            !feature.IsHidden &&
+            (includeHidden || !feature.IsHidden) &&
             feature.Key.ToLower() == normalizedKey &&
             feature.Value.ToLower().Contains(normalizedValue)));
     }

@@ -77,6 +77,7 @@ public class HomeController : Controller
                 new ItemSearchCriteria(), invalidSearch.Items, "Konum ve tarih alanları zorunludur.", true));
         }
 
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var result = await _listingService.FindMatchesAsync(new MatchingCriteria
         {
             Category = CategoryNames.TryGetValue(input.Category ?? string.Empty, out var categoryName)
@@ -87,13 +88,10 @@ public class HomeController : Controller
             Brand = input.Brand,
             Model = input.Model,
             Color = input.Color,
-            EventDate = input.EventDate!.Value.Date + input.EventTime!.Value
+            EventDate = input.EventDate!.Value.Date + input.EventTime!.Value,
+            SourceIsFound = input.SourceIsFound,
+            CurrentUserId = currentUserId
         });
-
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var matchedItems = currentUserId is null
-            ? result.Items
-            : result.Items.Where(item => item.UserId != currentUserId).ToArray();
 
         return View(nameof(Index), await BuildHomeViewModelAsync(
             new ItemSearchCriteria
@@ -107,8 +105,8 @@ public class HomeController : Controller
                 EventDateFrom = input.EventDate.Value.Date + input.EventTime.Value,
                 EventDateTo = input.EventDate.Value.Date + input.EventTime.Value
             },
-            matchedItems,
-            matchedItems.Count == 0 ? "Size ait ilanlar eşleşme sonuçlarından çıkarıldı." : result.Error,
+            result.Items,
+            result.Error,
             true));
     }
 
@@ -121,7 +119,9 @@ public class HomeController : Controller
         var questions = new Dictionary<int, IReadOnlyList<VerificationQuestionDto>>();
         foreach (var item in items)
         {
-            questions[item.Id] = await _listingService.GetVerificationQuestionsAsync(item.Id);
+            questions[item.Id] = await _listingService.GetVerificationQuestionsAsync(
+                item.Id,
+                includeSecretQuestion: false);
         }
 
         return new ItemSearchViewModel
@@ -131,7 +131,6 @@ public class HomeController : Controller
             CurrentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
             ValidationError = validationError ?? TempData["VerificationError"]?.ToString(),
             VerificationQuestions = questions,
-            MatchingQuestions = await _listingService.GetMatchingQuestionsAsync(),
             IsMatchingResult = isMatchingResult
         };
     }
@@ -309,7 +308,7 @@ public class HomeController : Controller
         _dbContext.LostItemFeatures.AddRange(features);
         _dbContext.ListingStatusHistories.Add(new ListingStatusHistory
         {
-            LostItemId = lostItem.Id,
+            LostItemId = item.Id,
             Status = "Created",
             ChangedByUserId = userId,
             Details = "İlan oluşturuldu."
@@ -407,13 +406,40 @@ public class HomeController : Controller
         var recommendations = await _listingService.GetRecommendationsAsync(item);
         var verificationQuestions = new Dictionary<int, IReadOnlyList<VerificationQuestionDto>>();
         var verifiedRecommendationIds = new HashSet<int>();
+        ChatMatch? contactMatch = null;
+
+        if (currentUserId is not null &&
+            currentUserId != item.UserId &&
+            IsOpen(item))
+        {
+            contactMatch = (await _listingService.GetChatMatchesAsync(currentUserId))
+                .Where(match => match.MatchedItem.Id == item.Id)
+                .OrderByDescending(match => match.SimilarityPercent)
+                .FirstOrDefault();
+
+            if (contactMatch is not null)
+            {
+                verificationQuestions[item.Id] =
+                    await _listingService.GetVerificationQuestionsAsync(
+                        item.Id,
+                        includeSecretQuestion: true);
+
+                if (await _listingService.GetProtectedDetailsAsync(item.Id, currentUserId) is not null)
+                {
+                    verifiedRecommendationIds.Add(item.Id);
+                }
+            }
+        }
+
         foreach (var recommendation in recommendations)
         {
             var verificationItemId = recommendation.Item.UserId == currentUserId
                 ? item.Id
                 : recommendation.Item.Id;
             verificationQuestions[verificationItemId] =
-                await _listingService.GetVerificationQuestionsAsync(verificationItemId);
+                await _listingService.GetVerificationQuestionsAsync(
+                    verificationItemId,
+                    includeSecretQuestion: true);
 
             if (currentUserId is not null &&
                 await _listingService.GetProtectedDetailsAsync(verificationItemId, currentUserId) is not null)
@@ -428,6 +454,7 @@ public class HomeController : Controller
             Recommendations = recommendations,
             CanStartChat = IsOpen(item),
             CurrentUserId = currentUserId,
+            ContactMatch = contactMatch,
             VerifiedRecommendationIds = verifiedRecommendationIds,
             VerificationQuestions = verificationQuestions,
             StatusHistory = await _dbContext.ListingStatusHistories
@@ -442,7 +469,7 @@ public class HomeController : Controller
     }
 
     private static bool IsOpen(LostItem item) =>
-        !item.IsDelivered && (item.IsFound || !item.IsItemFound);
+        !item.IsArchived && !item.IsDelivered && (item.IsFound || !item.IsItemFound);
 
     [Authorize]
     [HttpGet]
@@ -785,6 +812,9 @@ public class HomeController : Controller
 
 public class MatchingInput
 {
+    [Required(ErrorMessage = "İlan türünü seçin.")]
+    public bool? SourceIsFound { get; set; }
+
     [Required(ErrorMessage = "Kategori seçin.")]
     public string? Category { get; set; }
 
@@ -904,6 +934,7 @@ public class ItemDetailViewModel
 {
     public LostItem? Item { get; set; }
     public IReadOnlyList<RecommendedItem> Recommendations { get; set; } = [];
+    public ChatMatch? ContactMatch { get; set; }
     public bool CanStartChat { get; set; }
     public string? CurrentUserId { get; set; }
     public ProtectedListingDto? ProtectedDetails { get; set; }

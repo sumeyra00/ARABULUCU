@@ -31,6 +31,14 @@
                             <p class="text-muted small">İlan bilgilerini girin. Kategori, konum, başlık ve metin sinyali eşleşmeleriyle en az 50 puan alan ilanlar gösterilir. İletişimden önce ilan sahibinin gizli doğrulama soruları cevaplanır.</p>
                             <div class="row g-3">
                                 <div class="col-md-6">
+                                    <label for="matchingSourceType" class="form-label fw-semibold">Eşleştirilecek ilan türü</label>
+                                    <select id="matchingSourceType" name="SourceIsFound" class="form-select" required>
+                                        <option value="">İlan türünü seçin</option>
+                                        <option value="false">Kayıp ilanım için bulunan ilan ara</option>
+                                        <option value="true">Bulunan ilanım için kayıp ilan ara</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
                                     <label for="matchingCategory" class="form-label fw-semibold">Kategori</label>
                                     <select id="matchingCategory" name="Category" class="form-select" required>
                                         <option value="">Kategori seçin</option>
@@ -117,10 +125,10 @@
                                     <p class="small mb-2">Olay tarihi: @item.EventDate.ToString("dd.MM.yyyy HH:mm")</p>
                                     <p class="small mb-3">@(item.IsItemFound ? "Eşya bulundu" : "Eşya henüz bulunmadı") · @(item.IsDelivered ? "Teslim edildi" : "Teslim edilmedi")</p>
                                 }
-                            @if (Model.CurrentUserId is not null && Model.CurrentUserId != item.UserId)
-                            {
-                                <button type="button" class="btn btn-danger rounded-pill mt-auto" data-bs-toggle="modal" data-bs-target="#verifyModal-@item.Id">Eşyayı Doğrula</button>
-                            }
+                                @if (Model.CurrentUserId is not null && Model.CurrentUserId != item.UserId)
+                                {
+                                    <button type="button" class="btn btn-danger rounded-pill mt-auto" data-bs-toggle="modal" data-bs-target="#verifyModal-@item.Id">Eşyayı Doğrula</button>
+                                }
                             </div>
                         </article>
                     </div>

@@ -10,7 +10,7 @@ public interface ILostItemListingService
     Task<IReadOnlyList<RecommendedItem>> GetRecommendationsAsync(LostItem item, int limit = 5);
     Task<bool> CanChatAsync(string userId, int itemId, int matchedItemId);
     Task<IReadOnlyList<ChatMatch>> GetChatMatchesAsync(string userId);
-    Task<IReadOnlyList<VerificationQuestionDto>> GetVerificationQuestionsAsync(int itemId);
+    Task<IReadOnlyList<VerificationQuestionDto>> GetVerificationQuestionsAsync(int itemId, bool includeSecretQuestion = true);
     Task<IReadOnlyList<VerificationQuestionDto>> GetMatchingQuestionsAsync();
     Task<MatchingResult> FindMatchesAsync(MatchingCriteria criteria);
     Task<VerificationResult> VerifyAsync(int itemId, string claimerUserId, IReadOnlyCollection<VerificationAnswerDto> answers);

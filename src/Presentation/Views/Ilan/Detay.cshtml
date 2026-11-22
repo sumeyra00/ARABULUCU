@@ -28,6 +28,36 @@
                     }
                     <span class="badge text-bg-light">@item.Category.Name</span>
                 </div>
+                @if (User.Identity?.IsAuthenticated == true &&
+                     Model.CurrentUserId != item.UserId &&
+                     !item.IsArchived &&
+                     !item.IsDelivered &&
+                     (item.IsFound || !item.IsItemFound))
+                {
+                    <section class="border rounded-4 p-3 p-md-4 mb-4 bg-light" aria-labelledby="contact-owner-title">
+                        <h2 id="contact-owner-title" class="h5 fw-bold mb-2">İlan sahibi ile iletişime geç</h2>
+                        @if (Model.ContactMatch is null)
+                        {
+                            <p class="text-muted mb-0">İletişime geçmek için eşleşen zıt türde bir ilanınız olmalıdır.</p>
+                        }
+                        else if (Model.VerifiedRecommendationIds.Contains(item.Id))
+                        {
+                            <p class="text-success small mb-3">İlan doğrulandı. Sohbete devam edebilirsiniz.</p>
+                            <a asp-controller="Home" asp-action="Mesajlar"
+                               asp-route-ilanId="@Model.ContactMatch.Item.Id"
+                               asp-route-eslesenIlanId="@item.Id"
+                               class="btn btn-danger rounded-pill">Sohbete Git / Mesaj Gönder</a>
+                        }
+                        else
+                        {
+                            <p class="text-muted small mb-3">Sohbeti başlatmadan önce ilan sahibinin doğrulama sorularını cevaplayın.</p>
+                            <button type="button" class="btn btn-warning rounded-pill"
+                                    data-bs-toggle="modal" data-bs-target="#contactVerificationModal">
+                                İlan sahibi ile iletişime geç
+                            </button>
+                        }
+                    </section>
+                }
                 @if (User.Identity?.IsAuthenticated == true && Model.CurrentUserId != item.UserId)
                 {
                     <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#reportListingModal">İlanı şikâyet et</button>
@@ -124,6 +154,47 @@
             </div>
         }
 
+        @if (User.Identity?.IsAuthenticated == true &&
+             Model.CurrentUserId != item.UserId &&
+             Model.ContactMatch is not null &&
+             Model.VerificationQuestions.TryGetValue(item.Id, out var contactQuestions) &&
+             contactQuestions.Count >= 3 &&
+             contactQuestions.Sum(question => question.Weight) >= 50)
+        {
+            <div class="modal fade" id="contactVerificationModal" tabindex="-1" aria-labelledby="contactVerificationModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content rounded-4 border-0 shadow">
+                        <div class="modal-header">
+                            <h2 class="modal-title h5" id="contactVerificationModalLabel">İlan sahibi ile iletişime geçmeden önce doğrulama</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                        </div>
+                        <form asp-controller="Home" asp-action="Verify" method="post">
+                            @Html.AntiForgeryToken()
+                            <div class="modal-body">
+                                <input type="hidden" name="ilanId" value="@item.Id" />
+                                <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                <input type="hidden" name="successUrl" value="@Url.Action("Mesajlar", "Home", new { ilanId = Model.ContactMatch.Item.Id, eslesenIlanId = item.Id })" />
+                                <p class="text-muted small">Önce ilan sahibinin gizli sorusunu ve standart doğrulama sorularını cevaplayın. En az 3 doğru cevap ve 50 puan gerektiğinde sohbet açılır.</p>
+                                @for (var index = 0; index < contactQuestions.Count; index++)
+                                {
+                                    var question = contactQuestions[index];
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold" for="contact-answer-@item.Id-@question.Id">@question.Prompt</label>
+                                        <input id="contact-answer-@item.Id-@question.Id" name="answers[@index].Answer" class="form-control" autocomplete="off" required />
+                                        <input type="hidden" name="answers[@index].QuestionId" value="@question.Id" />
+                                    </div>
+                                }
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Vazgeç</button>
+                                <button type="submit" class="btn btn-danger rounded-pill">Doğrula ve sohbete geç</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+
         <section aria-labelledby="recommendations-title">
             <h2 id="recommendations-title" class="h4 fw-bold mb-3">Benzer ilanlar</h2>
             @if (Model.Recommendations.Count == 0)
@@ -164,38 +235,43 @@
                                     <div class="d-flex gap-2 flex-wrap">
                                         <a asp-controller="Home" asp-action="Detay" asp-route-ilanId="@recommendation.Item.Id" class="btn btn-outline-primary btn-sm rounded-pill">İlanı görüntüle</a>
                                          @if (Model.CanStartChat &&
-                                              Model.VerifiedRecommendationIds.Contains(verificationItemId) &&
-                                            !recommendation.Item.IsDelivered &&
-                                            (recommendation.Item.IsFound || !recommendation.Item.IsItemFound) &&
-                                            recommendation.SimilarityPercent >= 50 &&
-                                            item.UserId != recommendation.Item.UserId &&
-                                            (Model.CurrentUserId == item.UserId || Model.CurrentUserId == recommendation.Item.UserId))
-                                        {
-                                            <a asp-controller="Home" asp-action="Mesajlar"
-                                               asp-route-ilanId="@item.Id"
-                                               asp-route-eslesenIlanId="@recommendation.Item.Id"
-                                               class="btn btn-danger btn-sm rounded-pill">Eşleşme sohbetini aç</a>
-                                        }
-                                         else if (Model.CanStartChat &&
                                               Model.CurrentUserId is not null &&
+                                               item.UserId != recommendation.Item.UserId &&
+                                               recommendation.Item.IsFound != item.IsFound &&
+                                               !recommendation.Item.IsArchived &&
+                                               !recommendation.Item.IsDelivered &&
+                                               (recommendation.Item.IsFound || !recommendation.Item.IsItemFound) &&
+                                               recommendation.SimilarityPercent >= 50 &&
                                               (Model.CurrentUserId == item.UserId || Model.CurrentUserId == recommendation.Item.UserId) &&
                                               Model.VerificationQuestions.TryGetValue(verificationItemId, out var questions) &&
-                                             questions.Count > 0)
+                                              questions.Count >= 3 &&
+                                              questions.Sum(question => question.Weight) >= 50)
                                          {
-                                              <button type="button" class="btn btn-warning btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#verifyRecommendation-@recommendation.Item.Id">İletişime geç</button>
+                                               <button type="button" class="btn btn-warning btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#verifyRecommendation-@recommendation.Item.Id">İlan sahibi ile iletişime geç</button>
                                          }
                                     </div>
                                 </div>
                             </article>
                         </div>
 
-                         @if (Model.VerificationQuestions.TryGetValue(verificationItemId, out var recommendationQuestions) && recommendationQuestions.Count > 0)
+                         @if (Model.CanStartChat &&
+                              Model.CurrentUserId is not null &&
+                              item.UserId != recommendation.Item.UserId &&
+                              recommendation.Item.IsFound != item.IsFound &&
+                              !recommendation.Item.IsArchived &&
+                              !recommendation.Item.IsDelivered &&
+                              (recommendation.Item.IsFound || !recommendation.Item.IsItemFound) &&
+                              recommendation.SimilarityPercent >= 50 &&
+                              (Model.CurrentUserId == item.UserId || Model.CurrentUserId == recommendation.Item.UserId) &&
+                              Model.VerificationQuestions.TryGetValue(verificationItemId, out var recommendationQuestions) &&
+                              recommendationQuestions.Count >= 3 &&
+                              recommendationQuestions.Sum(question => question.Weight) >= 50)
                          {
                              <div class="modal fade" id="verifyRecommendation-@recommendation.Item.Id" tabindex="-1" aria-hidden="true">
                                  <div class="modal-dialog modal-dialog-centered">
                                      <div class="modal-content rounded-4 border-0 shadow">
                                          <div class="modal-header">
-                                             <h2 class="modal-title h5">Gizli doğrulama</h2>
+                                          <h2 class="modal-title h5">İlan sahibi ile iletişime geçmeden önce doğrulama</h2>
                                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
                                          </div>
                                          <form asp-controller="Home" asp-action="Verify" method="post">
@@ -204,7 +280,7 @@
                                                   <input type="hidden" name="ilanId" value="@verificationItemId" />
                                                  <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
                                                   <input type="hidden" name="successUrl" value="@chatUrl" />
-                                                 <p class="text-muted small">İlan sahibiyle iletişime geçmeden önce gizli soruları cevaplayın.</p>
+                                                  <p class="text-muted small">Önce ilan sahibinin gizli sorusunu ve standart doğrulama sorularını cevaplayın. En az 3 doğru cevap ve 50 puan gerektiğinde sohbet açılır.</p>
                                                  @for (var index = 0; index < recommendationQuestions.Count; index++)
                                                  {
                                                      var question = recommendationQuestions[index];

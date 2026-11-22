@@ -41,6 +41,11 @@ public sealed class VerificationServiceTests
 
         var question = Assert.Single(questions);
         Assert.Equal("Gizli doğrulama detayı", question.Prompt);
+
+        var directCardQuestions = await new LostItemListingService(db, new ItemRepository(db), new LostItemSimilarityService())
+            .GetVerificationQuestionsAsync(item.Id, includeSecretQuestion: false);
+
+        Assert.Empty(directCardQuestions);
     }
 
     [Fact]
