@@ -2,6 +2,7 @@ using ARABULUCU.BLL.DTOs;
 using ARABULUCU.DAL.Data;
 using ARABULUCU.DAL.Repositories;
 using ARABULUCU.ENT.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace ARABULUCU.BLL.Services;
@@ -148,7 +149,7 @@ public sealed class LostItemListingService : ILostItemListingService
             .AsNoTracking()
             .Where(item => item.Id == itemId || item.Id == matchedItemId)
             .Include(item => item.Category)
-            .Include(item => item.Features.Where(feature => !feature.IsHidden))
+            .Include(item => item.Features)
             .ToListAsync();
 
         if (items.Count != 2)
@@ -158,7 +159,108 @@ public sealed class LostItemListingService : ILostItemListingService
 
         var item = items.Single(candidate => candidate.Id == itemId);
         var matchedItem = items.Single(candidate => candidate.Id == matchedItemId);
-        return CanChatBetween(item, matchedItem, userId);
+        if (!CanChatBetween(item, matchedItem, userId))
+        {
+            return false;
+        }
+
+        var foundItem = item.IsFound ? item : matchedItem;
+        var lostItem = item.IsFound ? matchedItem : item;
+        var requiresVerification = foundItem.Features.Any(feature => feature.Key == "SecurityQuestion");
+        var verified = !requiresVerification || await _dbContext.VerifiedItemMatches.AnyAsync(match =>
+            match.FoundItemId == foundItem.Id &&
+            match.LostItemId == lostItem.Id &&
+            match.UserId == lostItem.UserId);
+        return verified && (userId == foundItem.UserId || userId == lostItem.UserId);
+    }
+
+    public async Task<string?> GetMatchVerificationQuestionAsync(string userId, int lostItemId, int foundItemId)
+    {
+        var pair = await _dbContext.LostItems
+            .AsNoTracking()
+            .Where(item => item.Id == lostItemId || item.Id == foundItemId)
+            .Include(item => item.Features)
+            .ToListAsync();
+        if (pair.Count != 2)
+        {
+            return null;
+        }
+
+        var lostItem = pair.Single(item => item.Id == lostItemId);
+        var foundItem = pair.Single(item => item.Id == foundItemId);
+        if (lostItem.IsFound || !foundItem.IsFound || lostItem.UserId != userId || !CanChatBetween(foundItem, lostItem, userId))
+        {
+            return null;
+        }
+
+        return foundItem.Features
+            .SingleOrDefault(feature => feature.Key == "SecurityQuestion")?.Value;
+    }
+
+    public async Task<VerificationResult> VerifyLostItemMatchAsync(string userId, int lostItemId, int foundItemId, string answer)
+    {
+        var question = await GetMatchVerificationQuestionAsync(userId, lostItemId, foundItemId);
+        if (question is null || string.IsNullOrWhiteSpace(answer))
+        {
+            return new VerificationResult(false, "Bu eşleşme için doğrulama sorusu bulunamadı.");
+        }
+
+        var foundItem = await _dbContext.LostItems
+            .Include(item => item.Features)
+            .SingleOrDefaultAsync(item => item.Id == foundItemId && item.IsFound);
+        if (foundItem is null)
+        {
+            return new VerificationResult(false, "Bulunan ilan bulunamadı.");
+        }
+
+        var lostItem = await _dbContext.LostItems
+            .AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Id == lostItemId && !item.IsFound && item.UserId == userId);
+        if (lostItem is null)
+        {
+            return new VerificationResult(false, "Kayıp ilanı doğrulama yetkiniz bulunmuyor.");
+        }
+
+        var answerHash = foundItem.Features
+            .SingleOrDefault(feature => feature.Key == "SecurityAnswerHash")?.Value;
+        var isCorrect = !string.IsNullOrWhiteSpace(answerHash) &&
+            new PasswordHasher<LostItem>().VerifyHashedPassword(foundItem, answerHash, answer.Trim()) != PasswordVerificationResult.Failed;
+
+        var alreadyVerified = await _dbContext.VerifiedItemMatches.AnyAsync(match =>
+            match.FoundItemId == foundItemId && match.LostItemId == lostItemId && match.UserId == userId);
+        if (!alreadyVerified)
+        {
+            _dbContext.VerifiedItemMatches.Add(new VerifiedItemMatch
+            {
+                FoundItemId = foundItemId,
+                LostItemId = lostItemId,
+                UserId = userId,
+                VerifiedAt = DateTime.UtcNow
+            });
+        }
+
+        var displayName = await _dbContext.UserProfiles
+            .AsNoTracking()
+            .Where(profile => profile.Id == userId)
+            .Select(profile => profile.DisplayName)
+            .SingleOrDefaultAsync() ?? "Kayıp ilanı sahibi";
+        var orderedPair = foundItemId < lostItemId
+            ? (ItemId: foundItemId, MatchedItemId: lostItemId)
+            : (ItemId: lostItemId, MatchedItemId: foundItemId);
+        _dbContext.ContactMessages.Add(new ContactMessage
+        {
+            LostItemId = orderedPair.ItemId,
+            MatchedLostItemId = orderedPair.MatchedItemId,
+            SenderUserId = userId,
+            FromUserId = displayName,
+            Message = isCorrect
+                ? "Kayıp ilanını veren kişi soruyu doğru cevapladı."
+                : "Kayıp ilanını veren kişi soruyu yanlış cevapladı.",
+            SentAt = DateTime.UtcNow
+        });
+        await _dbContext.SaveChangesAsync();
+
+        return new VerificationResult(isCorrect, CanStartChat: true);
     }
 
     public async Task<IReadOnlyList<ChatMatch>> GetChatMatchesAsync(string userId)
@@ -187,6 +289,127 @@ public sealed class LostItemListingService : ILostItemListingService
             .Where(match => CanChatBetween(match.Item, match.MatchedItem, userId))
             .OrderByDescending(match => match.SimilarityPercent)
             .ThenByDescending(match => match.Item.EventDate)
+            .ToList();
+    }
+
+    public async Task<VerificationResult> VerifyFoundItemAsync(string userId, int foundItemId, string answer)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return new VerificationResult(false, "Doğrulama yapmak için giriş yapmalısınız.");
+        }
+
+        var item = await _dbContext.LostItems
+            .Include(candidate => candidate.Features)
+            .SingleOrDefaultAsync(candidate => candidate.Id == foundItemId && candidate.IsFound);
+        if (item is null || !IsOpen(item))
+        {
+            return new VerificationResult(false, "Bu bulunan ilan artık doğrulanamıyor.");
+        }
+
+        if (item.UserId == userId)
+        {
+            return new VerificationResult(false, "Kendi ilanınızı doğrulayamazsınız.");
+        }
+
+        var answerHash = item.Features
+            .SingleOrDefault(feature => feature.Key == "SecurityAnswerHash")?.Value;
+        if (string.IsNullOrWhiteSpace(answerHash) || string.IsNullOrWhiteSpace(answer))
+        {
+            return new VerificationResult(false, "Doğrulama cevabı geçersiz.");
+        }
+
+        var submittedAnswer = answer.Trim();
+        var passwordHasher = new PasswordHasher<LostItem>();
+        var isCorrect = passwordHasher.VerifyHashedPassword(item, answerHash, submittedAnswer) != PasswordVerificationResult.Failed;
+        var alreadyVerified = await _dbContext.VerifiedItemMatches
+            .AnyAsync(match => match.FoundItemId == foundItemId && match.UserId == userId);
+        if (!alreadyVerified)
+        {
+            _dbContext.VerifiedItemMatches.Add(new VerifiedItemMatch
+            {
+                FoundItemId = foundItemId,
+                UserId = userId,
+                VerifiedAt = DateTime.UtcNow
+            });
+        }
+
+        var displayName = await _dbContext.UserProfiles
+            .AsNoTracking()
+            .Where(profile => profile.Id == userId)
+            .Select(profile => profile.DisplayName)
+            .SingleOrDefaultAsync();
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            return new VerificationResult(false, "Sohbete katılmak için kullanıcı profili bulunamadı.");
+        }
+
+        _dbContext.ContactMessages.Add(new ContactMessage
+        {
+            LostItemId = foundItemId,
+            SenderUserId = userId,
+            FromUserId = displayName,
+            Message = $"🔐 Doğrulama cevabı: {submittedAnswer} ({(isCorrect ? "doğru" : "yanlış")})",
+            SentAt = DateTime.UtcNow
+        });
+        await _dbContext.SaveChangesAsync();
+
+        return isCorrect
+            ? new VerificationResult(true, CanStartChat: true)
+            : new VerificationResult(false, "Cevabınız kaydedildi. İlan sahibiyle sohbet başlatabilirsiniz.", true);
+    }
+
+    public async Task<bool> CanChatWithVerifiedItemAsync(string userId, int foundItemId, string participantUserId)
+    {
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(participantUserId))
+        {
+            return false;
+        }
+
+        var item = await _dbContext.LostItems
+            .AsNoTracking()
+            .SingleOrDefaultAsync(candidate => candidate.Id == foundItemId && candidate.IsFound);
+        if (item is null || !IsOpen(item))
+        {
+            return false;
+        }
+
+        var verified = await _dbContext.VerifiedItemMatches
+            .AnyAsync(match => match.FoundItemId == foundItemId && match.UserId == participantUserId);
+        return verified && (userId == participantUserId || userId == item.UserId);
+    }
+
+    public async Task<IReadOnlyList<VerifiedChatMatch>> GetVerifiedChatMatchesAsync(string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return [];
+        }
+
+        var matches = await _dbContext.VerifiedItemMatches
+            .AsNoTracking()
+            .Where(match => match.UserId == userId || match.FoundItem.UserId == userId)
+            .Include(match => match.FoundItem)
+                .ThenInclude(item => item.Category)
+            .Include(match => match.FoundItem)
+                .ThenInclude(item => item.Features.Where(feature => !feature.IsHidden))
+            .Where(match => !match.FoundItem.IsDelivered)
+            .OrderByDescending(match => match.VerifiedAt)
+            .ToListAsync();
+
+        var participantIds = matches.Select(match => match.UserId).Distinct().ToArray();
+        var names = await _dbContext.UserProfiles
+            .AsNoTracking()
+            .Where(profile => participantIds.Contains(profile.Id))
+            .ToDictionaryAsync(profile => profile.Id, profile => profile.DisplayName);
+
+        return matches
+            .Select(match => new VerifiedChatMatch
+            {
+                FoundItem = match.FoundItem,
+                ParticipantUserId = match.UserId,
+                ParticipantDisplayName = names.GetValueOrDefault(match.UserId, "Doğrulanan kullanıcı")
+            })
             .ToList();
     }
 

@@ -8,6 +8,7 @@ using ARABULUCU.DAL.Repositories;
 using ARABULUCU.ENT.Entities;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Xunit;
 
 namespace ARABULUCU.Tests;
@@ -372,6 +373,41 @@ public sealed class LostItemListingServiceTests
         Assert.False(await service.CanChatAsync(owner.Id, lost.Id, found.Id));
     }
 
+    [Fact]
+    public async Task VerifyLostItemMatchAsync_WrongAnswerStillOpensChatAndWritesResultMessage()
+    {
+        await using var connection = await CreateDatabaseAsync();
+        await using var db = CreateContext(connection);
+        var (owner, wallet, _) = AddBaseEntities(db);
+        var finder = new UserProfile { Id = "finder", DisplayName = "Finder", Email = "finder@example.com" };
+        db.UserProfiles.Add(finder);
+        var lost = Item(owner, wallet, "Mavi cüzdan", "Deri", "Kütüphane", DateTime.Today);
+        var found = Item(finder, wallet, "Mavi cüzdan", "Deri", "Kütüphane", DateTime.Today);
+        found.IsFound = true;
+        found.IsItemFound = true;
+        found.Features.Add(new LostItemFeature { Key = "SecurityQuestion", Value = "İçindeki kart ne renk?", IsHidden = true });
+        found.Features.Add(new LostItemFeature
+        {
+            Key = "SecurityAnswerHash",
+            Value = new PasswordHasher<LostItem>().HashPassword(found, "mavi"),
+            IsHidden = true
+        });
+        db.LostItems.AddRange(lost, found);
+        await db.SaveChangesAsync();
+        var service = CreateService(db);
+
+        var result = await service.VerifyLostItemMatchAsync(owner.Id, lost.Id, found.Id, "kırmızı");
+
+        Assert.False(result.Succeeded);
+        Assert.True(result.CanStartChat);
+        Assert.True(await service.CanChatAsync(owner.Id, lost.Id, found.Id));
+        Assert.True(await service.CanChatAsync(finder.Id, found.Id, lost.Id));
+        var message = await db.ContactMessages.SingleAsync();
+        Assert.Equal(Math.Min(found.Id, lost.Id), message.LostItemId);
+        Assert.Equal(Math.Max(found.Id, lost.Id), message.MatchedLostItemId);
+        Assert.Equal("Kayıp ilanını veren kişi soruyu yanlış cevapladı.", message.Message);
+    }
+
     [Theory]
     [InlineData(49.99, false)]
     [InlineData(50, true)]
@@ -430,6 +466,49 @@ public sealed class LostItemListingServiceTests
         Assert.All(matches, match => Assert.True(match.Item.IsFound || !match.Item.IsItemFound));
         Assert.All(matches, match => Assert.True(match.MatchedItem.IsFound || !match.MatchedItem.IsItemFound));
         Assert.All(matches, match => Assert.False(match.Item.IsDelivered || match.MatchedItem.IsDelivered));
+    }
+
+    [Fact]
+    public async Task VerifyFoundItemAsync_AllowsUserWithoutListingsAndEnablesDirectChat()
+    {
+        await using var connection = await CreateDatabaseAsync();
+        await using var db = CreateContext(connection);
+        var (owner, wallet, _) = AddBaseEntities(db);
+        var verifier = new UserProfile { Id = "verifier", DisplayName = "Verifier", Email = "verifier@example.com" };
+        db.UserProfiles.Add(verifier);
+        var found = Item(owner, wallet, "Mavi termos", "Termos", "Kütüphane", DateTime.Today);
+        found.IsFound = true;
+        found.IsItemFound = true;
+        found.Features.Add(new LostItemFeature { Key = "SecurityQuestion", Value = "İçindeki etiket ne renk?", IsHidden = true });
+        found.Features.Add(new LostItemFeature
+        {
+            Key = "SecurityAnswerHash",
+            Value = new PasswordHasher<LostItem>().HashPassword(found, "mavi"),
+            IsHidden = true
+        });
+        db.LostItems.Add(found);
+        await db.SaveChangesAsync();
+        var service = CreateService(db);
+
+        var ownerAttempt = await service.VerifyFoundItemAsync(owner.Id, found.Id, "mavi");
+        Assert.False(ownerAttempt.Succeeded);
+        Assert.Empty(await db.VerifiedItemMatches.ToListAsync());
+
+        var wrongAnswer = await service.VerifyFoundItemAsync(verifier.Id, found.Id, "kırmızı");
+        Assert.False(wrongAnswer.Succeeded);
+        Assert.True(wrongAnswer.CanStartChat);
+        Assert.Single(await db.VerifiedItemMatches.ToListAsync());
+        var verificationMessage = await db.ContactMessages.SingleAsync();
+        Assert.Contains("kırmızı", verificationMessage.Message);
+        Assert.Contains("yanlış", verificationMessage.Message);
+
+        var result = await service.VerifyFoundItemAsync(verifier.Id, found.Id, "mavi");
+
+        Assert.True(result.Succeeded);
+        Assert.True(await service.CanChatWithVerifiedItemAsync(verifier.Id, found.Id, verifier.Id));
+        Assert.True(await service.CanChatWithVerifiedItemAsync(owner.Id, found.Id, verifier.Id));
+        Assert.Single(await db.VerifiedItemMatches.ToListAsync());
+        Assert.Equal(2, await db.ContactMessages.CountAsync());
     }
 
     [Fact]

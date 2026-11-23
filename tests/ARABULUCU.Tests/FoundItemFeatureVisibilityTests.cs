@@ -59,6 +59,7 @@ public sealed class FoundItemFeatureVisibilityTests
             ItemDate = new DateTime(2026, 10, 31, 12, 0, 0),
             CampusArea = "yemekhane",
             SecurityQuestion = "Termosun içindeki etiket ne renk?",
+            SecurityAnswer = "mavi",
             ItemStatus = "with_me",
             Brand = "TermosCo",
             Model = "500 ml",
@@ -74,6 +75,55 @@ public sealed class FoundItemFeatureVisibilityTests
         Assert.True(features["Model"].IsHidden);
         Assert.True(features["Color"].IsHidden);
         Assert.True(features["SecurityQuestion"].IsHidden);
+        Assert.True(features["SecurityAnswerHash"].IsHidden);
+    }
+
+    [Fact]
+    public async Task KayipOlustur_SavesWithoutVerificationQuestion()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseSqlite(connection)
+            .Options;
+        await using var dbContext = new ApplicationDbContext(options);
+        await dbContext.Database.EnsureCreatedAsync();
+        dbContext.UserProfiles.Add(new UserProfile
+        {
+            Id = "owner",
+            DisplayName = "Owner",
+            Email = "owner@example.com"
+        });
+        await dbContext.SaveChangesAsync();
+
+        var httpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim(ClaimTypes.NameIdentifier, "owner")],
+                "test"))
+        };
+        var controller = new HomeController(dbContext, new TestWebHostEnvironment(), new TestListingService())
+        {
+            ControllerContext = new ControllerContext { HttpContext = httpContext },
+            TempData = new TempDataDictionary(httpContext, new TestTempDataProvider())
+        };
+
+        var result = await controller.KayipOlustur(new LostItemViewModel
+        {
+            Title = "Siyah çanta",
+            Category = "canta",
+            ItemDate = new DateTime(2026, 10, 31, 12, 0, 0),
+            CampusArea = "kutuphane",
+            Description = "Siyah deri sırt çantası."
+        });
+
+        Assert.IsType<RedirectToActionResult>(result);
+        var features = await dbContext.LostItemFeatures
+            .AsNoTracking()
+            .ToListAsync();
+
+        Assert.DoesNotContain(features, feature => feature.Key == "SecurityQuestion");
+        Assert.DoesNotContain(features, feature => feature.Key == "SecurityAnswerHash");
     }
 
     private sealed class TestListingService : ILostItemListingService
@@ -90,8 +140,23 @@ public sealed class FoundItemFeatureVisibilityTests
         public Task<bool> CanChatAsync(string userId, int itemId, int matchedItemId) =>
             Task.FromResult(false);
 
+        public Task<string?> GetMatchVerificationQuestionAsync(string userId, int lostItemId, int foundItemId) =>
+            Task.FromResult<string?>(null);
+
+        public Task<VerificationResult> VerifyLostItemMatchAsync(string userId, int lostItemId, int foundItemId, string answer) =>
+            Task.FromResult(new VerificationResult(false));
+
         public Task<IReadOnlyList<ChatMatch>> GetChatMatchesAsync(string userId) =>
             Task.FromResult<IReadOnlyList<ChatMatch>>([]);
+
+        public Task<VerificationResult> VerifyFoundItemAsync(string userId, int foundItemId, string answer) =>
+            Task.FromResult(new VerificationResult(false));
+
+        public Task<bool> CanChatWithVerifiedItemAsync(string userId, int foundItemId, string participantUserId) =>
+            Task.FromResult(false);
+
+        public Task<IReadOnlyList<VerifiedChatMatch>> GetVerifiedChatMatchesAsync(string userId) =>
+            Task.FromResult<IReadOnlyList<VerifiedChatMatch>>([]);
     }
 
     private sealed class TestWebHostEnvironment : IWebHostEnvironment

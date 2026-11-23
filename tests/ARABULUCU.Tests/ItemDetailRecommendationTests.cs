@@ -45,7 +45,7 @@ public sealed class ItemDetailRecommendationTests
 
         Assert.Contains(candidateType, html);
         Assert.Matches(@"73[,.]5% benzer", html);
-        Assert.Contains("Eşleşme sohbetini aç", html);
+        Assert.Contains("Doğrulama ile iletişime geç", html);
     }
 
     [Theory]
@@ -63,7 +63,7 @@ public sealed class ItemDetailRecommendationTests
         var html = await RenderDetailViewAsync(viewModel, httpContext);
 
         Assert.Matches(@"73[,.]5% benzer", html);
-        Assert.DoesNotContain("Eşleşme sohbetini aç", html);
+        Assert.DoesNotContain("Doğrulama ile iletişime geç", html);
     }
 
     [Theory]
@@ -85,7 +85,7 @@ public sealed class ItemDetailRecommendationTests
         Assert.True(viewModel.CanStartChat);
         var html = await RenderDetailViewAsync(viewModel, httpContext);
 
-        Assert.DoesNotContain("Eşleşme sohbetini aç", html);
+        Assert.DoesNotContain("Doğrulama ile iletişime geç", html);
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public sealed class ItemDetailRecommendationTests
         Assert.Null(viewModel.CurrentUserId);
         var html = await RenderDetailViewAsync(viewModel, httpContext);
 
-        Assert.DoesNotContain("Eşleşme sohbetini aç", html);
+        Assert.DoesNotContain("Doğrulama ile iletişime geç", html);
     }
 
     [Fact]
@@ -261,8 +261,23 @@ public sealed class ItemDetailRecommendationTests
         public Task<bool> CanChatAsync(string userId, int itemId, int matchedItemId) =>
             Task.FromResult(false);
 
+        public Task<string?> GetMatchVerificationQuestionAsync(string userId, int lostItemId, int foundItemId) =>
+            Task.FromResult<string?>(null);
+
+        public Task<VerificationResult> VerifyLostItemMatchAsync(string userId, int lostItemId, int foundItemId, string answer) =>
+            Task.FromResult(new VerificationResult(false));
+
         public Task<IReadOnlyList<ChatMatch>> GetChatMatchesAsync(string userId) =>
             Task.FromResult<IReadOnlyList<ChatMatch>>([]);
+
+        public Task<VerificationResult> VerifyFoundItemAsync(string userId, int foundItemId, string answer) =>
+            Task.FromResult(new VerificationResult(false));
+
+        public Task<bool> CanChatWithVerifiedItemAsync(string userId, int foundItemId, string participantUserId) =>
+            Task.FromResult(false);
+
+        public Task<IReadOnlyList<VerifiedChatMatch>> GetVerifiedChatMatchesAsync(string userId) =>
+            Task.FromResult<IReadOnlyList<VerifiedChatMatch>>([]);
     }
 
     private sealed class TestWebHostEnvironment : IWebHostEnvironment
