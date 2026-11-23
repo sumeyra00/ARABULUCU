@@ -1,4 +1,6 @@
-﻿@{
+﻿@model ARABULUCU.Web.Controllers.ContactViewModel
+
+@{
     ViewData["Title"] = "İletişim & Destek";
 }
 
@@ -31,6 +33,11 @@
             </div>
 
             <div class="card-body p-4 p-md-5">
+                @if (TempData["ContactSuccessMessage"] is string successMessage)
+                {
+                    <div class="alert alert-success rounded-4" role="alert">@successMessage</div>
+                }
+
                 <div class="row g-4">
                     
                     <!-- Sol Taraf: İletişim Bilgileri Kartları -->
@@ -74,34 +81,40 @@
 
                     <!-- Sağ Taraf: Destek & Mesaj Formu -->
                     <div class="col-lg-7">
-                        <form method="post" action="#">
+                        <form asp-controller="Home" asp-action="Iletisim" method="post">
+                            @Html.AntiForgeryToken()
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-4"></div>
                             <div class="mb-3">
-                                <label class="form-label small fw-semibold text-secondary">Adınız Soyadınız</label>
-                                <input type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="Örn: Fatmanur ..." required />
+                                <label asp-for="Name" class="form-label small fw-semibold text-secondary">Adınız Soyadınız</label>
+                                <input asp-for="Name" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="Örn: Fatmanur ..." />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
                             </div>
 
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label small fw-semibold text-secondary">Öğrenci / Kurumsal E-Posta</label>
-                                    <input type="email" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="ornek@cumhuriyet.edu.tr" required />
+                                    <label asp-for="Email" class="form-label small fw-semibold text-secondary">Öğrenci / Kurumsal E-Posta</label>
+                                    <input asp-for="Email" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="ornek@cumhuriyet.edu.tr" />
+                                    <span asp-validation-for="Email" class="text-danger small"></span>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label small fw-semibold text-secondary">Konu</label>
-                                    <select class="form-select bg-light border rounded-pill px-3 py-2 shadow-none">
+                                    <label asp-for="Subject" class="form-label small fw-semibold text-secondary">Konu</label>
+                                    <select asp-for="Subject" class="form-select bg-light border rounded-pill px-3 py-2 shadow-none">
                                         <option value="Destek">🛠️ Teknik Sorun / Hata Bildirimi</option>
                                         <option value="GeriBildirim">💡 Öneri & Geri Bildirim</option>
                                         <option value="Ihlal">⚠️ Şüpheli İlan / Güvenlik İhlali</option>
                                         <option value="Diger">✨ Diğer</option>
                                     </select>
+                                    <span asp-validation-for="Subject" class="text-danger small"></span>
                                 </div>
                             </div>
 
                             <div class="mb-4">
-                                <label class="form-label small fw-semibold text-secondary">Mesajınız</label>
-                                <textarea rows="5" class="form-control bg-light border rounded-4 p-3 shadow-none" placeholder="Detayları buraya yazabilirsiniz..." required></textarea>
+                                <label asp-for="Message" class="form-label small fw-semibold text-secondary">Mesajınız</label>
+                                <textarea asp-for="Message" rows="5" class="form-control bg-light border rounded-4 p-3 shadow-none" placeholder="Detayları buraya yazabilirsiniz..."></textarea>
+                                <span asp-validation-for="Message" class="text-danger small"></span>
                             </div>
 
-                            <button type="button" class="btn w-100 rounded-pill py-3 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">
+                            <button type="submit" class="btn w-100 rounded-pill py-3 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">
                                 ✨ Mesajı Gönder
                             </button>
                         </form>

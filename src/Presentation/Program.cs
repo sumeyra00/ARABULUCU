@@ -16,8 +16,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDataProtection().SetApplicationName("ARABULUCU");
 
-// Doğrudan Supabase Session Pooler bağlantı dizesi
-var connectionString = "Host=aws-0-eu-west-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.joxwercozcyuoumfueen;Password=Sümeyra123.";
+// Bağlantı dizesi appsettings/user-secrets/environment üzerinden alınır.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection yapılandırılmamış.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -47,6 +49,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // DAL repository kayıtları (IItemRepository kullanılıyor)
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<ILostItemListingService, LostItemListingService>();
+builder.Services.AddScoped<IContactSubmissionService, ContactSubmissionService>();
 builder.Services.AddSingleton<ILostItemSimilarityService, LostItemSimilarityService>();
 
 // SignalR hub kaydı (chat için)

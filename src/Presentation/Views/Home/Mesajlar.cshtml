@@ -11,7 +11,7 @@
             <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
                 <h1 class="h3 fw-bold mb-2">Eşleşmelerim</h1>
                 <p class="text-muted mb-4">Yalnızca açık kayıp ve bulunan ilanlar arasında en az %50 benzerlik bulunan eşleşmelerde sohbet başlatabilirsiniz.</p>
-                @if (Model.AvailableMatches.Count == 0)
+                @if (Model.AvailableMatches.Count == 0 && Model.VerifiedMatches.Count == 0)
                 {
                     <div class="alert alert-light border mb-0">
                         Henüz sohbet edilebilir bir eşleşmeniz yok. İlanlar filtrelenip eşleştiğinde burada görünecek.
@@ -22,13 +22,24 @@
                     <div class="list-group">
                         @foreach (var match in Model.AvailableMatches)
                         {
-                            <a href="@Url.Action("Mesajlar", "Home", new { ilanId = match.Item.Id, eslesenIlanId = match.MatchedItem.Id })"
+                            <a href="@Url.Action("Detay", "Home", new { ilanId = match.Item.IsFound ? match.MatchedItem.Id : match.Item.Id, sourceIlanId = match.Item.IsFound ? match.Item.Id : match.MatchedItem.Id })"
                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 py-3">
                                 <span>
                                     <strong>@match.Item.Title ↔ @match.MatchedItem.Title</strong>
                                     <span class="d-block small text-muted">İlanlar %@match.SimilarityPercent benzer</span>
                                 </span>
                                 <span class="badge rounded-pill text-bg-success">Eşleşti · Sohbet et</span>
+                            </a>
+                        }
+                        @foreach (var match in Model.VerifiedMatches)
+                        {
+                            <a href="@Url.Action("Mesajlar", "Home", new { dogrulananIlanId = match.FoundItem.Id, katilimciId = match.ParticipantUserId })"
+                               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 py-3">
+                                <span>
+                                    <strong>@match.FoundItem.Title</strong>
+                                    <span class="d-block small text-muted">Doğrulanan kullanıcı: @match.ParticipantDisplayName</span>
+                                </span>
+                                <span class="badge rounded-pill text-bg-success">Doğrulandı · Sohbet et</span>
                             </a>
                         }
                     </div>
@@ -52,7 +63,9 @@ else
 
     <div class="container position-relative" style="z-index: 2;" id="chatApp"
          data-item-id="@Model.Item.Id"
-         data-matched-item-id="@Model.MatchedItem!.Id"
+         data-matched-item-id="@(Model.IsVerifiedConversation ? 0 : Model.MatchedItem!.Id)"
+         data-conversation-type="@(Model.IsVerifiedConversation ? "verified" : "matched")"
+         data-participant-id="@Model.VerifiedParticipantUserId"
          data-user-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value">
 
         <!-- Üst Geri Dön Butonu -->
@@ -76,14 +89,16 @@ else
                     </div>
 
                     <div class="list-group list-group-flush">
-                        <a href="@Url.Action("Mesajlar", "Home", new { ilanId = Model.Item.Id, eslesenIlanId = Model.MatchedItem!.Id })" class="list-group-item list-group-item-action p-3 border-bottom border-0 border-start border-4" style="background-color: #FFF0F4; border-left-color: #FF6082 !important;" aria-current="page">
+                        <a href="@(Model.IsVerifiedConversation
+                            ? Url.Action("Mesajlar", "Home", new { dogrulananIlanId = Model.Item.Id, katilimciId = Model.VerifiedParticipantUserId })
+                            : Url.Action("Mesajlar", "Home", new { ilanId = Model.Item.Id, eslesenIlanId = Model.MatchedItem!.Id }))" class="list-group-item list-group-item-action p-3 border-bottom border-0 border-start border-4" style="background-color: #FFF0F4; border-left-color: #FF6082 !important;" aria-current="page">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0" style="width: 44px; height: 44px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
                                     #@Model.Item.Id
                                 </div>
                                 <div class="flex-grow-1 overflow-hidden">
                                     <div class="d-flex align-items-center justify-content-between mb-1">
-                                        <span class="fw-bold text-dark">@Model.Item.Title ↔ @Model.MatchedItem!.Title</span>
+                                         <span class="fw-bold text-dark">@(Model.IsVerifiedConversation ? Model.Item.Title : $"{Model.Item.Title} ↔ {Model.MatchedItem!.Title}")</span>
                                         <small id="chatStatus" class="badge rounded-pill bg-white text-muted border px-2 py-1" style="font-size: 0.7rem;">Bağlanıyor...</small>
                                     </div>
                                     <div class="small fw-semibold text-secondary text-truncate">Eşleşme sohbeti</div>
@@ -104,7 +119,7 @@ else
                                 💬
                             </div>
                             <div>
-                                <div class="fw-bold text-dark">@Model.Item.Title ↔ @Model.MatchedItem!.Title</div>
+                                <div class="fw-bold text-dark">@(Model.IsVerifiedConversation ? Model.Item.Title : $"{Model.Item.Title} ↔ {Model.MatchedItem!.Title}")</div>
                                 <small class="text-success fw-semibold" style="font-size: 0.75rem;">● SignalR Canlı Bağlantı</small>
                             </div>
                         </div>
@@ -204,6 +219,8 @@ else
     const sendButton = document.getElementById('sendButton');
     const conversationId = Number(chatApp.dataset.itemId);
     const matchedConversationId = Number(chatApp.dataset.matchedItemId);
+    const conversationType = chatApp.dataset.conversationType;
+    const participantId = chatApp.dataset.participantId || chatApp.dataset.userId;
 
     function appendMessage(message) {
         const ownMessage = message.senderUserId === chatApp.dataset.userId;
@@ -211,6 +228,7 @@ else
         wrapper.className = `d-flex flex-column ${ownMessage ? 'align-items-end' : 'align-items-start'} mb-3`;
 
         const bubble = document.createElement('div');
+        const isVerificationMessage = message.message.startsWith('🔐 Doğrulama cevabı:');
         if (ownMessage) {
             bubble.className = 'p-3 rounded-4 shadow-sm text-white small';
             bubble.style.background = 'linear-gradient(135deg, #FF6082 0%, #FF416C 100%)';
@@ -219,7 +237,13 @@ else
         }
         bubble.style.maxWidth = '75%';
         bubble.style.wordBreak = 'break-word';
-        bubble.textContent = `${message.sender}: ${message.message}`;
+        bubble.textContent = isVerificationMessage
+            ? `🔐 Doğrulama cevabı\n${message.message.replace('🔐 Doğrulama cevabı: ', '')}`
+            : `${message.sender}: ${message.message}`;
+        if (isVerificationMessage) {
+            bubble.style.whiteSpace = 'pre-line';
+            bubble.title = 'İletişim başlamadan gönderilen doğrulama cevabı';
+        }
 
         const timestamp = document.createElement('span');
         timestamp.className = 'text-muted mt-1 px-2';
@@ -258,7 +282,9 @@ else
     });
 
     async function joinConversation() {
-        const history = await connection.invoke('JoinConversation', conversationId, matchedConversationId);
+        const history = conversationType === 'verified'
+            ? await connection.invoke('JoinVerifiedConversation', conversationId, participantId)
+            : await connection.invoke('JoinConversation', conversationId, matchedConversationId);
         chatMessages.replaceChildren();
         history.forEach(appendMessage);
         chatStatus.textContent = 'Bağlandı';

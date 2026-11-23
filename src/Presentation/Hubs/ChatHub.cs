@@ -41,12 +41,13 @@ public sealed class ChatHub : Hub
         if (Context.Items.TryGetValue(ConversationKey, out var current) &&
             current is Conversation previous)
         {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GetGroupName(previous.ItemId, previous.MatchedItemId));
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GetGroupName(previous));
         }
 
         var pair = OrderPair(itemId, matchedItemId);
-        await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupName(pair.ItemId, pair.MatchedItemId));
-        Context.Items[ConversationKey] = new Conversation(pair.ItemId, pair.MatchedItemId, userId);
+        var conversation = new Conversation(pair.ItemId, pair.MatchedItemId, userId, false, userId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupName(conversation));
+        Context.Items[ConversationKey] = conversation;
 
         return await _dbContext.ContactMessages
             .AsNoTracking()
@@ -56,6 +57,42 @@ public sealed class ChatHub : Hub
             .OrderByDescending(message => message.SentAt)
             .ThenByDescending(message => message.Id)
             .Take(100)
+            .OrderBy(message => message.SentAt)
+            .ThenBy(message => message.Id)
+            .Select(message => new ChatMessageDto(
+                message.Id,
+                message.SenderUserId ?? string.Empty,
+                message.FromUserId,
+                message.Message,
+                message.SentAt))
+            .ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<ChatMessageDto>> JoinVerifiedConversation(int foundItemId, string participantUserId)
+    {
+        var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null ||
+            !await _listingService.CanChatWithVerifiedItemAsync(userId, foundItemId, participantUserId))
+        {
+            throw new HubException("Bu doğrulanmış sohbet için yetkiniz bulunmuyor.");
+        }
+
+        if (Context.Items.TryGetValue(ConversationKey, out var current) &&
+            current is Conversation previous)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GetGroupName(previous));
+        }
+
+        var conversation = new Conversation(foundItemId, null, userId, true, participantUserId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupName(conversation));
+        Context.Items[ConversationKey] = conversation;
+
+        return await _dbContext.ContactMessages
+            .AsNoTracking()
+            .Where(message =>
+                message.LostItemId == foundItemId &&
+                message.MatchedLostItemId == null &&
+                (message.SenderUserId == participantUserId || message.SenderUserId == userId))
             .OrderBy(message => message.SentAt)
             .ThenBy(message => message.Id)
             .Select(message => new ChatMessageDto(
@@ -77,8 +114,9 @@ public sealed class ChatHub : Hub
 
         var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId is null ||
-            userId != conversation.UserId ||
-            !await _listingService.CanChatAsync(userId, conversation.ItemId, conversation.MatchedItemId))
+            (conversation.IsVerified
+                ? !await _listingService.CanChatWithVerifiedItemAsync(userId, conversation.ItemId, conversation.ParticipantUserId)
+                : !await _listingService.CanChatAsync(userId, conversation.ItemId, conversation.MatchedItemId!.Value)))
         {
             throw new HubException("Bu eşleşme için sohbet yetkiniz bulunmuyor.");
         }
@@ -102,7 +140,7 @@ public sealed class ChatHub : Hub
         var chatMessage = new ContactMessage
         {
             LostItemId = conversation.ItemId,
-            MatchedLostItemId = conversation.MatchedItemId,
+            MatchedLostItemId = conversation.IsVerified ? null : conversation.MatchedItemId,
             SenderUserId = userId,
             FromUserId = displayName,
             Message = content,
@@ -112,18 +150,25 @@ public sealed class ChatHub : Hub
         _dbContext.ContactMessages.Add(chatMessage);
         await _dbContext.SaveChangesAsync();
 
-        await Clients.Group(GetGroupName(conversation.ItemId, conversation.MatchedItemId)).SendAsync(
+        await Clients.Group(GetGroupName(conversation)).SendAsync(
             "ReceiveMessage",
             new ChatMessageDto(chatMessage.Id, userId, chatMessage.FromUserId, chatMessage.Message, chatMessage.SentAt));
     }
 
-    private static string GetGroupName(int itemId, int matchedItemId) =>
-        $"items-{itemId}-{matchedItemId}";
+    private static string GetGroupName(Conversation conversation) =>
+        conversation.IsVerified
+            ? $"verified-item-{conversation.ItemId}-{conversation.ParticipantUserId}"
+            : $"items-{conversation.ItemId}-{conversation.MatchedItemId}";
 
     private static (int ItemId, int MatchedItemId) OrderPair(int itemId, int matchedItemId) =>
         itemId < matchedItemId ? (itemId, matchedItemId) : (matchedItemId, itemId);
 
-    private sealed record Conversation(int ItemId, int MatchedItemId, string UserId);
+    private sealed record Conversation(
+        int ItemId,
+        int? MatchedItemId,
+        string UserId,
+        bool IsVerified,
+        string ParticipantUserId);
 }
 
 public sealed record ChatMessageDto(int Id, string SenderUserId, string Sender, string Message, DateTime SentAt);

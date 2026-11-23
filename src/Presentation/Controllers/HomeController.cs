@@ -4,8 +4,8 @@ using ARABULUCU.BLL.DTOs;
 using ARABULUCU.BLL.Services;
 using ARABULUCU.DAL.Data;
 using ARABULUCU.ENT.Entities;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,15 +47,18 @@ public class HomeController : Controller
     private readonly ApplicationDbContext _dbContext;
     private readonly IWebHostEnvironment _environment;
     private readonly ILostItemListingService _listingService;
+    private readonly IContactSubmissionService _contactSubmissionService;
 
     public HomeController(
         ApplicationDbContext dbContext,
         IWebHostEnvironment environment,
-        ILostItemListingService listingService)
+        ILostItemListingService listingService,
+        IContactSubmissionService? contactSubmissionService = null)
     {
         _dbContext = dbContext;
         _environment = environment;
         _listingService = listingService;
+        _contactSubmissionService = contactSubmissionService ?? new ContactSubmissionService(dbContext);
     }
 
     [HttpGet]
@@ -82,12 +85,12 @@ public class HomeController : Controller
 
     [Authorize]
     [HttpGet]
-    public IActionResult KayipOlustur() => View("~/Views/Ilan/KayipOlustur.cshtml", new ItemReportViewModel());
+    public IActionResult KayipOlustur() => View("~/Views/Ilan/KayipOlustur.cshtml", new LostItemViewModel());
 
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public Task<IActionResult> KayipOlustur(ItemReportViewModel report) =>
+    public Task<IActionResult> KayipOlustur(LostItemViewModel report) =>
         SaveItemAsync(report, isFound: false);
 
     [Authorize]
@@ -144,7 +147,7 @@ public class HomeController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Detay(int? ilanId, int? id)
+    public async Task<IActionResult> Detay(int? ilanId, int? id, int? sourceIlanId = null)
     {
         var item = await _listingService.GetByIdAsync(ilanId ?? id ?? 0);
         if (item is null)
@@ -152,12 +155,65 @@ public class HomeController : Controller
             return View("~/Views/Ilan/Detay.cshtml", new ItemDetailViewModel());
         }
 
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        string? verificationQuestion = null;
+        if (item.IsFound && currentUserId is not null && currentUserId != item.UserId)
+        {
+            verificationQuestion = await _dbContext.LostItemFeatures
+                .AsNoTracking()
+                .Where(feature => feature.LostItemId == item.Id && feature.Key == "SecurityQuestion")
+                .Select(feature => feature.Value)
+                .SingleOrDefaultAsync();
+        }
+        else if (!item.IsFound && sourceIlanId.HasValue && currentUserId is not null && currentUserId == item.UserId)
+        {
+            verificationQuestion = await _listingService.GetMatchVerificationQuestionAsync(currentUserId, item.Id, sourceIlanId.Value);
+        }
+
         return View("~/Views/Ilan/Detay.cshtml", new ItemDetailViewModel
         {
             Item = item,
             Recommendations = await _listingService.GetRecommendationsAsync(item),
             CanStartChat = IsOpen(item),
-            CurrentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            CurrentUserId = currentUserId,
+            VerificationQuestion = verificationQuestion,
+            SourceItemId = sourceIlanId,
+            SourceItemIsFound = sourceIlanId.HasValue && await _dbContext.LostItems
+                .AsNoTracking()
+                .Where(candidate => candidate.Id == sourceIlanId.Value)
+                .Select(candidate => candidate.IsFound)
+                .SingleOrDefaultAsync()
+        });
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DogrulaEslesme(VerifyMatchViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["VerificationError"] = "Lütfen doğrulama cevabını yazın.";
+            return RedirectToAction(nameof(Detay), new { ilanId = model.LostItemId, sourceIlanId = model.FoundItemId });
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
+        {
+            return Challenge();
+        }
+
+        var result = await _listingService.VerifyLostItemMatchAsync(userId, model.LostItemId, model.FoundItemId, model.Answer);
+        if (!result.CanStartChat)
+        {
+            TempData["VerificationError"] = result.ErrorMessage ?? "Doğrulama işlemi tamamlanamadı.";
+            return RedirectToAction(nameof(Detay), new { ilanId = model.LostItemId, sourceIlanId = model.FoundItemId });
+        }
+
+        return RedirectToAction(nameof(Mesajlar), new
+        {
+            ilanId = model.FoundItemId,
+            eslesenIlanId = model.LostItemId
         });
     }
 
@@ -165,13 +221,73 @@ public class HomeController : Controller
         !item.IsDelivered && (item.IsFound || !item.IsItemFound);
 
     [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Dogrula(VerifyItemViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["VerificationError"] = "Lütfen doğrulama cevabını yazın.";
+            return RedirectToAction(nameof(Detay), new { ilanId = model.FoundItemId });
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
+        {
+            return Challenge();
+        }
+
+        var result = await _listingService.VerifyFoundItemAsync(userId, model.FoundItemId, model.Answer);
+        if (!result.CanStartChat)
+        {
+            TempData["VerificationError"] = result.ErrorMessage ?? "Doğrulama işlemi tamamlanamadı.";
+            return RedirectToAction(nameof(Detay), new { ilanId = model.FoundItemId });
+        }
+
+        TempData["SuccessMessage"] = result.Succeeded
+            ? "Eşya doğrulandı. İlan sahibiyle iletişime geçebilirsiniz."
+            : "Cevabınız sohbete kaydedildi. İlan sahibiyle iletişime geçebilirsiniz.";
+        return RedirectToAction(nameof(Mesajlar), new
+        {
+            dogrulananIlanId = model.FoundItemId,
+            katilimciId = userId
+        });
+    }
+
+    [Authorize]
     [HttpGet]
-    public async Task<IActionResult> Mesajlar(int? ilanId, int? eslesenIlanId)
+    public async Task<IActionResult> Mesajlar(
+        int? ilanId,
+        int? eslesenIlanId,
+        int? dogrulananIlanId,
+        string? katilimciId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId is null)
         {
             return Challenge();
+        }
+
+        if (dogrulananIlanId.HasValue)
+        {
+            var participantUserId = katilimciId ?? userId;
+            if (!await _listingService.CanChatWithVerifiedItemAsync(userId, dogrulananIlanId.Value, participantUserId))
+            {
+                return NotFound();
+            }
+
+            var verifiedItem = await _listingService.GetByIdAsync(dogrulananIlanId.Value);
+            if (verifiedItem is null)
+            {
+                return NotFound();
+            }
+
+            return View("~/Views/Home/Mesajlar.cshtml", new MessagesViewModel
+            {
+                Item = verifiedItem,
+                IsVerifiedConversation = true,
+                VerifiedParticipantUserId = participantUserId
+            });
         }
 
         if (ilanId.HasValue || eslesenIlanId.HasValue)
@@ -199,7 +315,8 @@ public class HomeController : Controller
 
         return View("~/Views/Home/Mesajlar.cshtml", new MessagesViewModel
         {
-            AvailableMatches = await _listingService.GetChatMatchesAsync(userId)
+            AvailableMatches = await _listingService.GetChatMatchesAsync(userId),
+            VerifiedMatches = await _listingService.GetVerifiedChatMatchesAsync(userId)
         });
     }
 
@@ -207,11 +324,34 @@ public class HomeController : Controller
 
     public IActionResult Hakkimizda() => View("~/Views/Home/Hakkimizda.cshtml");
 
-    public IActionResult Iletisim() => View("~/Views/Home/Iletisim.cshtml");
+    [HttpGet]
+    public IActionResult Iletisim() => View("~/Views/Home/Iletisim.cshtml", new ContactViewModel());
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Iletisim(ContactViewModel model, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("~/Views/Home/Iletisim.cshtml", model);
+        }
+
+        await _contactSubmissionService.CreateAsync(
+            new ContactSubmissionRequest(
+                model.Name,
+                model.Email,
+                model.Subject,
+                model.Message,
+                User.FindFirstValue(ClaimTypes.NameIdentifier)),
+            cancellationToken);
+
+        TempData["ContactSuccessMessage"] = "Mesajınız başarıyla gönderildi. En kısa sürede size dönüş yapacağız.";
+        return RedirectToAction(nameof(Iletisim));
+    }
 
     public IActionResult Privacy() => View();
 
-    private async Task<IActionResult> SaveItemAsync(ItemReportViewModel model, bool isFound)
+    private async Task<IActionResult> SaveItemAsync(ItemReportBaseViewModel model, bool isFound)
     {
         if (!CategoryNames.ContainsKey(model.Category ?? string.Empty))
         {
@@ -223,19 +363,14 @@ public class HomeController : Controller
             ModelState.AddModelError(nameof(model.CampusArea), "Lütfen geçerli bir kampüs bölgesi seçin.");
         }
 
-        if (string.IsNullOrWhiteSpace(model.SecurityQuestion))
+        if (isFound && model is ItemReportViewModel foundReport && string.IsNullOrWhiteSpace(foundReport.SecurityQuestion))
         {
-            ModelState.AddModelError(nameof(model.SecurityQuestion), "Doğrulama sorusu zorunludur.");
+            ModelState.AddModelError(nameof(ItemReportViewModel.SecurityQuestion), "Doğrulama sorusu zorunludur.");
         }
 
         if (!isFound && string.IsNullOrWhiteSpace(model.Description))
         {
             ModelState.AddModelError(nameof(model.Description), "Eşyanın açıklaması zorunludur.");
-        }
-
-        if (!isFound && string.IsNullOrWhiteSpace(model.SecurityAnswer))
-        {
-            ModelState.AddModelError(nameof(model.SecurityAnswer), "Doğrulama cevabı zorunludur.");
         }
 
         if (isFound && model.ItemStatus is not ("with_me" or "delivered"))
@@ -322,32 +457,32 @@ public class HomeController : Controller
 
             await _dbContext.SaveChangesAsync();
 
-            var features = new List<LostItemFeature>
+            var features = new List<LostItemFeature>();
+
+            if (isFound && model is ItemReportViewModel foundModel)
             {
-                new()
+                features.Add(new LostItemFeature
                 {
                     LostItemId = lostItem.Id,
                     Key = "SecurityQuestion",
-                    Value = model.SecurityQuestion!.Trim(),
+                    Value = foundModel.SecurityQuestion.Trim(),
                     IsHidden = true
-                }
-            };
+                });
+
+                features.Add(new LostItemFeature
+                {
+                    LostItemId = lostItem.Id,
+                    Key = "SecurityAnswerHash",
+                    Value = new PasswordHasher<LostItem>().HashPassword(lostItem, foundModel.SecurityAnswer.Trim()),
+                    IsHidden = true
+                });
+            }
 
             AddFeature(features, lostItem.Id, "Brand", model.Brand, isFound);
             AddFeature(features, lostItem.Id, "Model", model.Model, isFound);
             AddFeature(features, lostItem.Id, "Color", model.Color, isFound);
 
-            if (!isFound)
-            {
-                features.Add(new LostItemFeature
-                {
-                    LostItemId = lostItem.Id,
-                    Key = "SecurityAnswerHash",
-                    Value = new PasswordHasher<LostItem>().HashPassword(lostItem, model.SecurityAnswer!.Trim()),
-                    IsHidden = true
-                });
-            }
-            else
+            if (isFound)
             {
                 features.Add(new LostItemFeature
                 {
@@ -416,7 +551,7 @@ public class HomeController : Controller
     }
 }
 
-public class ItemReportViewModel
+public abstract class ItemReportBaseViewModel
 {
     [Required(ErrorMessage = "Eşya başlığı zorunludur.")]
     [StringLength(150)]
@@ -446,12 +581,6 @@ public class ItemReportViewModel
     [StringLength(100)]
     public string? Color { get; set; }
 
-    [StringLength(300)]
-    public string? SecurityQuestion { get; set; }
-
-    [StringLength(300)]
-    public string? SecurityAnswer { get; set; }
-
     public string? ItemStatus { get; set; } = "with_me";
 
     [StringLength(300)]
@@ -459,6 +588,41 @@ public class ItemReportViewModel
 
     [FromForm(Name = "itemPhoto")]
     public IFormFile? Photo { get; set; }
+}
+
+public sealed class LostItemViewModel : ItemReportBaseViewModel
+{
+}
+
+public sealed class ItemReportViewModel : ItemReportBaseViewModel
+{
+    [Required(ErrorMessage = "Doğrulama sorusu zorunludur.")]
+    [StringLength(300)]
+    public string SecurityQuestion { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Doğrulama cevabı zorunludur.")]
+    [StringLength(300)]
+    public string SecurityAnswer { get; set; } = string.Empty;
+}
+
+public sealed class ContactViewModel
+{
+    [Required(ErrorMessage = "Ad soyad zorunludur.")]
+    [StringLength(100)]
+    public string Name { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "E-posta adresi zorunludur.")]
+    [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi girin.")]
+    [StringLength(200)]
+    public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Konu seçin.")]
+    [StringLength(100)]
+    public string Subject { get; set; } = "Destek";
+
+    [Required(ErrorMessage = "Mesajınızı yazın.")]
+    [StringLength(2000, MinimumLength = 10, ErrorMessage = "Mesajınız 10-2000 karakter arasında olmalıdır.")]
+    public string Message { get; set; } = string.Empty;
 }
 
 public class ProfileViewModel
@@ -493,6 +657,32 @@ public class ItemDetailViewModel
     public IReadOnlyList<RecommendedItem> Recommendations { get; set; } = [];
     public bool CanStartChat { get; set; }
     public string? CurrentUserId { get; set; }
+    public string? VerificationQuestion { get; set; }
+    public int? SourceItemId { get; set; }
+    public bool SourceItemIsFound { get; set; }
+}
+
+public sealed class VerifyItemViewModel
+{
+    [Range(1, int.MaxValue)]
+    public int FoundItemId { get; set; }
+
+    [Required(ErrorMessage = "Doğrulama cevabı zorunludur.")]
+    [StringLength(300)]
+    public string Answer { get; set; } = string.Empty;
+}
+
+public sealed class VerifyMatchViewModel
+{
+    [Range(1, int.MaxValue)]
+    public int LostItemId { get; set; }
+
+    [Range(1, int.MaxValue)]
+    public int FoundItemId { get; set; }
+
+    [Required(ErrorMessage = "Doğrulama cevabı zorunludur.")]
+    [StringLength(300)]
+    public string Answer { get; set; } = string.Empty;
 }
 
 public class MessagesViewModel
@@ -500,4 +690,7 @@ public class MessagesViewModel
     public LostItem? Item { get; set; }
     public LostItem? MatchedItem { get; set; }
     public IReadOnlyList<ChatMatch> AvailableMatches { get; set; } = [];
+    public IReadOnlyList<VerifiedChatMatch> VerifiedMatches { get; set; } = [];
+    public bool IsVerifiedConversation { get; set; }
+    public string? VerifiedParticipantUserId { get; set; }
 }

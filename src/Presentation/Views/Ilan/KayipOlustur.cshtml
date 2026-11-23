@@ -1,4 +1,4 @@
-@model ARABULUCU.Web.Controllers.ItemReportViewModel
+@model ARABULUCU.Web.Controllers.LostItemViewModel
 
 @{
     ViewData["Title"] = "Kayıp İlanı Oluştur";
@@ -73,7 +73,7 @@
                         </div>
                     </div>
 
-                    <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">Açıklama ve Doğrulama</h6>
+                    <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">Açıklama</h6>
                     <div class="mb-3">
                         <label asp-for="Description" class="form-label fw-semibold">Eşyanın Belirgin Özellikleri</label>
                         <textarea asp-for="Description" class="form-control" rows="3" placeholder="Rengi, markası, üzerindeki ayırt edici özellikler..."></textarea>
@@ -94,18 +94,6 @@
                             <label asp-for="Color" class="form-label fw-semibold">Renk (isteğe bağlı)</label>
                             <input asp-for="Color" class="form-control" />
                             <span asp-validation-for="Color" class="text-danger small"></span>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="SecurityQuestion" class="form-label fw-semibold">Doğrulama Sorusu</label>
-                            <input asp-for="SecurityQuestion" class="form-control" placeholder="Örn: Anahtarlıktaki figür ne?" />
-                            <span asp-validation-for="SecurityQuestion" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="SecurityAnswer" class="form-label fw-semibold">Doğru Cevap (Gizli)</label>
-                            <input asp-for="SecurityAnswer" class="form-control" />
-                            <span asp-validation-for="SecurityAnswer" class="text-danger small"></span>
                         </div>
                     </div>
                     <div class="mb-4">

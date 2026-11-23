@@ -16,6 +16,8 @@ namespace ARABULUCU.DAL.Data
         public DbSet<Category> Categories { get; set; } = null!;
         public DbSet<LostItemFeature> LostItemFeatures { get; set; } = null!;
         public DbSet<ContactMessage> ContactMessages { get; set; } = null!;
+        public DbSet<ContactSubmission> ContactSubmissions { get; set; } = null!;
+        public DbSet<VerifiedItemMatch> VerifiedItemMatches { get; set; } = null!;
         public DbSet<UserProfile> UserProfiles { get; set; } = null!;
         public DbSet<Notification> Notifications { get; set; } = null!;
 
@@ -44,6 +46,22 @@ namespace ARABULUCU.DAL.Data
                 .WithOne()
                 .HasForeignKey(feature => feature.LostItemId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<VerifiedItemMatch>()
+                .HasOne(match => match.FoundItem)
+                .WithMany()
+                .HasForeignKey(match => match.FoundItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<VerifiedItemMatch>()
+                .HasOne(match => match.LostItem)
+                .WithMany()
+                .HasForeignKey(match => match.LostItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<VerifiedItemMatch>()
+                .HasIndex(match => new { match.FoundItemId, match.LostItemId, match.UserId })
+                .IsUnique();
 
             modelBuilder.Entity<Notification>()
                 .HasOne(notification => notification.User)

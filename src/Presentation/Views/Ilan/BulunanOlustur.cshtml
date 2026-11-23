@@ -98,6 +98,12 @@
                         <div class="form-text">Gerçek sahibini ayırt etmek için cevabı yalnızca sahibinin bilebileceği bir soru sorun.</div>
                     </div>
                     <div class="mb-3">
+                        <label asp-for="SecurityAnswer" class="form-label fw-semibold">Doğru Cevap (Gizli)</label>
+                        <input asp-for="SecurityAnswer" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="SecurityAnswer" class="text-danger small"></span>
+                        <div class="form-text">Bu cevap yalnızca sahiplik doğrulaması sırasında kullanılır.</div>
+                    </div>
+                    <div class="mb-3">
                         <label asp-for="Description" class="form-label fw-semibold">Genel Açıklama</label>
                         <textarea asp-for="Description" class="form-control" rows="3" placeholder="Doğrulama sorusunun cevabını ele vermeyen genel bilgiler..."></textarea>
                         <span asp-validation-for="Description" class="text-danger small"></span>

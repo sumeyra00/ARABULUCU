@@ -94,6 +94,41 @@ namespace ARABULUCU.DAL.Data.Migrations
                     b.ToTable("ContactMessages");
                 });
 
+            modelBuilder.Entity("ARABULUCU.ENT.Entities.ContactSubmission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ContactSubmissions");
+                });
+
             modelBuilder.Entity("ARABULUCU.ENT.Entities.LostItem", b =>
                 {
                     b.Property<int>("Id")
@@ -227,6 +262,37 @@ namespace ARABULUCU.DAL.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("UserProfiles");
+                });
+
+            modelBuilder.Entity("ARABULUCU.ENT.Entities.VerifiedItemMatch", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FoundItemId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("LostItemId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LostItemId");
+
+                    b.HasIndex("FoundItemId", "LostItemId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("VerifiedItemMatches");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -468,6 +534,24 @@ namespace ARABULUCU.DAL.Data.Migrations
                     b.Navigation("LostItem");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ARABULUCU.ENT.Entities.VerifiedItemMatch", b =>
+                {
+                    b.HasOne("ARABULUCU.ENT.Entities.LostItem", "FoundItem")
+                        .WithMany()
+                        .HasForeignKey("FoundItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ARABULUCU.ENT.Entities.LostItem", "LostItem")
+                        .WithMany()
+                        .HasForeignKey("LostItemId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("FoundItem");
+
+                    b.Navigation("LostItem");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
