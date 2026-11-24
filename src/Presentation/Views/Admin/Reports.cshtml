@@ -1,0 +1,32 @@
+@model IReadOnlyList<ARABULUCU.Web.Controllers.ModerationReportViewModel>
+@{
+	ViewData["Title"] = "İlan Moderasyon Kuyruğu";
+}
+<div class="container py-5" style="max-width: 1050px;">
+	<h1 class="h3 fw-bold mb-4">İlan Moderasyon Kuyruğu</h1>
+	@if (Model.Count == 0)
+	{
+		<div class="alert alert-success">Bekleyen şikâyet bulunmuyor.</div>
+	}
+	else
+	{
+		foreach (var report in Model)
+		{
+			<article class="card border-0 shadow-sm rounded-4 mb-3">
+				<div class="card-body">
+					<h2 class="h5">@report.Title <span class="text-muted">(#@report.LostItemId)</span></h2>
+					<p class="mb-1"><strong>Neden:</strong> @report.Reason</p>
+					<p class="text-secondary">@report.Details</p>
+					<small class="text-muted">@report.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+					<form asp-action="ReviewReport" method="post" class="d-flex gap-2 mt-3">
+						@Html.AntiForgeryToken()
+						<input type="hidden" name="id" value="@report.Id" />
+						<input name="note" class="form-control" placeholder="İnceleme notu" />
+						<button name="decision" value="Reject" class="btn btn-outline-secondary">Reddet</button>
+						<button name="decision" value="Remove" class="btn btn-danger">İlanı kaldır</button>
+					</form>
+				</div>
+			</article>
+		}
+	}
+</div>
