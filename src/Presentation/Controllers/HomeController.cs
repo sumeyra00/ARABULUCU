@@ -300,8 +300,8 @@ public class HomeController : Controller
 
         return RedirectToAction(nameof(Mesajlar), new
         {
-            ilanId = model.FoundItemId,
-            eslesenIlanId = model.LostItemId
+            ilanId = model.LostItemId,
+            eslesenIlanId = model.FoundItemId
         });
     }
 
@@ -380,16 +380,31 @@ public class HomeController : Controller
 
         if (ilanId.HasValue || eslesenIlanId.HasValue)
         {
-            if (!ilanId.HasValue ||
-                !eslesenIlanId.HasValue ||
-                !await _listingService.CanChatAsync(userId, ilanId.Value, eslesenIlanId.Value))
+            if (!ilanId.HasValue || !eslesenIlanId.HasValue)
             {
                 return NotFound();
             }
 
             var item = await _listingService.GetByIdAsync(ilanId.Value);
             var matchedItem = await _listingService.GetByIdAsync(eslesenIlanId.Value);
-            if (item is null || matchedItem is null)
+            if (item is null || matchedItem is null ||
+                (item.UserId != userId && matchedItem.UserId != userId))
+            {
+                return NotFound();
+            }
+
+            var lostItem = item.IsFound ? matchedItem : item;
+            var foundItem = item.IsFound ? item : matchedItem;
+            if (lostItem.IsFound || !foundItem.IsFound)
+            {
+                return NotFound();
+            }
+
+            var hasSecurityQuestion = foundItem.Features.Any(feature => feature.Key == "SecurityQuestion");
+            var isVerified = !hasSecurityQuestion || await _listingService.IsMatchVerifiedAsync(
+                lostItem.Id, foundItem.Id, lostItem.UserId);
+            if (!isVerified && hasSecurityQuestion &&
+                userId != lostItem.UserId && userId != foundItem.UserId)
             {
                 return NotFound();
             }
@@ -397,7 +412,13 @@ public class HomeController : Controller
             return View("~/Views/Home/Mesajlar.cshtml", new MessagesViewModel
             {
                 Item = item,
-                MatchedItem = matchedItem
+                MatchedItem = matchedItem,
+                IsMatchVerified = isVerified,
+                LostItemId = lostItem.Id,
+                FoundItemId = foundItem.Id,
+                VerificationQuestion = !isVerified && userId == lostItem.UserId
+                    ? await _listingService.GetMatchVerificationQuestionAsync(userId, lostItem.Id, foundItem.Id)
+                    : null
             });
         }
 
@@ -784,6 +805,10 @@ public class MessagesViewModel
     public IReadOnlyList<VerifiedChatMatch> VerifiedMatches { get; set; } = [];
     public bool IsVerifiedConversation { get; set; }
     public string? VerifiedParticipantUserId { get; set; }
+    public bool IsMatchVerified { get; set; }
+    public int? LostItemId { get; set; }
+    public int? FoundItemId { get; set; }
+    public string? VerificationQuestion { get; set; }
 }
 
 public class EditItemViewModel

@@ -255,13 +255,18 @@ public sealed class ItemDetailRecommendationTests
             Task.FromResult<LostItem?>(id == source.Id ? source : null);
 
         public Task<IReadOnlyList<RecommendedItem>> GetRecommendationsAsync(LostItem item, int limit = 5) =>
-            Task.FromResult<IReadOnlyList<RecommendedItem>>([]);
+            Task.FromResult<IReadOnlyList<RecommendedItem>>([
+                new RecommendedItem { Item = candidate, SimilarityPercent = 73.5m }
+            ]);
 
         public Task<bool> CanChatAsync(string userId, int itemId, int matchedItemId) =>
             Task.FromResult(false);
 
         public Task<string?> GetMatchVerificationQuestionAsync(string userId, int lostItemId, int foundItemId) =>
             Task.FromResult<string?>(null);
+
+        public Task<bool> IsMatchVerifiedAsync(int lostItemId, int foundItemId, string userId) =>
+            Task.FromResult(false);
 
         public Task<VerificationResult> VerifyLostItemMatchAsync(string userId, int lostItemId, int foundItemId, string answer) =>
             Task.FromResult(new VerificationResult(false));

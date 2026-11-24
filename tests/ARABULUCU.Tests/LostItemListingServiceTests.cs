@@ -406,7 +406,7 @@ public sealed class LostItemListingServiceTests
         var message = await db.ContactMessages.SingleAsync();
         Assert.Equal(Math.Min(found.Id, lost.Id), message.LostItemId);
         Assert.Equal(Math.Max(found.Id, lost.Id), message.MatchedLostItemId);
-        Assert.Equal("Kayıp ilanını veren kişi soruyu yanlış cevapladı.", message.Message);
+        Assert.Equal("Soru yanlış cevaplandı.", message.Message);
     }
 
     [Theory]

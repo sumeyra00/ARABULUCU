@@ -189,7 +189,8 @@ public sealed class LostItemListingService : ILostItemListingService
 
         var lostItem = pair.SingleOrDefault(item => !item.IsFound && item.Id == lostItemId);
         var foundItem = pair.SingleOrDefault(item => item.IsFound && item.Id == foundItemId);
-        if (lostItem is null || foundItem is null || lostItem.UserId != userId ||
+        if (lostItem is null || foundItem is null ||
+            (lostItem.UserId != userId && foundItem.UserId != userId) ||
             foundItem.UserId == lostItem.UserId || foundItem.IsDelivered)
         {
             return null;
@@ -200,21 +201,17 @@ public sealed class LostItemListingService : ILostItemListingService
             return null;
         }
 
-        var alreadyVerified = await _dbContext.VerifiedItemMatches.AnyAsync(match =>
-            match.FoundItemId == foundItem.Id &&
-            match.LostItemId == lostItem.Id &&
-            match.UserId == lostItem.UserId);
-
-        if (alreadyVerified)
-        {
-            return null;
-        }
-
         return foundItem.Features
-            .Where(feature => !feature.IsHidden && feature.Key == "SecurityQuestion")
+            .Where(feature => feature.Key == "SecurityQuestion")
             .Select(feature => feature.Value)
             .FirstOrDefault();
     }
+
+    public Task<bool> IsMatchVerifiedAsync(int lostItemId, int foundItemId, string userId) =>
+        _dbContext.VerifiedItemMatches.AnyAsync(match =>
+            match.FoundItemId == foundItemId &&
+            match.LostItemId == lostItemId &&
+            match.UserId == userId);
 
     public async Task<VerificationResult> VerifyLostItemMatchAsync(string userId, int lostItemId, int foundItemId, string answer)
     {
@@ -246,13 +243,18 @@ public sealed class LostItemListingService : ILostItemListingService
                 VerifiedAt = DateTime.UtcNow
             });
 
+            var answerHash = foundItem.Features
+                .SingleOrDefault(feature => feature.Key == "SecurityAnswerHash")?.Value;
+            var isCorrect = !string.IsNullOrWhiteSpace(answerHash) &&
+                new PasswordHasher<LostItem>().VerifyHashedPassword(foundItem, answerHash, answer.Trim()) != PasswordVerificationResult.Failed;
+
             _dbContext.ContactMessages.Add(new ContactMessage
             {
                 LostItemId = lostItemId,
                 MatchedLostItemId = foundItemId,
                 SenderUserId = userId,
                 FromUserId = "Sistem",
-                Message = "Kayıp ilanını veren kişi soruyu yanlış cevapladı.",
+                Message = isCorrect ? "Soru doğru cevaplandı." : "Soru yanlış cevaplandı.",
                 SentAt = DateTime.UtcNow
             });
 

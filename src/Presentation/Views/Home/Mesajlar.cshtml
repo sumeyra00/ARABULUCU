@@ -64,7 +64,8 @@ else
     <div class="container position-relative" style="z-index: 2;" id="chatApp"
          data-item-id="@Model.Item.Id"
          data-matched-item-id="@(Model.IsVerifiedConversation ? 0 : Model.MatchedItem!.Id)"
-         data-conversation-type="@(Model.IsVerifiedConversation ? "verified" : "matched")"
+                     data-conversation-type="@(Model.IsVerifiedConversation ? "verified" : "matched")"
+                     data-match-verified="@Model.IsMatchVerified.ToString().ToLowerInvariant()"
          data-participant-id="@Model.VerifiedParticipantUserId"
          data-user-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value">
 
@@ -138,11 +139,33 @@ else
                     </div>
 
                     <!-- Mesaj Balonları -->
-                    <div id="chatMessages" class="flex-grow-1 p-3 overflow-auto d-flex flex-column" style="background-color: #FCFBFB; min-height: 380px;" aria-live="polite">
+                     <div id="chatVerification" class="p-3 @(Model.IsVerifiedConversation || Model.IsMatchVerified ? "d-none" : "")">
+                         @if (!Model.IsVerifiedConversation && !Model.IsMatchVerified && Model.VerificationQuestion is not null)
+                         {
+                             <div class="alert alert-warning rounded-4 mb-0">
+                                 <strong>Mesajlaşmadan önce soruyu cevaplayın.</strong>
+                                 <p class="mb-3 mt-2">@Model.VerificationQuestion</p>
+                                 <form asp-controller="Home" asp-action="DogrulaEslesme" method="post">
+                                     @Html.AntiForgeryToken()
+                                     <input type="hidden" name="LostItemId" value="@Model.LostItemId" />
+                                     <input type="hidden" name="FoundItemId" value="@Model.FoundItemId" />
+                                     <div class="input-group">
+                                         <input name="Answer" class="form-control" maxlength="300" required placeholder="Cevabınız" />
+                                         <button type="submit" class="btn btn-warning">Cevapla</button>
+                                     </div>
+                                 </form>
+                             </div>
+                         }
+                         else if (!Model.IsVerifiedConversation && !Model.IsMatchVerified)
+                         {
+                             <div class="alert alert-info rounded-4 mb-0">Karşı tarafın soruyu cevaplaması bekleniyor. Cevap sonrasında mesajlaşma açılacaktır.</div>
+                         }
+                     </div>
+                     <div id="chatMessages" class="flex-grow-1 p-3 overflow-auto d-flex flex-column" style="background-color: #FCFBFB; min-height: 380px;" aria-live="polite">
                     </div>
 
                     <!-- Alt Mesaj Gönderme Çubuğu -->
-                    <div class="p-3 border-top bg-white">
+                     <div class="p-3 border-top bg-white @(Model.IsVerifiedConversation || Model.IsMatchVerified ? "" : "d-none")" id="chatComposer">
                         <form id="chatForm" class="d-flex gap-2 align-items-center">
                             <!-- Canlı Konum Paylaş Butonu -->
                             <button type="button" class="btn btn-outline-danger rounded-pill fw-semibold d-flex align-items-center gap-1 text-nowrap px-3 py-2 shadow-none" data-bs-toggle="modal" data-bs-target="#locationModal" style="border-color: #FFD9E2; color: #FF416C;">
@@ -293,6 +316,12 @@ else
     }
 
     async function connect() {
+        if (conversationType === 'matched' && chatApp.dataset.matchVerified !== 'true') {
+            chatStatus.textContent = 'Doğrulama bekleniyor';
+            chatStatus.className = 'badge rounded-pill bg-warning text-dark border px-2 py-1';
+            return;
+        }
+
         try {
             await connection.start();
             await joinConversation();

@@ -143,6 +143,9 @@ public sealed class FoundItemFeatureVisibilityTests
         public Task<string?> GetMatchVerificationQuestionAsync(string userId, int lostItemId, int foundItemId) =>
             Task.FromResult<string?>(null);
 
+        public Task<bool> IsMatchVerifiedAsync(int lostItemId, int foundItemId, string userId) =>
+            Task.FromResult(false);
+
         public Task<VerificationResult> VerifyLostItemMatchAsync(string userId, int lostItemId, int foundItemId, string answer) =>
             Task.FromResult(new VerificationResult(false));
 
