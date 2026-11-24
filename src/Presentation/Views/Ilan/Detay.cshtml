@@ -46,27 +46,47 @@
                     <div class="alert alert-danger rounded-4" role="alert">@verificationError</div>
                 }
 
-                @if (Model.SourceItemIsFound && Model.SourceItemId.HasValue && Model.VerificationQuestion is not null)
+                @if (Model.SourceItemId.HasValue && Model.SourceItemId.Value != item.Id)
                 {
+                    var lostItemId = item.IsFound ? Model.SourceItemId.Value : item.Id;
+                    var foundItemId = item.IsFound ? item.Id : Model.SourceItemId.Value;
+                    var questionText = !string.IsNullOrWhiteSpace(Model.VerificationQuestion)
+                        ? Model.VerificationQuestion
+                        : "Eşyanın gerçek sahibi olduğunuzu doğrulamak için ayırt edici bir bilgi/cevap yazın:";
+
                     <div class="p-4 mt-4 rounded-4 border" style="background-color: #FFF7F9; border-color: #FFD9E2 !important;">
-                        <h2 class="h5 fw-bold">Doğrulama ile iletişime geç ve eşleşme sohbetini başlat</h2>
-                        <p class="mb-3 text-secondary">Bulunan eşya sahibinin sorusunu cevaplayın. Cevabınız doğru veya yanlış olsa da sohbet açılacaktır.</p>
-                        <p class="fw-semibold mb-3">@Model.VerificationQuestion</p>
+                        <h2 class="h5 fw-bold">Doğrulama Sorusu</h2>
+                        <p class="mb-2 text-secondary">İletişime geçmek için aşağıdaki doğrulama sorusunu cevaplayın. Cevabınız doğru veya yanlış olsa da sohbet açılacaktır.</p>
+                        <p class="fw-semibold mb-3 text-dark">@questionText</p>
                         <form asp-controller="Home" asp-action="DogrulaEslesme" method="post">
                             @Html.AntiForgeryToken()
-                            <input type="hidden" name="LostItemId" value="@item.Id" />
-                            <input type="hidden" name="FoundItemId" value="@Model.SourceItemId" />
+                            <input type="hidden" name="LostItemId" value="@lostItemId" />
+                            <input type="hidden" name="FoundItemId" value="@foundItemId" />
                             <div class="input-group">
-                                <input name="Answer" class="form-control" maxlength="300" placeholder="Cevabınızı yazın" required />
-                                <button type="submit" class="btn btn-danger">İletişime Geç</button>
+                                <input name="Answer" class="form-control" maxlength="300" placeholder="Doğrulama cevabınızı yazın..." required />
+                                <button type="submit" class="btn btn-danger px-4">İletişime Geç</button>
                             </div>
                         </form>
                     </div>
                 }
-                else if (Model.SourceItemIsFound && Model.SourceItemId.HasValue && item.UserId == Model.CurrentUserId)
+                else if (item.IsFound && !string.IsNullOrWhiteSpace(Model.CurrentUserId) && item.UserId != Model.CurrentUserId)
                 {
-                    <div class="alert alert-info rounded-4 mt-4" role="status">
-                        Doğrulama sorusu kayıp ilanı sahibine gösterilecek. Cevap verildiğinde eşleşme sohbeti açılacaktır.
+                    var questionText = !string.IsNullOrWhiteSpace(Model.VerificationQuestion)
+                        ? Model.VerificationQuestion
+                        : "Eşyanın gerçek sahibi olduğunuzu doğrulamak için ayırt edici bir bilgi/cevap yazın:";
+
+                    <div class="p-4 mt-4 rounded-4 border" style="background-color: #FFF7F9; border-color: #FFD9E2 !important;">
+                        <h2 class="h5 fw-bold">Doğrulama Sorusu</h2>
+                        <p class="mb-2 text-secondary">İlan sahibiyle iletişime geçmek için doğrulama sorusunu cevaplayın. Cevabınız doğru veya yanlış olsa da sohbet açılacaktır.</p>
+                        <p class="fw-semibold mb-3 text-dark">@questionText</p>
+                        <form asp-controller="Home" asp-action="Dogrula" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="FoundItemId" value="@item.Id" />
+                            <div class="input-group">
+                                <input name="Answer" class="form-control" maxlength="300" placeholder="Doğrulama cevabınızı yazın..." required />
+                                <button type="submit" class="btn btn-danger px-4">İletişime Geç</button>
+                            </div>
+                        </form>
                     </div>
                 }
 
@@ -81,7 +101,6 @@
                         }
                     </dl>
                 }
-
             </div>
         </article>
 
@@ -126,10 +145,10 @@
                                             item.UserId != recommendation.Item.UserId &&
                                             (Model.CurrentUserId == item.UserId || Model.CurrentUserId == recommendation.Item.UserId))
                                         {
-                                         <a asp-controller="Home" asp-action="Detay"
-                                                asp-route-ilanId="@(item.IsFound ? recommendation.Item.Id : item.Id)"
-                                                asp-route-sourceIlanId="@(item.IsFound ? item.Id : recommendation.Item.Id)"
-                                                class="btn btn-danger btn-sm rounded-pill">Doğrulama ile iletişime geç</a>
+                                            <a asp-controller="Home" asp-action="Detay"
+                                               asp-route-ilanId="@(item.IsFound ? recommendation.Item.Id : item.Id)"
+                                               asp-route-sourceIlanId="@(item.IsFound ? item.Id : recommendation.Item.Id)"
+                                               class="btn btn-danger btn-sm rounded-pill">Doğrulama ile iletişime geç</a>
                                         }
                                     </div>
                                 </div>

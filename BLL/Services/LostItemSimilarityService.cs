@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using ARABULUCU.ENT.Entities;
 
@@ -21,18 +22,26 @@ public sealed class LostItemSimilarityService : ILostItemSimilarityService
         var weightedScore = 0d;
         var availableWeight = 0d;
 
+        var firstCategory = NormalizeText(first.Category?.Name);
+        var secondCategory = NormalizeText(second.Category?.Name);
         AddComponent(
-            !string.IsNullOrWhiteSpace(first.Category?.Name) && !string.IsNullOrWhiteSpace(second.Category?.Name),
-            string.Equals(first.Category?.Name, second.Category?.Name, StringComparison.OrdinalIgnoreCase) ? 1 : 0,
+            !string.IsNullOrWhiteSpace(firstCategory) && !string.IsNullOrWhiteSpace(secondCategory),
+            CategorySimilarity(firstCategory, secondCategory),
             CategoryWeight);
 
-        var firstText = GetItemText(first);
-        var secondText = GetItemText(second);
-        AddComponent(!string.IsNullOrWhiteSpace(firstText) && !string.IsNullOrWhiteSpace(secondText),
-            TokenSimilarity(firstText, secondText), ItemTextWeight);
+        var firstText = NormalizeText(GetItemText(first));
+        var secondText = NormalizeText(GetItemText(second));
+        AddComponent(
+            !string.IsNullOrWhiteSpace(firstText) && !string.IsNullOrWhiteSpace(secondText),
+            TokenSimilarity(firstText, secondText),
+            ItemTextWeight);
 
-        AddComponent(!string.IsNullOrWhiteSpace(first.Location) && !string.IsNullOrWhiteSpace(second.Location),
-            LocationSimilarity(first.Location, second.Location), LocationWeight);
+        var firstLocation = NormalizeText(first.Location);
+        var secondLocation = NormalizeText(second.Location);
+        AddComponent(
+            !string.IsNullOrWhiteSpace(firstLocation) && !string.IsNullOrWhiteSpace(secondLocation),
+            LocationSimilarity(firstLocation, secondLocation),
+            LocationWeight);
 
         if (availableWeight == 0)
         {
@@ -61,27 +70,82 @@ public sealed class LostItemSimilarityService : ILostItemSimilarityService
         return string.Join(' ', new[] { item.Title, item.Description }.Concat(visibleFeatures));
     }
 
-    private static double TokenSimilarity(string first, string second)
+    private static double CategorySimilarity(string first, string second)
     {
-        var firstTokens = TokenPattern.Matches(first)
-            .Select(match => match.Value)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var secondTokens = TokenPattern.Matches(second)
-            .Select(match => match.Value)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (string.Equals(first, second, StringComparison.Ordinal))
+        {
+            return 1;
+        }
+
+        var firstTokens = TokenPattern.Matches(first).Select(m => m.Value).ToHashSet(StringComparer.Ordinal);
+        var secondTokens = TokenPattern.Matches(second).Select(m => m.Value).ToHashSet(StringComparer.Ordinal);
         if (firstTokens.Count == 0 || secondTokens.Count == 0)
         {
             return 0;
         }
 
         var intersection = firstTokens.Count(secondTokens.Contains);
-        var union = firstTokens.Union(secondTokens, StringComparer.OrdinalIgnoreCase).Count();
-        return (double)intersection / union;
+        return intersection > 0 ? 0.75 : 0;
     }
 
-    private static double LocationSimilarity(string first, string second) =>
-        first.Contains(second, StringComparison.OrdinalIgnoreCase) ||
-        second.Contains(first, StringComparison.OrdinalIgnoreCase)
-            ? 1
-            : 0;
+    private static double TokenSimilarity(string first, string second)
+    {
+        var firstTokens = TokenPattern.Matches(first)
+            .Select(match => match.Value)
+            .ToHashSet(StringComparer.Ordinal);
+        var secondTokens = TokenPattern.Matches(second)
+            .Select(match => match.Value)
+            .ToHashSet(StringComparer.Ordinal);
+        if (firstTokens.Count == 0 || secondTokens.Count == 0)
+        {
+            return 0;
+        }
+
+        var intersection = firstTokens.Count(secondTokens.Contains);
+        var union = firstTokens.Union(secondTokens, StringComparer.Ordinal).Count();
+        return union == 0 ? 0 : (double)intersection / union;
+    }
+
+    private static double LocationSimilarity(string first, string second)
+    {
+        if (first.Contains(second, StringComparison.Ordinal) ||
+            second.Contains(first, StringComparison.Ordinal))
+        {
+            return 1;
+        }
+
+        var firstTokens = TokenPattern.Matches(first).Select(m => m.Value).ToHashSet(StringComparer.Ordinal);
+        var secondTokens = TokenPattern.Matches(second).Select(m => m.Value).ToHashSet(StringComparer.Ordinal);
+        if (firstTokens.Count == 0 || secondTokens.Count == 0)
+        {
+            return 0;
+        }
+
+        var intersection = firstTokens.Count(secondTokens.Contains);
+        var minCount = Math.Min(firstTokens.Count, secondTokens.Count);
+        return minCount == 0 ? 0 : (double)intersection / minCount;
+    }
+
+    private static string NormalizeText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var trCulture = new CultureInfo("tr-TR");
+        var lower = value.Trim().ToLower(trCulture);
+
+        var mapped = lower
+            .Replace('ı', 'i')
+            .Replace('İ', 'i')
+            .Replace('ğ', 'g')
+            .Replace('ü', 'u')
+            .Replace('ş', 's')
+            .Replace('ö', 'o')
+            .Replace('ç', 'c');
+
+        var parts = mapped.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(" ", parts);
+    }
 }

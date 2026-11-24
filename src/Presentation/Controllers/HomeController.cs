@@ -138,12 +138,35 @@ public class HomeController : Controller
             })
             .ToListAsync();
 
+        var matchedIds = (TempData["MatchedItemIds"] as string ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(idText => int.TryParse(idText, out var parsedId) ? parsedId : 0)
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        var recentMatches = matchedIds.Count > 0
+            ? await _dbContext.LostItems
+                .AsNoTracking()
+                .Include(item => item.Category)
+                .Where(item => matchedIds.Contains(item.Id) && item.UserId != userId)
+                .ToListAsync()
+            : [];
+
+        var createdItemId = TempData["CreatedItemId"] is int intId
+            ? intId
+            : int.TryParse(TempData["CreatedItemId"]?.ToString(), out var parsedCreatedId)
+                ? parsedCreatedId
+                : (int?)null;
+
         return View("~/Views/Home/Profil.cshtml", new ProfileViewModel
         {
             DisplayName = profile.DisplayName,
             Email = profile.Email,
             LostItems = items.Where(item => !item.IsFound).ToList(),
-            FoundItems = items.Where(item => item.IsFound).ToList()
+            FoundItems = items.Where(item => item.IsFound).ToList(),
+            RecentMatches = recentMatches,
+            CreatedItemId = createdItemId
         });
     }
 
@@ -243,17 +266,31 @@ public class HomeController : Controller
 
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         string? verificationQuestion = null;
-        if (item.IsFound && currentUserId is not null && currentUserId != item.UserId)
+        bool sourceItemIsFound = false;
+
+        if (sourceIlanId.HasValue)
+        {
+            sourceItemIsFound = await _dbContext.LostItems
+                .AsNoTracking()
+                .Where(candidate => candidate.Id == sourceIlanId.Value)
+                .Select(candidate => candidate.IsFound)
+                .SingleOrDefaultAsync();
+
+            // Soru yalnızca kayıp ilanı sahibine sorulur; bulunan ilan sahibine sorulmaz.
+            if (!item.IsFound && sourceItemIsFound && currentUserId is not null && currentUserId == item.UserId)
+            {
+                verificationQuestion = await _listingService.GetMatchVerificationQuestionAsync(
+                    currentUserId, item.Id, sourceIlanId.Value);
+            }
+        }
+        else if (item.IsFound && currentUserId is not null && currentUserId != item.UserId)
         {
             verificationQuestion = await _dbContext.LostItemFeatures
                 .AsNoTracking()
                 .Where(feature => feature.LostItemId == item.Id && feature.Key == "SecurityQuestion")
                 .Select(feature => feature.Value)
-                .SingleOrDefaultAsync();
-        }
-        else if (!item.IsFound && sourceIlanId.HasValue && currentUserId is not null && currentUserId == item.UserId)
-        {
-            verificationQuestion = await _listingService.GetMatchVerificationQuestionAsync(currentUserId, item.Id, sourceIlanId.Value);
+                .SingleOrDefaultAsync()
+                ?? "Bu eşyanın gerçek sahibi olduğunuzu doğrulayacak ayırt edici bir bilgi yazın:";
         }
 
         var recommendations = await _listingService.GetRecommendationsAsync(item, limit: 6);
@@ -266,11 +303,7 @@ public class HomeController : Controller
             CurrentUserId = currentUserId,
             VerificationQuestion = verificationQuestion,
             SourceItemId = sourceIlanId,
-            SourceItemIsFound = sourceIlanId.HasValue && await _dbContext.LostItems
-                .AsNoTracking()
-                .Where(candidate => candidate.Id == sourceIlanId.Value)
-                .Select(candidate => candidate.IsFound)
-                .SingleOrDefaultAsync()
+            SourceItemIsFound = sourceItemIsFound
         });
     }
 
@@ -297,6 +330,10 @@ public class HomeController : Controller
             TempData["VerificationError"] = result.ErrorMessage ?? "Doğrulama işlemi tamamlanamadı.";
             return RedirectToAction(nameof(Detay), new { ilanId = model.LostItemId, sourceIlanId = model.FoundItemId });
         }
+
+        TempData["SuccessMessage"] = result.Succeeded
+            ? "Doğrulama cevabınız doğru kaydedildi ve sohbet başlatıldı."
+            : "Doğrulama cevabınız yanlış kaydedildi; yine de sohbet başlatıldı.";
 
         return RedirectToAction(nameof(Mesajlar), new
         {
@@ -333,8 +370,9 @@ public class HomeController : Controller
         }
 
         TempData["SuccessMessage"] = result.Succeeded
-            ? "Eşya doğrulandı. İlan sahibiyle iletişime geçebilirsiniz."
-            : "Cevabınız sohbete kaydedildi. İlan sahibiyle iletişime geçebilirsiniz.";
+            ? "Eşya doğru doğrulandı. Sohbet başlatıldı."
+            : "Cevabınız yanlış olarak kaydedildi. Sohbet başlatıldı.";
+
         return RedirectToAction(nameof(Mesajlar), new
         {
             dogrulananIlanId = model.FoundItemId,
@@ -374,7 +412,9 @@ public class HomeController : Controller
             {
                 Item = verifiedItem,
                 IsVerifiedConversation = true,
-                VerifiedParticipantUserId = participantUserId
+                VerifiedParticipantUserId = participantUserId,
+                AvailableMatches = await _listingService.GetChatMatchesAsync(userId),
+                VerifiedMatches = await _listingService.GetVerifiedChatMatchesAsync(userId)
             });
         }
 
@@ -388,6 +428,7 @@ public class HomeController : Controller
             var item = await _listingService.GetByIdAsync(ilanId.Value);
             var matchedItem = await _listingService.GetByIdAsync(eslesenIlanId.Value);
             if (item is null || matchedItem is null ||
+                item.IsFound == matchedItem.IsFound ||
                 (item.UserId != userId && matchedItem.UserId != userId))
             {
                 return NotFound();
@@ -395,19 +436,8 @@ public class HomeController : Controller
 
             var lostItem = item.IsFound ? matchedItem : item;
             var foundItem = item.IsFound ? item : matchedItem;
-            if (lostItem.IsFound || !foundItem.IsFound)
-            {
-                return NotFound();
-            }
 
-            var hasSecurityQuestion = foundItem.Features.Any(feature => feature.Key == "SecurityQuestion");
-            var isVerified = !hasSecurityQuestion || await _listingService.IsMatchVerifiedAsync(
-                lostItem.Id, foundItem.Id, lostItem.UserId);
-            if (!isVerified && hasSecurityQuestion &&
-                userId != lostItem.UserId && userId != foundItem.UserId)
-            {
-                return NotFound();
-            }
+            var isVerified = await _listingService.IsMatchVerifiedAsync(lostItem.Id, foundItem.Id, lostItem.UserId);
 
             return View("~/Views/Home/Mesajlar.cshtml", new MessagesViewModel
             {
@@ -416,9 +446,9 @@ public class HomeController : Controller
                 IsMatchVerified = isVerified,
                 LostItemId = lostItem.Id,
                 FoundItemId = foundItem.Id,
-                VerificationQuestion = !isVerified && userId == lostItem.UserId
-                    ? await _listingService.GetMatchVerificationQuestionAsync(userId, lostItem.Id, foundItem.Id)
-                    : null
+                VerificationQuestion = null,
+                AvailableMatches = await _listingService.GetChatMatchesAsync(userId),
+                VerifiedMatches = await _listingService.GetVerifiedChatMatchesAsync(userId)
             });
         }
 
@@ -616,6 +646,15 @@ public class HomeController : Controller
             _dbContext.LostItemFeatures.AddRange(features);
             await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            var matches = await _listingService.GetRecommendationsAsync(lostItem, limit: 6);
+            TempData["CreatedItemId"] = lostItem.Id;
+            TempData["MatchedItemIds"] = string.Join(",", matches.Select(m => m.Item.Id));
+            TempData["SuccessMessage"] = isFound
+                ? "Bulunan eşya bildirildi ve kaydedildi. Olası eşleşmeler aşağıda listelendi."
+                : "Kayıp ilanınız yayınlandı. Olası eşleşmeler aşağıda listelendi.";
+
+            return RedirectToAction(nameof(Profil));
         }
         catch
         {
@@ -633,11 +672,6 @@ public class HomeController : Controller
 
             throw;
         }
-
-        TempData["SuccessMessage"] = isFound
-            ? "Bulunan eşya bildirildi ve kaydedildi."
-            : "Kayıp ilanınız yayınlandı ve kaydedildi.";
-        return RedirectToAction(nameof(Profil));
     }
 
     private static void AddFeature(
@@ -740,6 +774,8 @@ public class ProfileViewModel
     public string Email { get; set; } = string.Empty;
     public List<UserItemViewModel> LostItems { get; set; } = [];
     public List<UserItemViewModel> FoundItems { get; set; } = [];
+    public List<LostItem> RecentMatches { get; set; } = [];
+    public int? CreatedItemId { get; set; }
 }
 
 public class UserItemViewModel

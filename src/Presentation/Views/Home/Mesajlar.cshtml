@@ -9,37 +9,39 @@
         <div class="container" style="max-width: 900px;">
             <a href="/" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border mb-4">&larr; Ana Sayfaya Dön</a>
             <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
-                <h1 class="h3 fw-bold mb-2">Eşleşmelerim</h1>
-                <p class="text-muted mb-4">Yalnızca açık kayıp ve bulunan ilanlar arasında en az %50 benzerlik bulunan eşleşmelerde sohbet başlatabilirsiniz.</p>
+                <h1 class="h3 fw-bold mb-2">Mesajlarım &amp; Eşleşmeler</h1>
+                <p class="text-muted mb-4">Kayıp ve bulunan ilanlarınız arasındaki eşleşmeler ve başlatılan sohbetler aşağıda listelenir.</p>
                 @if (Model.AvailableMatches.Count == 0 && Model.VerifiedMatches.Count == 0)
                 {
                     <div class="alert alert-light border mb-0">
-                        Henüz sohbet edilebilir bir eşleşmeniz yok. İlanlar filtrelenip eşleştiğinde burada görünecek.
+                        Henüz sohbet edilebilir bir eşleşmeniz yok. İlanlar eşleştiğinde ve doğrulama tamamlandığında burada görünecek.
                     </div>
                 }
                 else
                 {
                     <div class="list-group">
-                        @foreach (var match in Model.AvailableMatches)
-                        {
-                            <a href="@Url.Action("Detay", "Home", new { ilanId = match.Item.IsFound ? match.MatchedItem.Id : match.Item.Id, sourceIlanId = match.Item.IsFound ? match.Item.Id : match.MatchedItem.Id })"
-                               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 py-3">
-                                <span>
-                                    <strong>@match.Item.Title ↔ @match.MatchedItem.Title</strong>
-                                    <span class="d-block small text-muted">İlanlar %@match.SimilarityPercent benzer</span>
-                                </span>
-                                <span class="badge rounded-pill text-bg-success">Eşleşti · Sohbet et</span>
-                            </a>
-                        }
                         @foreach (var match in Model.VerifiedMatches)
                         {
                             <a href="@Url.Action("Mesajlar", "Home", new { dogrulananIlanId = match.FoundItem.Id, katilimciId = match.ParticipantUserId })"
                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 py-3">
                                 <span>
                                     <strong>@match.FoundItem.Title</strong>
-                                    <span class="d-block small text-muted">Doğrulanan kullanıcı: @match.ParticipantDisplayName</span>
+                                    <span class="d-block small text-muted">Eşleşen kullanıcı: @match.ParticipantDisplayName</span>
                                 </span>
-                                <span class="badge rounded-pill text-bg-success">Doğrulandı · Sohbet et</span>
+                                <span class="badge rounded-pill text-bg-success">Sohbeti Aç</span>
+                            </a>
+                        }
+                        @foreach (var match in Model.AvailableMatches)
+                        {
+                            var lostItem = match.Item.IsFound ? match.MatchedItem : match.Item;
+                            var foundItem = match.Item.IsFound ? match.Item : match.MatchedItem;
+                            <a href="@Url.Action("Mesajlar", "Home", new { ilanId = lostItem.Id, eslesenIlanId = foundItem.Id })"
+                               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 py-3">
+                                <span>
+                                    <strong>@lostItem.Title ↔ @foundItem.Title</strong>
+                                    <span class="d-block small text-muted">İlanlar %@match.SimilarityPercent benzer</span>
+                                </span>
+                                <span class="badge rounded-pill text-bg-danger">Mesajlara Git</span>
                             </a>
                         }
                     </div>
@@ -50,378 +52,356 @@
 }
 else
 {
-<!-- Leaflet Harita Kütüphanesi -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<div class="position-relative overflow-hidden py-4" style="background: radial-gradient(circle at 50% 20%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: 100vh;">
+    <div class="position-relative overflow-hidden py-4" style="background: radial-gradient(circle at 50% 20%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: 100vh;">
 
-    <!-- Sevimli Süs Figürleri -->
-    <div class="position-absolute d-none d-lg-block" style="top: 6%; left: 5%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">💬</div>
-    <div class="position-absolute d-none d-lg-block" style="top: 10%; right: 6%; font-size: 2.4rem; transform: rotate(18deg); user-select: none;">🌸</div>
-    <div class="position-absolute d-none d-lg-block" style="bottom: 8%; left: 4%; font-size: 2rem; transform: rotate(12deg); user-select: none;">✨</div>
-    <div class="position-absolute d-none d-lg-block" style="bottom: 10%; right: 5%; font-size: 2.2rem; transform: rotate(-12deg); user-select: none;">📍</div>
+        <div class="position-absolute d-none d-lg-block" style="top: 6%; left: 5%; font-size: 2.2rem; transform: rotate(-15deg); user-select: none;">💬</div>
+        <div class="position-absolute d-none d-lg-block" style="top: 10%; right: 6%; font-size: 2.4rem; transform: rotate(18deg); user-select: none;">🌸</div>
+        <div class="position-absolute d-none d-lg-block" style="bottom: 8%; left: 4%; font-size: 2rem; transform: rotate(12deg); user-select: none;">✨</div>
+        <div class="position-absolute d-none d-lg-block" style="bottom: 10%; right: 5%; font-size: 2.2rem; transform: rotate(-12deg); user-select: none;">📍</div>
 
-    <div class="container position-relative" style="z-index: 2;" id="chatApp"
-         data-item-id="@Model.Item.Id"
-         data-matched-item-id="@(Model.IsVerifiedConversation ? 0 : Model.MatchedItem!.Id)"
-                     data-conversation-type="@(Model.IsVerifiedConversation ? "verified" : "matched")"
-                     data-match-verified="@Model.IsMatchVerified.ToString().ToLowerInvariant()"
-         data-participant-id="@Model.VerifiedParticipantUserId"
-         data-user-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value">
+        <div class="container position-relative" style="z-index: 2;" id="chatApp"
+             data-item-id="@Model.Item.Id"
+             data-matched-item-id="@(Model.IsVerifiedConversation ? 0 : Model.MatchedItem!.Id)"
+             data-conversation-type="@(Model.IsVerifiedConversation ? "verified" : "matched")"
+             data-match-verified="@Model.IsMatchVerified.ToString().ToLowerInvariant()"
+             data-participant-id="@Model.VerifiedParticipantUserId"
+             data-user-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value">
 
-        <!-- Üst Geri Dön Butonu -->
-        <div class="mb-3">
-            <a href="@Url.Action("Detay", "Home", new { ilanId = Model.Item.Id })" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border">
-                &larr; İlan Detayına Dön
-            </a>
-        </div>
+            <div class="mb-3 d-flex gap-2 flex-wrap">
+                <a href="@Url.Action("Mesajlar", "Home")" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border">
+                    &larr; Tüm Mesajlarım
+                </a>
+                <a href="@Url.Action("Detay", "Home", new { ilanId = Model.Item.Id })" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm bg-white border">
+                    İlan Detayına Dön
+                </a>
+            </div>
 
-        <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);">
-            <div class="row g-0" style="min-height: 620px;">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);">
+                <div class="row g-0" style="min-height: 620px;">
 
-                <!-- Sol Panel: Konuşma Listesi -->
-                <div class="col-md-4 border-end" style="background-color: #FFFDFC;">
-                    <div class="p-3 border-bottom" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <h5 class="fw-bold text-dark mb-0">💬 Sohbetler</h5>
-                            <span class="badge rounded-pill text-white px-2 py-1" style="background-color: #FF6082; font-size: 0.75rem;">Canlı</span>
+                    <!-- Sol Panel: Konuşma Listesi -->
+                    <div class="col-md-4 border-end" style="background-color: #FFFDFC;">
+                        <div class="p-3 border-bottom" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h5 class="fw-bold text-dark mb-0">💬 Sohbetler</h5>
+                                <span class="badge rounded-pill text-white px-2 py-1" style="background-color: #FF6082; font-size: 0.75rem;">Canlı</span>
+                            </div>
+                            <input type="text" class="form-control form-control-sm bg-white border rounded-pill px-3 py-2 shadow-none" placeholder="Sohbetlerde ara..." />
                         </div>
-                        <input type="text" class="form-control form-control-sm bg-white border rounded-pill px-3 py-2 shadow-none" placeholder="Sohbetlerde ara..." />
-                    </div>
 
-                    <div class="list-group list-group-flush">
-                        <a href="@(Model.IsVerifiedConversation
-                            ? Url.Action("Mesajlar", "Home", new { dogrulananIlanId = Model.Item.Id, katilimciId = Model.VerifiedParticipantUserId })
-                            : Url.Action("Mesajlar", "Home", new { ilanId = Model.Item.Id, eslesenIlanId = Model.MatchedItem!.Id }))" class="list-group-item list-group-item-action p-3 border-bottom border-0 border-start border-4" style="background-color: #FFF0F4; border-left-color: #FF6082 !important;" aria-current="page">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0" style="width: 44px; height: 44px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
-                                    #@Model.Item.Id
-                                </div>
-                                <div class="flex-grow-1 overflow-hidden">
-                                    <div class="d-flex align-items-center justify-content-between mb-1">
-                                         <span class="fw-bold text-dark">@(Model.IsVerifiedConversation ? Model.Item.Title : $"{Model.Item.Title} ↔ {Model.MatchedItem!.Title}")</span>
-                                        <small id="chatStatus" class="badge rounded-pill bg-white text-muted border px-2 py-1" style="font-size: 0.7rem;">Bağlanıyor...</small>
+                        <div class="list-group list-group-flush">
+                            <a href="@(Model.IsVerifiedConversation
+                                ? Url.Action("Mesajlar", "Home", new { dogrulananIlanId = Model.Item.Id, katilimciId = Model.VerifiedParticipantUserId })
+                            : Url.Action("Mesajlar", "Home", new { ilanId = Model.Item.Id, eslesenIlanId = Model.MatchedItem!.Id }))"
+                               class="list-group-item list-group-item-action p-3 border-bottom border-0 border-start border-4"
+                               style="background-color: #FFF0F4; border-left-color: #FF6082 !important;"
+                               aria-current="page">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0"
+                                         style="width: 44px; height: 44px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
+                                        #@Model.Item.Id
                                     </div>
-                                    <div class="small fw-semibold text-secondary text-truncate">Eşleşme sohbeti</div>
-                                    <p class="small text-muted mb-0 text-truncate" style="font-size: 0.75rem;">SignalR ile canlı mesajlaşma</p>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <div class="d-flex align-items-center justify-content-between mb-1">
+                                            <span class="fw-bold text-dark">@(Model.IsVerifiedConversation ? Model.Item.Title : $"{Model.Item.Title} ↔ {Model.MatchedItem!.Title}")</span>
+                                            <small id="chatStatus" class="badge rounded-pill bg-white text-muted border px-2 py-1" style="font-size: 0.7rem;">Bağlanıyor...</small>
+                                        </div>
+                                        <div class="small fw-semibold text-secondary text-truncate">Eşleşme sohbeti</div>
+                                        <p class="small text-muted mb-0 text-truncate" style="font-size: 0.75rem;">SignalR ile canlı mesajlaşma</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Sağ Panel: Aktif Mesajlaşma Penceresi -->
-                <div class="col-md-8 d-flex flex-column bg-white">
-
-                    <!-- Üst Başlık -->
-                    <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="background-color: #FFFDFD;">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 42px; height: 42px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
-                                💬
-                            </div>
-                            <div>
-                                <div class="fw-bold text-dark">@(Model.IsVerifiedConversation ? Model.Item.Title : $"{Model.Item.Title} ↔ {Model.MatchedItem!.Title}")</div>
-                                <small class="text-success fw-semibold" style="font-size: 0.75rem;">● SignalR Canlı Bağlantı</small>
-                            </div>
-                        </div>
-                        <div>
-                            <a href="@Url.Action("Detay", "Home", new { ilanId = Model.Item.Id })" class="btn btn-sm rounded-pill px-3 fw-semibold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
-                                İlanı Gör
                             </a>
                         </div>
                     </div>
 
-                    <!-- Güvenlik Bilgilendirmesi -->
-                    <div class="px-3 pt-3">
-                        <div class="alert border-0 rounded-4 small py-2 mb-0 text-center" style="background-color: #FFF3F6; border: 1px dashed #FFD9E2 !important; color: #842029;">
-                            🔒 Sohbetler ilan numarasına göre ayrılır. Güvenliğiniz için teslimatta kalabalık kampüs alanlarını tercih edin.
+                    <!-- Sağ Panel: Aktif Mesajlaşma Penceresi -->
+                    <div class="col-md-8 d-flex flex-column bg-white">
+
+                        <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="background-color: #FFFDFD;">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm"
+                                     style="width: 42px; height: 42px; background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
+                                    💬
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">@(Model.IsVerifiedConversation ? Model.Item.Title : $"{Model.Item.Title} ↔ {Model.MatchedItem!.Title}")</div>
+                                    <small class="text-success fw-semibold" style="font-size: 0.75rem;">● SignalR Canlı Bağlantı</small>
+                                </div>
+                            </div>
+                            <div>
+                                <a href="@Url.Action("Detay", "Home", new { ilanId = Model.Item.Id })"
+                                   class="btn btn-sm rounded-pill px-3 fw-semibold text-white shadow-sm"
+                                   style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
+                                    İlanı Gör
+                                </a>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Mesaj Balonları -->
-                     <div id="chatVerification" class="p-3 @(Model.IsVerifiedConversation || Model.IsMatchVerified ? "d-none" : "")">
-                         @if (!Model.IsVerifiedConversation && !Model.IsMatchVerified && Model.VerificationQuestion is not null)
-                         {
-                             <div class="alert alert-warning rounded-4 mb-0">
-                                 <strong>Mesajlaşmadan önce soruyu cevaplayın.</strong>
-                                 <p class="mb-3 mt-2">@Model.VerificationQuestion</p>
-                                 <form asp-controller="Home" asp-action="DogrulaEslesme" method="post">
-                                     @Html.AntiForgeryToken()
-                                     <input type="hidden" name="LostItemId" value="@Model.LostItemId" />
-                                     <input type="hidden" name="FoundItemId" value="@Model.FoundItemId" />
-                                     <div class="input-group">
-                                         <input name="Answer" class="form-control" maxlength="300" required placeholder="Cevabınız" />
-                                         <button type="submit" class="btn btn-warning">Cevapla</button>
-                                     </div>
-                                 </form>
-                             </div>
-                         }
-                         else if (!Model.IsVerifiedConversation && !Model.IsMatchVerified)
-                         {
-                             <div class="alert alert-info rounded-4 mb-0">Karşı tarafın soruyu cevaplaması bekleniyor. Cevap sonrasında mesajlaşma açılacaktır.</div>
-                         }
-                     </div>
-                     <div id="chatMessages" class="flex-grow-1 p-3 overflow-auto d-flex flex-column" style="background-color: #FCFBFB; min-height: 380px;" aria-live="polite">
-                    </div>
+                        <div class="px-3 pt-3">
+                            <div class="alert border-0 rounded-4 small py-2 mb-0 text-center"
+                                 style="background-color: #FFF3F6; border: 1px dashed #FFD9E2 !important; color: #842029;">
+                                🔒 Sohbetler ilan numarasına göre ayrılır. Güvenliğiniz için teslimatta kalabalık kampüs alanlarını tercih edin.
+                            </div>
+                        </div>
 
-                    <!-- Alt Mesaj Gönderme Çubuğu -->
-                     <div class="p-3 border-top bg-white @(Model.IsVerifiedConversation || Model.IsMatchVerified ? "" : "d-none")" id="chatComposer">
-                        <form id="chatForm" class="d-flex gap-2 align-items-center">
-                            <!-- Canlı Konum Paylaş Butonu -->
-                            <button type="button" class="btn btn-outline-danger rounded-pill fw-semibold d-flex align-items-center gap-1 text-nowrap px-3 py-2 shadow-none" data-bs-toggle="modal" data-bs-target="#locationModal" style="border-color: #FFD9E2; color: #FF416C;">
-                                📍 Konum Paylaş
-                            </button>
+                        <div id="chatVerification" class="p-3 d-none"></div>
 
-                            <input id="chatInput" type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="Bir mesaj yazın..." maxlength="2000" autocomplete="off" required />
-                            <button id="sendButton" type="submit" class="btn rounded-pill px-4 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);" disabled>
-                                Gönder
-                            </button>
-                        </form>
+                        <div id="chatMessages" class="flex-grow-1 p-3 overflow-auto d-flex flex-column" style="background-color: #FCFBFB; min-height: 380px;" aria-live="polite">
+                        </div>
+
+                        <div class="p-3 border-top bg-white" id="chatComposer">
+                            <form id="chatForm" class="d-flex gap-2 align-items-center">
+                                <button type="button"
+                                        class="btn btn-outline-danger rounded-pill fw-semibold d-flex align-items-center gap-1 text-nowrap px-3 py-2 shadow-none"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#locationModal"
+                                        style="border-color: #FFD9E2; color: #FF416C;">
+                                    📍 Konum Paylaş
+                                </button>
+
+                                <input id="chatInput" type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" placeholder="Bir mesaj yazın..." maxlength="2000" autocomplete="off" required />
+                                <button id="sendButton" type="submit" class="btn rounded-pill px-4 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);" disabled>
+                                    Gönder
+                                </button>
+                            </form>
+                        </div>
+
                     </div>
 
                 </div>
-
             </div>
         </div>
     </div>
-</div>
 
-<!-- CHAT İÇİ BULUŞMA NOKTASI / KONUM PAYLAŞMA MODALI -->
-<div class="modal fade" id="locationModal" tabindex="-1" aria-labelledby="locationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
-            <div class="modal-header border-bottom py-3" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
-                <h6 class="modal-title fw-bold text-dark" id="locationModalLabel">📍 Teslimat / Buluşma Konumu Paylaş</h6>
-                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Kapat"></button>
-            </div>
+    <!-- CHAT İÇİ BULUŞMA NOKTASI / KONUM PAYLAŞMA MODALI -->
+    <div class="modal fade" id="locationModal" tabindex="-1" aria-labelledby="locationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+                <div class="modal-header border-bottom py-3" style="background: linear-gradient(135deg, #FFF0F4 0%, #FFE2EA 100%);">
+                    <h6 class="modal-title fw-bold text-dark" id="locationModalLabel">📍 Teslimat / Buluşma Konumu Paylaş</h6>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
 
-            <div class="modal-body p-4">
-                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
-                    <span class="small text-muted">Mevcut konumunuzu alabilir veya kampüs haritasından tıklayarak teslimat noktası seçebilirsiniz.</span>
-                    <button type="button" class="btn btn-sm rounded-pill px-3 py-2 text-white fw-bold shadow-sm text-nowrap" id="btnLiveLocation" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
-                        🎯 Canlı GPS Konumumu Al
+                <div class="modal-body p-4">
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+                        <span class="small text-muted">Mevcut konumunuzu alabilir veya kampüs haritasından tıklayarak teslimat noktası seçebilirsiniz.</span>
+                        <button type="button" class="btn btn-sm rounded-pill px-3 py-2 text-white fw-bold shadow-sm text-nowrap" id="btnLiveLocation" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%);">
+                            🎯 Canlı GPS Konumumu Al
+                        </button>
+                    </div>
+
+                    <div id="chatMap" class="rounded-4 border mb-3 shadow-sm" style="height: 280px; width: 100%; background: #f0f0f0;"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Konum Başlığı / Yakın Bina</label>
+                            <input type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" id="chatPlaceName" placeholder="Örn: Merkez Kütüphane Önü" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Buluşma Notu (Opsiyonel)</label>
+                            <input type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" id="chatMeetingNote" placeholder="Örn: Yeşil banklardayım, mavi kazaklıyım" />
+                        </div>
+                        <input type="hidden" id="chatLat" />
+                        <input type="hidden" id="chatLng" />
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-3 fw-semibold" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="button" class="btn rounded-pill px-4 fw-bold text-white shadow-sm" id="sendLocationButton" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%);">
+                        ✓ Konumu Sohbete Gönder
                     </button>
                 </div>
-
-                <!-- Modal İçi Mini Harita -->
-                <div id="chatMap" class="rounded-4 border mb-3 shadow-sm" style="height: 280px; width: 100%; background: #f0f0f0;"></div>
-
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-secondary">Konum Başlığı / Yakın Bina</label>
-                        <input type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" id="chatPlaceName" placeholder="Örn: Merkez Kütüphane Önü" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-secondary">Buluşma Notu (Opsiyonel)</label>
-                        <input type="text" class="form-control bg-light border rounded-pill px-3 py-2 shadow-none" id="chatMeetingNote" placeholder="Örn: Yeşil banklardayım, mavi kazaklıyım" />
-                    </div>
-                    <input type="hidden" id="chatLat" />
-                    <input type="hidden" id="chatLng" />
-                </div>
-            </div>
-
-            <div class="modal-footer border-top-0 pt-0 px-4 pb-4">
-                <button type="button" class="btn btn-light rounded-pill px-3 fw-semibold" data-bs-dismiss="modal">Vazgeç</button>
-                <button type="button" class="btn rounded-pill px-4 fw-bold text-white shadow-sm" id="sendLocationButton" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%);">
-                    ✓ Konumu Sohbete Gönder
-                </button>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Leaflet JS ve Harita Scripti -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
-<script>
-    const chatApp = document.getElementById('chatApp');
-    const chatMessages = document.getElementById('chatMessages');
-    const chatStatus = document.getElementById('chatStatus');
-    const chatForm = document.getElementById('chatForm');
-    const chatInput = document.getElementById('chatInput');
-    const sendButton = document.getElementById('sendButton');
-    const conversationId = Number(chatApp.dataset.itemId);
-    const matchedConversationId = Number(chatApp.dataset.matchedItemId);
-    const conversationType = chatApp.dataset.conversationType;
-    const participantId = chatApp.dataset.participantId || chatApp.dataset.userId;
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script>
+        const chatApp = document.getElementById('chatApp');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatStatus = document.getElementById('chatStatus');
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        const conversationId = Number(chatApp.dataset.itemId);
+        const matchedConversationId = Number(chatApp.dataset.matchedItemId);
+        const conversationType = chatApp.dataset.conversationType;
+        const participantId = chatApp.dataset.participantId || chatApp.dataset.userId;
 
-    function appendMessage(message) {
-        const ownMessage = message.senderUserId === chatApp.dataset.userId;
-        const wrapper = document.createElement('div');
-        wrapper.className = `d-flex flex-column ${ownMessage ? 'align-items-end' : 'align-items-start'} mb-3`;
+        function appendMessage(message) {
+            const ownMessage = message.senderUserId === chatApp.dataset.userId;
+            const wrapper = document.createElement('div');
+            wrapper.className = `d-flex flex-column ${ownMessage ? 'align-items-end' : 'align-items-start'} mb-3`;
 
-        const bubble = document.createElement('div');
-        const isVerificationMessage = message.message.startsWith('🔐 Doğrulama cevabı:');
-        if (ownMessage) {
-            bubble.className = 'p-3 rounded-4 shadow-sm text-white small';
-            bubble.style.background = 'linear-gradient(135deg, #FF6082 0%, #FF416C 100%)';
-        } else {
-            bubble.className = 'p-3 rounded-4 shadow-sm bg-white border text-dark small';
+            const bubble = document.createElement('div');
+            const isVerificationMessage = message.message.startsWith('🔐 Doğrulama cevabı:');
+            if (ownMessage) {
+                bubble.className = 'p-3 rounded-4 shadow-sm text-white small';
+                bubble.style.background = 'linear-gradient(135deg, #FF6082 0%, #FF416C 100%)';
+            } else {
+                bubble.className = 'p-3 rounded-4 shadow-sm bg-white border text-dark small';
+            }
+            bubble.style.maxWidth = '75%';
+            bubble.style.wordBreak = 'break-word';
+            bubble.textContent = isVerificationMessage
+                ? `🔐 Doğrulama cevabı (${message.sender})\n${message.message.replace('🔐 Doğrulama cevabı: ', '')}`
+                : `${message.sender}: ${message.message}`;
+            if (isVerificationMessage) {
+                bubble.style.whiteSpace = 'pre-line';
+                bubble.title = 'Doğrulama cevabı ve doğruluk durumu';
+            }
+
+            const timestamp = document.createElement('span');
+            timestamp.className = 'text-muted mt-1 px-2';
+            timestamp.style.fontSize = '0.7rem';
+            timestamp.textContent = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            wrapper.append(bubble, timestamp);
+            chatMessages.appendChild(wrapper);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-        bubble.style.maxWidth = '75%';
-        bubble.style.wordBreak = 'break-word';
-        bubble.textContent = isVerificationMessage
-            ? `🔐 Doğrulama cevabı\n${message.message.replace('🔐 Doğrulama cevabı: ', '')}`
-            : `${message.sender}: ${message.message}`;
-        if (isVerificationMessage) {
-            bubble.style.whiteSpace = 'pre-line';
-            bubble.title = 'İletişim başlamadan gönderilen doğrulama cevabı';
-        }
 
-        const timestamp = document.createElement('span');
-        timestamp.className = 'text-muted mt-1 px-2';
-        timestamp.style.fontSize = '0.7rem';
-        timestamp.textContent = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl('/hubs/chat')
+            .withAutomaticReconnect()
+            .build();
 
-        wrapper.append(bubble, timestamp);
-        chatMessages.appendChild(wrapper);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    const connection = new signalR.HubConnectionBuilder()
-        .withUrl('/hubs/chat')
-        .withAutomaticReconnect()
-        .build();
-
-    connection.on('ReceiveMessage', appendMessage);
-    connection.onreconnecting(() => {
-        chatStatus.textContent = 'Yeniden bağlanıyor...';
-        chatStatus.className = 'badge rounded-pill bg-warning text-dark border px-2 py-1';
-        sendButton.disabled = true;
-    });
-    connection.onreconnected(async () => {
-        try {
-            await joinConversation();
-        } catch (error) {
-            chatStatus.textContent = 'Sohbete yeniden katılınamadı';
-            chatStatus.className = 'badge rounded-pill bg-danger text-white border px-2 py-1';
-            console.error('Sohbete yeniden katılınamadı:', error);
-        }
-    });
-    connection.onclose(() => {
-        chatStatus.textContent = 'Bağlantı kesildi';
-        chatStatus.className = 'badge rounded-pill bg-secondary text-white border px-2 py-1';
-        sendButton.disabled = true;
-    });
-
-    async function joinConversation() {
-        const history = conversationType === 'verified'
-            ? await connection.invoke('JoinVerifiedConversation', conversationId, participantId)
-            : await connection.invoke('JoinConversation', conversationId, matchedConversationId);
-        chatMessages.replaceChildren();
-        history.forEach(appendMessage);
-        chatStatus.textContent = 'Bağlandı';
-        chatStatus.className = 'badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-1';
-        sendButton.disabled = false;
-    }
-
-    async function connect() {
-        if (conversationType === 'matched' && chatApp.dataset.matchVerified !== 'true') {
-            chatStatus.textContent = 'Doğrulama bekleniyor';
+        connection.on('ReceiveMessage', appendMessage);
+        connection.onreconnecting(() => {
+            chatStatus.textContent = 'Yeniden bağlanıyor...';
             chatStatus.className = 'badge rounded-pill bg-warning text-dark border px-2 py-1';
-            return;
-        }
-
-        try {
-            await connection.start();
-            await joinConversation();
-        } catch (error) {
-            chatStatus.textContent = 'Bağlanılamadı, deneniyor...';
-            chatStatus.className = 'badge rounded-pill bg-danger text-white border px-2 py-1';
-            console.error('Sohbet bağlantısı kurulamadı:', error);
-            window.setTimeout(connect, 5000);
-        }
-    }
-
-    chatForm.addEventListener('submit', async event => {
-        event.preventDefault();
-        const message = chatInput.value.trim();
-        if (!message || connection.state !== signalR.HubConnectionState.Connected) {
-            return;
-        }
-
-        sendButton.disabled = true;
-        try {
-            await connection.invoke('SendMessage', message);
-            chatInput.value = '';
-            chatInput.focus();
-        } catch (error) {
-            chatStatus.textContent = error.message || 'Mesaj gönderilemedi';
-        } finally {
-            sendButton.disabled = connection.state !== signalR.HubConnectionState.Connected;
-        }
-    });
-
-    document.getElementById('sendLocationButton').addEventListener('click', async () => {
-        const latitude = document.getElementById('chatLat').value;
-        const longitude = document.getElementById('chatLng').value;
-        const place = document.getElementById('chatPlaceName').value.trim();
-        const note = document.getElementById('chatMeetingNote').value.trim();
-        if (!latitude || !longitude) {
-            alert('Lütfen önce haritadan bir konum seçin veya Canlı Konum butonuna tıklayın.');
-            return;
-        }
-
-        const message = `📍 Buluşma Noktası: ${place || 'Kampüs İçi'} (${latitude}, ${longitude})${note ? ` — Not: ${note}` : ''}`;
-        try {
-            await connection.invoke('SendMessage', message);
-            const modalInstance = bootstrap.Modal.getInstance(document.getElementById('locationModal'));
-            if (modalInstance) modalInstance.hide();
-        } catch (error) {
-            chatStatus.textContent = error.message || 'Konum gönderilemedi';
-        }
-    });
-
-    connect();
-
-    let chatMapInitialized = false;
-    let chatMap;
-    let chatMarker;
-
-    const modalEl = document.getElementById('locationModal');
-    if (modalEl) {
-        modalEl.addEventListener('shown.bs.modal', function () {
-            if (!chatMapInitialized) {
-                // Sivas Cumhuriyet Üniversitesi koordinatları
-                chatMap = L.map('chatMap').setView([39.7047, 37.0395], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap'
-                }).addTo(chatMap);
-
-                chatMap.on('click', function (e) {
-                    setChatLocation(e.latlng.lat, e.latlng.lng, "Seçilen Buluşma Noktası");
-                });
-
-                chatMapInitialized = true;
-            } else {
-                chatMap.invalidateSize();
+            sendButton.disabled = true;
+        });
+        connection.onreconnected(async () => {
+            try {
+                await joinConversation();
+            } catch (error) {
+                chatStatus.textContent = 'Sohbete yeniden katılınamadı';
+                chatStatus.className = 'badge rounded-pill bg-danger text-white border px-2 py-1';
+                console.error('Sohbete yeniden katılınamadı:', error);
             }
         });
-    }
+        connection.onclose(() => {
+            chatStatus.textContent = 'Bağlantı kesildi';
+            chatStatus.className = 'badge rounded-pill bg-secondary text-white border px-2 py-1';
+            sendButton.disabled = true;
+        });
 
-    function setChatLocation(lat, lng, label) {
-        if (chatMarker) {
-            chatMarker.setLatLng([lat, lng]);
-        } else {
-            chatMarker = L.marker([lat, lng]).addTo(chatMap);
+        async function joinConversation() {
+            const history = conversationType === 'verified'
+                ? await connection.invoke('JoinVerifiedConversation', conversationId, participantId)
+                : await connection.invoke('JoinConversation', conversationId, matchedConversationId);
+            chatMessages.replaceChildren();
+            history.forEach(appendMessage);
+            chatStatus.textContent = 'Bağlandı';
+            chatStatus.className = 'badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-1';
+            sendButton.disabled = false;
         }
-        chatMarker.bindPopup(`<b>${label}</b>`).openPopup();
-        chatMap.setView([lat, lng], 17);
-        document.getElementById('chatLat').value = lat;
-        document.getElementById('chatLng').value = lng;
-    }
 
-    const liveBtn = document.getElementById('btnLiveLocation');
-    if (liveBtn) {
-        liveBtn.addEventListener('click', function () {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    pos => setChatLocation(pos.coords.latitude, pos.coords.longitude, "Canlı Konumunuz"),
-                    error => { chatStatus.textContent = `Konum alınamadı: ${error.message}`; });
-            } else {
-                chatStatus.textContent = 'Tarayıcınız konum desteği sunmuyor';
+        async function connect() {
+            try {
+                await connection.start();
+                await joinConversation();
+            } catch (error) {
+                chatStatus.textContent = 'Bağlanılamadı, deneniyor...';
+                chatStatus.className = 'badge rounded-pill bg-danger text-white border px-2 py-1';
+                console.error('Sohbet bağlantısı kurulamadı:', error);
+                window.setTimeout(connect, 5000);
+            }
+        }
+
+        chatForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            const message = chatInput.value.trim();
+            if (!message || connection.state !== signalR.HubConnectionState.Connected) {
+                return;
+            }
+
+            sendButton.disabled = true;
+            try {
+                await connection.invoke('SendMessage', message);
+                chatInput.value = '';
+                chatInput.focus();
+            } catch (error) {
+                chatStatus.textContent = error.message || 'Mesaj gönderilemedi';
+            } finally {
+                sendButton.disabled = connection.state !== signalR.HubConnectionState.Connected;
             }
         });
-    }
-</script>
+
+        document.getElementById('sendLocationButton').addEventListener('click', async () => {
+            const latitude = document.getElementById('chatLat').value;
+            const longitude = document.getElementById('chatLng').value;
+            const place = document.getElementById('chatPlaceName').value.trim();
+            const note = document.getElementById('chatMeetingNote').value.trim();
+            if (!latitude || !longitude) {
+                alert('Lütfen önce haritadan bir konum seçin veya Canlı Konum butonuna tıklayın.');
+                return;
+            }
+
+            const message = `📍 Buluşma Noktası: ${place || 'Kampüs İçi'} (${latitude}, ${longitude})${note ? ` — Not: ${note}` : ''}`;
+            try {
+                await connection.invoke('SendMessage', message);
+                const modalInstance = bootstrap.Modal.getInstance(document.getElementById('locationModal'));
+                if (modalInstance) modalInstance.hide();
+            } catch (error) {
+                chatStatus.textContent = error.message || 'Konum gönderilemedi';
+            }
+        });
+
+        connect();
+
+        let chatMapInitialized = false;
+        let chatMap;
+        let chatMarker;
+
+        const modalEl = document.getElementById('locationModal');
+        if (modalEl) {
+            modalEl.addEventListener('shown.bs.modal', function () {
+                if (!chatMapInitialized) {
+                    chatMap = L.map('chatMap').setView([39.7047, 37.0395], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap'
+                    }).addTo(chatMap);
+
+                    chatMap.on('click', function (e) {
+                        setChatLocation(e.latlng.lat, e.latlng.lng, "Seçilen Buluşma Noktası");
+                    });
+
+                    chatMapInitialized = true;
+                } else {
+                    chatMap.invalidateSize();
+                }
+            });
+        }
+
+        function setChatLocation(lat, lng, label) {
+            if (chatMarker) {
+                chatMarker.setLatLng([lat, lng]);
+            } else {
+                chatMarker = L.marker([lat, lng]).addTo(chatMap);
+            }
+            chatMarker.bindPopup(`<b>${label}</b>`).openPopup();
+            chatMap.setView([lat, lng], 17);
+            document.getElementById('chatLat').value = lat;
+            document.getElementById('chatLng').value = lng;
+        }
+
+        const liveBtn = document.getElementById('btnLiveLocation');
+        if (liveBtn) {
+            liveBtn.addEventListener('click', function () {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        pos => setChatLocation(pos.coords.latitude, pos.coords.longitude, "Canlı Konumunuz"),
+                        error => { chatStatus.textContent = `Konum alınamadı: ${error.message}`; });
+                } else {
+                    chatStatus.textContent = 'Tarayıcınız konum desteği sunmuyor';
+                }
+            });
+        }
+    </script>
 }

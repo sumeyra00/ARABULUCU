@@ -15,12 +15,82 @@
                 <a href="/Home/BulunanOlustur" class="btn btn-outline-success btn-sm fw-bold">+ Yeni Buluntu Bildir</a>
             </div>
         </div>
+    </div>
 
     @if (TempData["SuccessMessage"] is string successMessage)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             @successMessage
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+        </div>
+    }
+
+    @if (Model.RecentMatches.Count > 0)
+    {
+        <div class="card shadow-sm border rounded-4 mb-4" style="border-color: #FFD9E2 !important; background-color: #FFF9FB;">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-1 text-dark">Olası Eşleşen İlanlar</h5>
+                <p class="text-muted small mb-3">Yeni oluşturduğunuz ilanla eşleşebilecek ilanlar aşağıda listelendi. İletişime geçmek için butona tıklayın.</p>
+
+                <div class="row g-3">
+                    @foreach (var match in Model.RecentMatches)
+                    {
+                        <div class="col-md-6">
+                            <div class="card h-100 border rounded-3 bg-white shadow-sm">
+                                <div class="card-body d-flex flex-column">
+                                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                        <span class="badge @(match.IsFound ? "text-bg-success" : "text-bg-danger")">
+                                            @(match.IsFound ? "Bulunan İlan" : "Kayıp İlan")
+                                        </span>
+                                        <span class="badge text-bg-light">@match.Category?.Name</span>
+                                    </div>
+                                    <h6 class="fw-bold mb-1">@match.Title</h6>
+                                    <p class="text-muted small mb-2">@match.Location</p>
+                                    <p class="small text-secondary mb-3">Tarih: @match.EventDate.ToString("dd.MM.yyyy HH:mm")</p>
+
+                                    <div class="mt-auto d-flex gap-2">
+                                        @if (match.IsFound)
+                                        {
+                                            <a asp-controller="Home"
+                                               asp-action="Detay"
+                                               asp-route-ilanId="@match.Id"
+                                               class="btn btn-danger btn-sm rounded-pill px-3 fw-semibold">
+                                                İletişime Geç
+                                            </a>
+                                        }
+                                        else if (Model.CreatedItemId.HasValue)
+                                        {
+                                            <a asp-controller="Home"
+                                               asp-action="Mesajlar"
+                                               asp-route-ilanId="@Model.CreatedItemId.Value"
+                                               asp-route-eslesenIlanId="@match.Id"
+                                               class="btn btn-danger btn-sm rounded-pill px-3 fw-semibold">
+                                                İletişime Geç
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-controller="Home"
+                                               asp-action="Detay"
+                                               asp-route-ilanId="@match.Id"
+                                               class="btn btn-danger btn-sm rounded-pill px-3 fw-semibold">
+                                                İletişime Geç
+                                            </a>
+                                        }
+
+                                        <a asp-controller="Home"
+                                           asp-action="Detay"
+                                           asp-route-ilanId="@match.Id"
+                                           class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                            İncele
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     }
 

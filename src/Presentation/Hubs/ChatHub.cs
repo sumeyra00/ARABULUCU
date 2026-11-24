@@ -49,16 +49,16 @@ public sealed class ChatHub : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupName(conversation));
         Context.Items[ConversationKey] = conversation;
 
+        // İlan çifti sırası (A,B) veya (B,A) fark etmeksizin tüm sohbet mesajlarını getir.
         return await _dbContext.ContactMessages
             .AsNoTracking()
             .Where(message =>
-                message.LostItemId == pair.ItemId &&
-                message.MatchedLostItemId == pair.MatchedItemId)
-            .OrderByDescending(message => message.SentAt)
-            .ThenByDescending(message => message.Id)
-            .Take(100)
+                message.MatchedLostItemId != null &&
+                ((message.LostItemId == itemId && message.MatchedLostItemId == matchedItemId) ||
+                 (message.LostItemId == matchedItemId && message.MatchedLostItemId == itemId)))
             .OrderBy(message => message.SentAt)
             .ThenBy(message => message.Id)
+            .Take(200)
             .Select(message => new ChatMessageDto(
                 message.Id,
                 message.SenderUserId ?? string.Empty,
@@ -87,12 +87,24 @@ public sealed class ChatHub : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupName(conversation));
         Context.Items[ConversationKey] = conversation;
 
+        var foundItemOwnerId = await _dbContext.LostItems
+            .AsNoTracking()
+            .Where(item => item.Id == foundItemId)
+            .Select(item => item.UserId)
+            .SingleOrDefaultAsync();
+
+        var allowedSenders = new[] { userId, participantUserId, foundItemOwnerId }
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct()
+            .ToArray();
+
         return await _dbContext.ContactMessages
             .AsNoTracking()
             .Where(message =>
                 message.LostItemId == foundItemId &&
                 message.MatchedLostItemId == null &&
-                (message.SenderUserId == participantUserId || message.SenderUserId == userId))
+                message.SenderUserId != null &&
+                allowedSenders.Contains(message.SenderUserId))
             .OrderBy(message => message.SentAt)
             .ThenBy(message => message.Id)
             .Select(message => new ChatMessageDto(
