@@ -1,0 +1,65 @@
+@model ARABULUCU.Web.Controllers.EditItemViewModel
+
+@{
+	ViewData["Title"] = "İlanı Güncelle";
+	var categories = ViewBag.Categories as IEnumerable<ARABULUCU.ENT.Entities.Category> ?? Enumerable.Empty<ARABULUCU.ENT.Entities.Category>();
+}
+
+<div class="container py-5" style="max-width: 760px;">
+	<div class="card shadow-sm border rounded-3">
+		<div class="card-body p-4 p-md-5">
+			<h3 class="fw-bold mb-4">İlanı Güncelle</h3>
+
+			<form asp-controller="Home" asp-action="IlanGuncelle" method="post">
+				@Html.AntiForgeryToken()
+				<input asp-for="Id" type="hidden" />
+				<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+				<div class="mb-3">
+					<label asp-for="Title" class="form-label fw-semibold">İlan Başlığı</label>
+					<input asp-for="Title" class="form-control" />
+					<span asp-validation-for="Title" class="text-danger"></span>
+				</div>
+
+				<div class="mb-3">
+					<label asp-for="CategoryId" class="form-label fw-semibold">Kategori</label>
+					<select asp-for="CategoryId" class="form-select">
+						<option value="0">Seçiniz...</option>
+						@foreach (var category in categories)
+						{
+							<option value="@category.Id">@category.Name</option>
+						}
+					</select>
+					<span asp-validation-for="CategoryId" class="text-danger"></span>
+				</div>
+
+				<div class="mb-3">
+					<label asp-for="Location" class="form-label fw-semibold">Konum</label>
+					<input asp-for="Location" class="form-control" />
+					<span asp-validation-for="Location" class="text-danger"></span>
+				</div>
+
+				<div class="mb-3">
+					<label asp-for="EventDate" class="form-label fw-semibold">Tarih</label>
+					<input asp-for="EventDate" type="datetime-local" class="form-control" />
+					<span asp-validation-for="EventDate" class="text-danger"></span>
+				</div>
+
+				<div class="mb-4">
+					<label asp-for="Description" class="form-label fw-semibold">Açıklama</label>
+					<textarea asp-for="Description" class="form-control" rows="5"></textarea>
+					<span asp-validation-for="Description" class="text-danger"></span>
+				</div>
+
+				<div class="d-flex gap-2">
+					<button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
+					<a asp-controller="Home" asp-action="Profil" class="btn btn-outline-secondary">Vazgeç</a>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<partial name="_ValidationScriptsPartial" />
+}

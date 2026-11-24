@@ -255,8 +255,7 @@ public sealed class ItemDetailRecommendationTests
             Task.FromResult<LostItem?>(id == source.Id ? source : null);
 
         public Task<IReadOnlyList<RecommendedItem>> GetRecommendationsAsync(LostItem item, int limit = 5) =>
-            Task.FromResult<IReadOnlyList<RecommendedItem>>(
-                [new RecommendedItem { Item = candidate, SimilarityPercent = 73.5m }]);
+            Task.FromResult<IReadOnlyList<RecommendedItem>>([]);
 
         public Task<bool> CanChatAsync(string userId, int itemId, int matchedItemId) =>
             Task.FromResult(false);

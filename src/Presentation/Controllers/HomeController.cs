@@ -127,6 +127,7 @@ public class HomeController : Controller
             .OrderByDescending(item => item.CreatedAt)
             .Select(item => new UserItemViewModel
             {
+                Id = item.Id,
                 Title = item.Title,
                 Category = item.Category.Name,
                 Location = item.Location,
@@ -144,6 +145,91 @@ public class HomeController : Controller
             LostItems = items.Where(item => !item.IsFound).ToList(),
             FoundItems = items.Where(item => item.IsFound).ToList()
         });
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> IlanGuncelle(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var item = await _dbContext.LostItems
+            .AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Id == id && item.UserId == userId);
+
+        if (item is null)
+        {
+            return NotFound();
+        }
+
+        ViewBag.Categories = await _dbContext.Categories
+            .AsNoTracking()
+            .OrderBy(category => category.Name)
+            .ToListAsync();
+
+        return View(new EditItemViewModel
+        {
+            Id = item.Id,
+            Title = item.Title,
+            Description = item.Description,
+            Location = item.Location,
+            EventDate = item.EventDate,
+            CategoryId = item.CategoryId
+        });
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> IlanGuncelle(EditItemViewModel model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var item = await _dbContext.LostItems
+            .SingleOrDefaultAsync(item => item.Id == model.Id && item.UserId == userId);
+
+        if (item is null)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Categories = await _dbContext.Categories
+                .AsNoTracking()
+                .OrderBy(category => category.Name)
+                .ToListAsync();
+            return View(model);
+        }
+
+        item.Title = model.Title.Trim();
+        item.Description = model.Description.Trim();
+        item.Location = model.Location.Trim();
+        item.EventDate = model.EventDate;
+        item.CategoryId = model.CategoryId;
+        await _dbContext.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "İlanınız güncellendi.";
+        return RedirectToAction(nameof(Profil));
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> IlanSil(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var item = await _dbContext.LostItems
+            .SingleOrDefaultAsync(item => item.Id == id && item.UserId == userId);
+
+        if (item is null)
+        {
+            return NotFound();
+        }
+
+        _dbContext.LostItems.Remove(item);
+        await _dbContext.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "İlanınız silindi.";
+        return RedirectToAction(nameof(Profil));
     }
 
     [HttpGet]
@@ -635,6 +721,8 @@ public class ProfileViewModel
 
 public class UserItemViewModel
 {
+    public int Id { get; set; }
+
     public string Title { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
@@ -648,6 +736,7 @@ public class ItemSearchViewModel
 {
     public ItemSearchCriteria Criteria { get; set; } = new();
     public IReadOnlyList<LostItem> Items { get; set; } = [];
+    public IReadOnlyList<ChatMatch> Matches { get; set; } = [];
     public string? ValidationError { get; set; }
 }
 
@@ -693,4 +782,27 @@ public class MessagesViewModel
     public IReadOnlyList<VerifiedChatMatch> VerifiedMatches { get; set; } = [];
     public bool IsVerifiedConversation { get; set; }
     public string? VerifiedParticipantUserId { get; set; }
+}
+
+public class EditItemViewModel
+{
+    public int Id { get; set; }
+
+    [Required(ErrorMessage = "İlan başlığı zorunludur.")]
+    [StringLength(100)]
+    public string Title { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Açıklama zorunludur.")]
+    [StringLength(2000)]
+    public string Description { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Konum zorunludur.")]
+    [StringLength(250)]
+    public string Location { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Tarih zorunludur.")]
+    public DateTime EventDate { get; set; }
+
+    [Range(1, int.MaxValue, ErrorMessage = "Kategori seçiniz.")]
+    public int CategoryId { get; set; }
 }

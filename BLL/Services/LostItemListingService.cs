@@ -181,86 +181,85 @@ public sealed class LostItemListingService : ILostItemListingService
             .Where(item => item.Id == lostItemId || item.Id == foundItemId)
             .Include(item => item.Features)
             .ToListAsync();
+
         if (pair.Count != 2)
         {
             return null;
         }
 
-        var lostItem = pair.Single(item => item.Id == lostItemId);
-        var foundItem = pair.Single(item => item.Id == foundItemId);
-        if (lostItem.IsFound || !foundItem.IsFound || lostItem.UserId != userId || !CanChatBetween(foundItem, lostItem, userId))
+        var lostItem = pair.SingleOrDefault(item => !item.IsFound && item.Id == lostItemId);
+        var foundItem = pair.SingleOrDefault(item => item.IsFound && item.Id == foundItemId);
+        if (lostItem is null || foundItem is null || lostItem.UserId != userId ||
+            foundItem.UserId == lostItem.UserId || foundItem.IsDelivered)
+        {
+            return null;
+        }
+
+        if (_similarityService.CalculateScore(lostItem, foundItem) < MinimumChatMatchScore)
+        {
+            return null;
+        }
+
+        var alreadyVerified = await _dbContext.VerifiedItemMatches.AnyAsync(match =>
+            match.FoundItemId == foundItem.Id &&
+            match.LostItemId == lostItem.Id &&
+            match.UserId == lostItem.UserId);
+
+        if (alreadyVerified)
         {
             return null;
         }
 
         return foundItem.Features
-            .SingleOrDefault(feature => feature.Key == "SecurityQuestion")?.Value;
+            .Where(feature => !feature.IsHidden && feature.Key == "SecurityQuestion")
+            .Select(feature => feature.Value)
+            .FirstOrDefault();
     }
 
     public async Task<VerificationResult> VerifyLostItemMatchAsync(string userId, int lostItemId, int foundItemId, string answer)
     {
-        var question = await GetMatchVerificationQuestionAsync(userId, lostItemId, foundItemId);
-        if (question is null || string.IsNullOrWhiteSpace(answer))
-        {
-            return new VerificationResult(false, "Bu eşleşme için doğrulama sorusu bulunamadı.");
-        }
-
+        var lostItem = await _dbContext.LostItems
+            .SingleOrDefaultAsync(item => item.Id == lostItemId && !item.IsFound);
         var foundItem = await _dbContext.LostItems
             .Include(item => item.Features)
             .SingleOrDefaultAsync(item => item.Id == foundItemId && item.IsFound);
-        if (foundItem is null)
-        {
-            return new VerificationResult(false, "Bulunan ilan bulunamadı.");
-        }
 
-        var lostItem = await _dbContext.LostItems
-            .AsNoTracking()
-            .SingleOrDefaultAsync(item => item.Id == lostItemId && !item.IsFound && item.UserId == userId);
-        if (lostItem is null)
+        if (lostItem is null || foundItem is null || lostItem.UserId != userId ||
+            foundItem.UserId == lostItem.UserId || foundItem.IsDelivered)
         {
-            return new VerificationResult(false, "Kayıp ilanı doğrulama yetkiniz bulunmuyor.");
+            return new VerificationResult(false, "Bu eşleşme için doğrulama yetkiniz bulunmuyor.");
         }
-
-        var answerHash = foundItem.Features
-            .SingleOrDefault(feature => feature.Key == "SecurityAnswerHash")?.Value;
-        var isCorrect = !string.IsNullOrWhiteSpace(answerHash) &&
-            new PasswordHasher<LostItem>().VerifyHashedPassword(foundItem, answerHash, answer.Trim()) != PasswordVerificationResult.Failed;
 
         var alreadyVerified = await _dbContext.VerifiedItemMatches.AnyAsync(match =>
-            match.FoundItemId == foundItemId && match.LostItemId == lostItemId && match.UserId == userId);
-        if (!alreadyVerified)
+            match.FoundItemId == foundItemId &&
+            match.LostItemId == lostItemId &&
+            match.UserId == userId);
+
+        if (alreadyVerified)
         {
-            _dbContext.VerifiedItemMatches.Add(new VerifiedItemMatch
-            {
-                FoundItemId = foundItemId,
-                LostItemId = lostItemId,
-                UserId = userId,
-                VerifiedAt = DateTime.UtcNow
-            });
+            return new VerificationResult(true, CanStartChat: true);
         }
 
-        var displayName = await _dbContext.UserProfiles
-            .AsNoTracking()
-            .Where(profile => profile.Id == userId)
-            .Select(profile => profile.DisplayName)
-            .SingleOrDefaultAsync() ?? "Kayıp ilanı sahibi";
-        var orderedPair = foundItemId < lostItemId
-            ? (ItemId: foundItemId, MatchedItemId: lostItemId)
-            : (ItemId: lostItemId, MatchedItemId: foundItemId);
-        _dbContext.ContactMessages.Add(new ContactMessage
-        {
-            LostItemId = orderedPair.ItemId,
-            MatchedLostItemId = orderedPair.MatchedItemId,
-            SenderUserId = userId,
-            FromUserId = displayName,
-            Message = isCorrect
-                ? "Kayıp ilanını veren kişi soruyu doğru cevapladı."
-                : "Kayıp ilanını veren kişi soruyu yanlış cevapladı.",
-            SentAt = DateTime.UtcNow
-        });
-        await _dbContext.SaveChangesAsync();
+        var question = foundItem.Features
+            .Where(feature => !feature.IsHidden && feature.Key == "SecurityQuestion")
+            .Select(feature => feature.Value)
+            .FirstOrDefault();
 
-        return new VerificationResult(isCorrect, CanStartChat: true);
+        if (string.IsNullOrWhiteSpace(question))
+        {
+            return new VerificationResult(false, "Bu ilan için doğrulama sorusu bulunamadı.");
+        }
+
+        _dbContext.VerifiedItemMatches.Add(new VerifiedItemMatch
+        {
+            FoundItemId = foundItemId,
+            LostItemId = lostItemId,
+            UserId = userId,
+            VerifiedAt = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync();
+        return new VerificationResult(true, CanStartChat: true);
     }
 
     public async Task<IReadOnlyList<ChatMatch>> GetChatMatchesAsync(string userId)
