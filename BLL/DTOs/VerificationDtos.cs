@@ -36,12 +36,6 @@ public sealed class VerificationAnswerDto
     public string Answer { get; init; } = string.Empty;
 }
 
-public sealed class VerificationResult
-{
-    public bool IsSuccessful { get; init; }
-    public string? Error { get; init; }
-}
-
 public sealed class ProtectedListingDto
 {
     public int Id { get; init; }

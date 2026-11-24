@@ -49,7 +49,7 @@
                 @if (Model.SourceItemIsFound && Model.SourceItemId.HasValue && Model.VerificationQuestion is not null)
                 {
                     <div class="p-4 mt-4 rounded-4 border" style="background-color: #FFF7F9; border-color: #FFD9E2 !important;">
-                        <h2 class="h5 fw-bold">Eşleşme sohbetini başlat</h2>
+                        <h2 class="h5 fw-bold">Doğrulama ile iletişime geç ve eşleşme sohbetini başlat</h2>
                         <p class="mb-3 text-secondary">Bulunan eşya sahibinin sorusunu cevaplayın. Cevabınız doğru veya yanlış olsa da sohbet açılacaktır.</p>
                         <p class="fw-semibold mb-3">@Model.VerificationQuestion</p>
                         <form asp-controller="Home" asp-action="DogrulaEslesme" method="post">

@@ -398,7 +398,8 @@ public sealed class LostItemListingServiceTests
 
         var result = await service.VerifyLostItemMatchAsync(owner.Id, lost.Id, found.Id, "kırmızı");
 
-        Assert.False(result.Succeeded);
+        Assert.True(result.Succeeded);
+        Assert.True(result.CanStartChat);
         Assert.True(result.CanStartChat);
         Assert.True(await service.CanChatAsync(owner.Id, lost.Id, found.Id));
         Assert.True(await service.CanChatAsync(finder.Id, found.Id, lost.Id));

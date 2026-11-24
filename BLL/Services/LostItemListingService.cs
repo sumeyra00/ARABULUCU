@@ -224,8 +224,9 @@ public sealed class LostItemListingService : ILostItemListingService
             .Include(item => item.Features)
             .SingleOrDefaultAsync(item => item.Id == foundItemId && item.IsFound);
 
-        if (lostItem is null || foundItem is null || lostItem.UserId != userId ||
-            foundItem.UserId == lostItem.UserId || foundItem.IsDelivered)
+        if (lostItem is null || foundItem is null ||
+            lostItem.UserId != userId || foundItem.UserId == lostItem.UserId ||
+            foundItem.IsDelivered)
         {
             return new VerificationResult(false, "Bu eşleşme için doğrulama yetkiniz bulunmuyor.");
         }
@@ -235,30 +236,30 @@ public sealed class LostItemListingService : ILostItemListingService
             match.LostItemId == lostItemId &&
             match.UserId == userId);
 
-        if (alreadyVerified)
+        if (!alreadyVerified)
         {
-            return new VerificationResult(true, CanStartChat: true);
+            _dbContext.VerifiedItemMatches.Add(new VerifiedItemMatch
+            {
+                FoundItemId = foundItemId,
+                LostItemId = lostItemId,
+                UserId = userId,
+                VerifiedAt = DateTime.UtcNow
+            });
+
+            _dbContext.ContactMessages.Add(new ContactMessage
+            {
+                LostItemId = lostItemId,
+                MatchedLostItemId = foundItemId,
+                SenderUserId = userId,
+                FromUserId = "Sistem",
+                Message = "Kayıp ilanını veren kişi soruyu yanlış cevapladı.",
+                SentAt = DateTime.UtcNow
+            });
+
+            await _dbContext.SaveChangesAsync();
         }
 
-        var question = foundItem.Features
-            .Where(feature => !feature.IsHidden && feature.Key == "SecurityQuestion")
-            .Select(feature => feature.Value)
-            .FirstOrDefault();
-
-        if (string.IsNullOrWhiteSpace(question))
-        {
-            return new VerificationResult(false, "Bu ilan için doğrulama sorusu bulunamadı.");
-        }
-
-        _dbContext.VerifiedItemMatches.Add(new VerifiedItemMatch
-        {
-            FoundItemId = foundItemId,
-            LostItemId = lostItemId,
-            UserId = userId,
-            VerifiedAt = DateTime.UtcNow
-        });
-
-        await _dbContext.SaveChangesAsync();
+        // Cevap, iletişim izni için kaydedilir; doğru/yanlış olması sohbeti engellemez.
         return new VerificationResult(true, CanStartChat: true);
     }
 

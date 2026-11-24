@@ -256,10 +256,12 @@ public class HomeController : Controller
             verificationQuestion = await _listingService.GetMatchVerificationQuestionAsync(currentUserId, item.Id, sourceIlanId.Value);
         }
 
+        var recommendations = await _listingService.GetRecommendationsAsync(item, limit: 6);
+
         return View("~/Views/Ilan/Detay.cshtml", new ItemDetailViewModel
         {
             Item = item,
-            Recommendations = await _listingService.GetRecommendationsAsync(item),
+            Recommendations = recommendations,
             CanStartChat = IsOpen(item),
             CurrentUserId = currentUserId,
             VerificationQuestion = verificationQuestion,
