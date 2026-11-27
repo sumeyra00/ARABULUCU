@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Giriş Yap";
+    var openAdminPanel = TempData["AdminLoginError"] is string;
 }
 
 <div class="position-relative overflow-hidden py-5 d-flex align-items-center justify-content-center" style="background: radial-gradient(circle at 50% 20%, #FFF0F4 0%, #FFF7F9 60%, #FCF9F9 100%); min-height: calc(100vh - 160px);">
@@ -17,6 +18,11 @@
                 @if (TempData["SuccessMessage"] is string successMessage)
                 {
                     <div class="alert alert-success" role="status">@successMessage</div>
+                }
+
+                @if (TempData["AdminLoginError"] is string adminLoginError)
+                {
+                    <div class="alert alert-danger small" role="alert">@adminLoginError</div>
                 }
 
                 <form asp-controller="Account" asp-action="Login" method="post">
@@ -42,6 +48,36 @@
                     </div>
                     <button type="submit" class="btn w-100 rounded-pill py-2 fw-bold text-white" style="background: linear-gradient(135deg, #FF6082 0%, #FF416C 100%); border: none;">Giriş Yap</button>
                 </form>
+
+                <hr class="my-4" />
+
+                <button class="btn btn-outline-dark w-100 rounded-pill py-2 fw-semibold small"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#adminLoginCollapse"
+                        aria-expanded="@(openAdminPanel ? "true" : "false")"
+                        aria-controls="adminLoginCollapse">
+                    🛡️ Admin Girişi
+                </button>
+
+                <div class="collapse mt-3 @(openAdminPanel ? "show" : "")" id="adminLoginCollapse">
+                    <div class="p-3 rounded-3 border bg-light">
+                        <form asp-controller="Account" asp-action="AdminLogin" method="post">
+                            @Html.AntiForgeryToken()
+                            <label for="adminPasswordInput" class="form-label small fw-semibold text-dark">Admin Şifresi</label>
+                            <input id="adminPasswordInput"
+                                   name="adminPassword"
+                                   type="password"
+                                   class="form-control form-control-sm mb-2"
+                                   placeholder="Admin şifresini girin"
+                                   autocomplete="off"
+                                   required />
+                            <button type="submit" class="btn btn-dark btn-sm w-100 rounded-pill fw-semibold">
+                                Admin Olarak Giriş Yap
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
             <div class="card-footer border-top-0 py-3 text-center" style="background-color: #FFF0F4;">
                 <p class="mb-0 small text-muted">

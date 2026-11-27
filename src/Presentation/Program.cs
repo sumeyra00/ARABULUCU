@@ -24,7 +24,6 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-
 builder.Services
     .AddIdentity<IdentityUser, IdentityRole>(options =>
     {
@@ -71,6 +70,12 @@ using (var scope = app.Services.CreateScope())
         throw new InvalidOperationException(
             $"PostgreSQL sunucusunun adresi çözümlenemedi: '{host}'. Supabase Dashboard > Connect > Session pooler adresini kullanın; doğrudan veritabanı adresi IPv6 gerektirebilir.",
             exception);
+    }
+
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    if (!await roleManager.RoleExistsAsync("Admin"))
+    {
+        await roleManager.CreateAsync(new IdentityRole("Admin"));
     }
 }
 

@@ -27,72 +27,72 @@
         <div id="homeFilters" class="collapse mb-5">
             <form asp-controller="Home" asp-action="Index" method="get" class="card border-0 shadow-sm rounded-4 p-3 p-md-4">
                 <div class="row g-3">
-                <div class="col-md-6">
-                    <label asp-for="Criteria.Query" class="form-label">Başlık veya açıklama</label>
-                    <input asp-for="Criteria.Query" name="Query" class="form-control" placeholder="Örn. siyah cüzdan" />
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="Criteria.Category" class="form-label">Kategori</label>
-                    <select asp-for="Criteria.Category" name="Category" class="form-select">
-                        <option value="">Tüm kategoriler</option>
-                        @foreach (var category in categories)
-                        {
-                            <option value="@category">@category</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Criteria.Location" class="form-label">Konum</label>
-                    <input asp-for="Criteria.Location" name="Location" class="form-control" placeholder="Konumda ara" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Criteria.IsFound" class="form-label">İlan türü</label>
-                    <select asp-for="Criteria.IsFound" name="IsFound" class="form-select">
-                        <option value="">Kayıp ve bulunan</option>
-                        <option value="false">Kayıp</option>
-                        <option value="true">Bulunan</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Criteria.IsItemFound" class="form-label">Bulunma durumu</label>
-                    <select asp-for="Criteria.IsItemFound" name="IsItemFound" class="form-select">
-                        <option value="">Tümü</option>
-                        <option value="false">Henüz bulunmadı</option>
-                        <option value="true">Bulundu</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Criteria.Brand" class="form-label">Marka</label>
-                    <input asp-for="Criteria.Brand" name="Brand" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Criteria.Model" class="form-label">Model</label>
-                    <input asp-for="Criteria.Model" name="Model" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Criteria.Color" class="form-label">Renk</label>
-                    <input asp-for="Criteria.Color" name="Color" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Criteria.EventDateFrom" class="form-label">Olay tarihi başlangıcı</label>
-                    <input asp-for="Criteria.EventDateFrom" type="date" name="EventDateFrom" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Criteria.EventDateTo" class="form-label">Olay tarihi bitişi</label>
-                    <input asp-for="Criteria.EventDateTo" type="date" name="EventDateTo" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Criteria.IsDelivered" class="form-label">Teslim durumu</label>
-                    <select asp-for="Criteria.IsDelivered" name="IsDelivered" class="form-select">
-                        <option value="">Tümü</option>
-                        <option value="false">Teslim edilmedi</option>
-                        <option value="true">Teslim edildi</option>
-                    </select>
-                </div>
-                <div class="col-12 d-flex gap-2">
-                    <button type="submit" class="btn btn-danger rounded-pill px-4">Filtrele</button>
-                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Temizle</a>
-                </div>
+                    <div class="col-md-6">
+                        <label asp-for="Criteria.Query" class="form-label">Başlık veya açıklama</label>
+                        <input asp-for="Criteria.Query" name="Query" class="form-control" placeholder="Örn. siyah cüzdan" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Criteria.Category" class="form-label">Kategori</label>
+                        <select asp-for="Criteria.Category" name="Category" class="form-select">
+                            <option value="">Tüm kategoriler</option>
+                            @foreach (var category in categories)
+                            {
+                                <option value="@category">@category</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Criteria.Location" class="form-label">Konum</label>
+                        <input asp-for="Criteria.Location" name="Location" class="form-control" placeholder="Konumda ara" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Criteria.IsFound" class="form-label">İlan türü</label>
+                        <select asp-for="Criteria.IsFound" name="IsFound" class="form-select">
+                            <option value="">Kayıp ve bulunan</option>
+                            <option value="false">Kayıp</option>
+                            <option value="true">Bulunan</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Criteria.IsItemFound" class="form-label">Bulunma durumu</label>
+                        <select asp-for="Criteria.IsItemFound" name="IsItemFound" class="form-select">
+                            <option value="">Tümü</option>
+                            <option value="false">Henüz bulunmadı</option>
+                            <option value="true">Bulundu</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Criteria.Brand" class="form-label">Marka</label>
+                        <input asp-for="Criteria.Brand" name="Brand" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Criteria.Model" class="form-label">Model</label>
+                        <input asp-for="Criteria.Model" name="Model" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Criteria.Color" class="form-label">Renk</label>
+                        <input asp-for="Criteria.Color" name="Color" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Criteria.EventDateFrom" class="form-label">Olay tarihi başlangıcı</label>
+                        <input asp-for="Criteria.EventDateFrom" type="date" name="EventDateFrom" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Criteria.EventDateTo" class="form-label">Olay tarihi bitişi</label>
+                        <input asp-for="Criteria.EventDateTo" type="date" name="EventDateTo" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Criteria.IsDelivered" class="form-label">Teslim durumu</label>
+                        <select asp-for="Criteria.IsDelivered" name="IsDelivered" class="form-select">
+                            <option value="">Tümü</option>
+                            <option value="false">Teslim edilmedi</option>
+                            <option value="true">Teslim edildi</option>
+                        </select>
+                    </div>
+                    <div class="col-12 d-flex gap-2">
+                        <button type="submit" class="btn btn-danger rounded-pill px-4">Filtrele</button>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Temizle</a>
+                    </div>
                 </div>
             </form>
         </div>

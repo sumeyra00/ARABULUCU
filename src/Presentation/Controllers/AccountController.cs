@@ -1,12 +1,13 @@
+using System.Security.Cryptography;
+using System.Text;
 using ARABULUCU.DAL.Data;
 using ARABULUCU.ENT.Entities;
 using ARABULUCU.Web.Models.Account;
 using ARABULUCU.Web.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
-using System.Text;
+using Microsoft.EntityFrameworkCore;
 
 namespace ARABULUCU.Web.Controllers;
 
@@ -15,6 +16,8 @@ public class AccountController : Controller
     private readonly ApplicationDbContext _dbContext;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<AccountController> _logger;
     private readonly IAccountEmailSender _emailSender;
 
@@ -22,12 +25,16 @@ public class AccountController : Controller
         ApplicationDbContext dbContext,
         UserManager<IdentityUser> userManager,
         SignInManager<IdentityUser> signInManager,
+        RoleManager<IdentityRole> roleManager,
+        IConfiguration configuration,
         ILogger<AccountController> logger,
         IAccountEmailSender emailSender)
     {
         _dbContext = dbContext;
         _userManager = userManager;
         _signInManager = signInManager;
+        _roleManager = roleManager;
+        _configuration = configuration;
         _logger = logger;
         _emailSender = emailSender;
     }
@@ -103,6 +110,72 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult Login(string? returnUrl = null) =>
         View(new LoginViewModel { ReturnUrl = returnUrl });
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdminLogin(string? adminPassword)
+    {
+        var configuredPassword = _configuration["AdminSettings:Password"];
+        if (string.IsNullOrWhiteSpace(configuredPassword) || string.IsNullOrWhiteSpace(adminPassword))
+        {
+            TempData["AdminLoginError"] = "Admin şifresi hatalı veya yapılandırılmamış.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var inputBytes = Encoding.UTF8.GetBytes(adminPassword);
+        var expectedBytes = Encoding.UTF8.GetBytes(configuredPassword);
+        if (inputBytes.Length != expectedBytes.Length ||
+            !CryptographicOperations.FixedTimeEquals(inputBytes, expectedBytes))
+        {
+            TempData["AdminLoginError"] = "Admin şifresi hatalı.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        const string adminRole = "Admin";
+        if (!await _roleManager.RoleExistsAsync(adminRole))
+        {
+            await _roleManager.CreateAsync(new IdentityRole(adminRole));
+        }
+
+        const string adminEmail = "admin@arabulucu.local";
+        var adminUser = await _userManager.FindByEmailAsync(adminEmail);
+        if (adminUser is null)
+        {
+            adminUser = new IdentityUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true
+            };
+
+            var randomSecret = Convert.ToBase64String(RandomNumberGenerator.GetBytes(24)) + "aA1!";
+            var createResult = await _userManager.CreateAsync(adminUser, randomSecret);
+            if (!createResult.Succeeded)
+            {
+                TempData["AdminLoginError"] = "Admin hesabı oluşturulamadı.";
+                return RedirectToAction(nameof(Login));
+            }
+        }
+
+        if (!await _userManager.IsInRoleAsync(adminUser, adminRole))
+        {
+            await _userManager.AddToRoleAsync(adminUser, adminRole);
+        }
+
+        if (!await _dbContext.UserProfiles.AnyAsync(p => p.Id == adminUser.Id))
+        {
+            _dbContext.UserProfiles.Add(new UserProfile
+            {
+                Id = adminUser.Id,
+                DisplayName = "Sistem Yöneticisi",
+                Email = adminEmail
+            });
+            await _dbContext.SaveChangesAsync();
+        }
+
+        await _signInManager.SignInAsync(adminUser, isPersistent: false);
+        return RedirectToAction("Index", "Admin");
+    }
 
     [HttpGet]
     public IActionResult ForgotPassword() => View(new ForgotPasswordViewModel());

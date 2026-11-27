@@ -22,7 +22,6 @@
 	</PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Views\Admin\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 </Project>
