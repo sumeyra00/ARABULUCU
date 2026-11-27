@@ -267,30 +267,31 @@ public class HomeController : Controller
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         string? verificationQuestion = null;
         bool sourceItemIsFound = false;
+        bool canAnswerMatchQuestion = false;
 
-        if (sourceIlanId.HasValue)
+        if (sourceIlanId.HasValue && sourceIlanId.Value != item.Id && currentUserId is not null)
         {
-            sourceItemIsFound = await _dbContext.LostItems
+            var sourceItem = await _dbContext.LostItems
                 .AsNoTracking()
-                .Where(candidate => candidate.Id == sourceIlanId.Value)
-                .Select(candidate => candidate.IsFound)
-                .SingleOrDefaultAsync();
+                .Include(candidate => candidate.Category)
+                .Include(candidate => candidate.Features.Where(feature => !feature.IsHidden))
+                .SingleOrDefaultAsync(candidate => candidate.Id == sourceIlanId.Value);
 
-            // Soru yalnızca kayıp ilanı sahibine sorulur; bulunan ilan sahibine sorulmaz.
-            if (!item.IsFound && sourceItemIsFound && currentUserId is not null && currentUserId == item.UserId)
+            if (sourceItem is not null && sourceItem.IsFound != item.IsFound)
             {
-                verificationQuestion = await _listingService.GetMatchVerificationQuestionAsync(
-                    currentUserId, item.Id, sourceIlanId.Value);
+                sourceItemIsFound = sourceItem.IsFound;
+
+                var lostItem = item.IsFound ? sourceItem : item;
+                var foundItem = item.IsFound ? item : sourceItem;
+
+                // Gizli doğrulama sorusu yalnızca eşleşen kayıp ilanı oluşturana görünür.
+                if (lostItem.UserId == currentUserId && foundItem.UserId != currentUserId)
+                {
+                    canAnswerMatchQuestion = true;
+                    verificationQuestion = await _listingService.GetMatchVerificationQuestionAsync(
+                        currentUserId, lostItem.Id, foundItem.Id);
+                }
             }
-        }
-        else if (item.IsFound && currentUserId is not null && currentUserId != item.UserId)
-        {
-            verificationQuestion = await _dbContext.LostItemFeatures
-                .AsNoTracking()
-                .Where(feature => feature.LostItemId == item.Id && feature.Key == "SecurityQuestion")
-                .Select(feature => feature.Value)
-                .SingleOrDefaultAsync()
-                ?? "Bu eşyanın gerçek sahibi olduğunuzu doğrulayacak ayırt edici bir bilgi yazın:";
         }
 
         var recommendations = await _listingService.GetRecommendationsAsync(item, limit: 6);
@@ -301,9 +302,9 @@ public class HomeController : Controller
             Recommendations = recommendations,
             CanStartChat = IsOpen(item),
             CurrentUserId = currentUserId,
-            VerificationQuestion = verificationQuestion,
-            SourceItemId = sourceIlanId,
-            SourceItemIsFound = sourceItemIsFound
+            VerificationQuestion = canAnswerMatchQuestion ? verificationQuestion : null,
+            SourceItemId = canAnswerMatchQuestion ? sourceIlanId : null,
+            SourceItemIsFound = canAnswerMatchQuestion && sourceItemIsFound
         });
     }
 
